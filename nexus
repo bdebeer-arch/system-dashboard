@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Strategic Impact Nexus</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --text: #2c3e50;
+            --card: #ffffff;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f1c40f;
+        }
+
+        body {
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { margin: 0 0 10px 0; letter-spacing: -1px; }
+        p.subtitle { color: #7f8c8d; margin: 0; }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* Inputs */
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.9rem; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box; 
+        }
+
+        /* Sliders */
+        .slider-container { margin-bottom: 15px; }
+        .slider-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .slider-val { font-weight: bold; color: var(--accent); }
+        
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        /* Results Area */
+        .verdict-box {
+            text-align: center;
+            padding: 20px;
+            background: #ecf0f1;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        #verdict-title { font-size: 1.5rem; font-weight: 800; display: block; margin-bottom: 5px; }
+        #verdict-desc { font-size: 0.95rem; color: #555; }
+
+        canvas {
+            width: 100%;
+            height: 250px;
+            margin-top: 20px;
+        }
+
+        /* Buttons */
+        .action-btn {
+            background: var(--text);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        .action-btn:hover { opacity: 0.9; }
+
+        footer { margin-top: 40px; font-size: 0.8rem; color: #bdc3c7; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>The Strategic Impact Nexus</h1>
+        <p class="subtitle">Systemic Evaluation for Educational Innovation</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="card">
+            <div class="input-group">
+                <label>Initiative / Project Name</label>
+                <input type="text" id="projectName" placeholder="e.g., Year 10 Integrated Curriculum">
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label>Academic Rigour (Te Hiranga)</label>
+                    <span class="slider-val" id="val-1">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" id="input-1" oninput="updateSystem()">
+            </div>
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label>Student Wellbeing (Hauora)</label>
+                    <span class="slider-val" id="val-2">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" id="input-2" oninput="updateSystem()">
+            </div>
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label>Staff Capacity (Logistics)</label>
+                    <span class="slider-val" id="val-3">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" id="input-3" oninput="updateSystem()">
+            </div>
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label>Cultural Responsiveness (Mātauranga)</label>
+                    <span class="slider-val" id="val-4">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" id="input-4" oninput="updateSystem()">
+            </div>
+
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label>Community & Whānau Engagement</label>
+                    <span class="slider-val" id="val-5">5</span>
+                </div>
+                <input type="range" min="0" max="10" value="5" id="input-5" oninput="updateSystem()">
+            </div>
+
+            <button class="action-btn" onclick="resetSystem()">Reset Analysis</button>
+        </div>
+
+        <div class="card">
+            <label>Systemic Balance Visualisation</label>
+            <canvas id="radarChart"></canvas>
+
+            <div class="verdict-box" id="verdict-box">
+                <span id="verdict-title">Awaiting Data...</span>
+                <span id="verdict-desc">Adjust sliders to calculate viability.</span>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        Designed for The Polymathic Educator | Focus: Holistic Systems Analysis
+    </footer>
+
+    <script>
+        // -- The Logic Core --
+
+        const canvas = document.getElementById('radarChart');
+        const ctx = canvas.getContext('2d');
+        
+        // Configuration for High DPI screens
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
+        const labels = ["Te Hiranga", "Hauora", "Logistics", "Mātauranga", "Whānau"];
+        
+        function updateSystem() {
+            // 1. Gather Data
+            const scores = [
+                parseInt(document.getElementById('input-1').value),
+                parseInt(document.getElementById('input-2').value),
+                parseInt(document.getElementById('input-3').value),
+                parseInt(document.getElementById('input-4').value),
+                parseInt(document.getElementById('input-5').value)
+            ];
+
+            // Update text displays
+            scores.forEach((s, i) => document.getElementById(`val-${i+1}`).innerText = s);
+
+            // 2. Calculate Strategic Viability
+            const total = scores.reduce((a, b) => a + b, 0);
+            const average = total / 5;
+            const minScore = Math.min(...scores);
+            
+            // Logic: Risk Aversion Check
+            // If any single pillar is too weak (< 3), the system flags a risk regardless of total score.
+            let title = "";
+            let desc = "";
+            let color = "";
+
+            if (minScore < 3) {
+                title = "CRITICAL IMBALANCE";
+                desc = "One or more systemic pillars are critically weak. Implementation risks are too high.";
+                color = "#e74c3c"; // Red
+            } else if (average >= 8) {
+                title = "HIGHLY VIABLE";
+                desc = "Excellent systemic alignment. This initiative demonstrates strong holistic value.";
+                color = "#27ae60"; // Green
+            } else if (average >= 5) {
+                title = "MODERATE VIABILITY";
+                desc = "Project is feasible but may require resource trade-offs or refinement.";
+                color = "#f39c12"; // Orange
+            } else {
+                title = "LOW PRIORITY";
+                desc = "Current impact does not justify the resource expenditure.";
+                color = "#7f8c8d"; // Grey
+            }
+
+            // Update UI
+            const vBox = document.getElementById('verdict-box');
+            document.getElementById('verdict-title').innerText = title;
+            document.getElementById('verdict-title').style.color = color;
+            document.getElementById('verdict-desc').innerText = desc;
+            vBox.style.borderLeft = `5px solid ${color}`;
+
+            // 3. Draw Radar Chart (The "Fun" Visual Part)
+            drawRadar(scores);
+        }
+
+        function drawRadar(data) {
+            const w = canvas.width / dpr;
+            const h = canvas.height / dpr;
+            const cx = w / 2;
+            const cy = h / 2;
+            const radius = Math.min(w, h) / 2 - 40;
+            const totalAxes = 5;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Draw Grid (Web)
+            ctx.strokeStyle = "#e0e0e0";
+            ctx.lineWidth = 1;
+            
+            for (let r = 0; r <= 10; r += 2) { // 5 rings
+                ctx.beginPath();
+                for (let i = 0; i < totalAxes; i++) {
+                    const angle = (Math.PI * 2 * i) / totalAxes - Math.PI / 2;
+                    const rDist = (radius / 10) * r;
+                    const x = cx + Math.cos(angle) * rDist;
+                    const y = cy + Math.sin(angle) * rDist;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // Draw Axes
+            for (let i = 0; i < totalAxes; i++) {
+                const angle = (Math.PI * 2 * i) / totalAxes - Math.PI / 2;
+                const x = cx + Math.cos(angle) * radius;
+                const y = cy + Math.sin(angle) * radius;
+                
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = "#bdc3c7";
+                ctx.stroke();
+
+                // Draw Labels
+                const lblX = cx + Math.cos(angle) * (radius + 20);
+                const lblY = cy + Math.sin(angle) * (radius + 20);
+                ctx.fillStyle = "#2c3e50";
+                ctx.font = "12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(labels[i], lblX, lblY);
+            }
+
+            // Draw Data Shape
+            ctx.beginPath();
+            for (let i = 0; i < totalAxes; i++) {
+                const angle = (Math.PI * 2 * i) / totalAxes - Math.PI / 2;
+                const val = data[i];
+                const rDist = (radius / 10) * val;
+                const x = cx + Math.cos(angle) * rDist;
+                const y = cy + Math.sin(angle) * rDist;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = "rgba(52, 152, 219, 0.4)"; // Blue with opacity
+            ctx.fill();
+            ctx.strokeStyle = "#2980b9";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function resetSystem() {
+            [1,2,3,4,5].forEach(i => {
+                document.getElementById(`input-${i}`).value = 5;
+            });
+            document.getElementById('projectName').value = "";
+            updateSystem();
+        }
+
+        // Init
+        updateSystem();
+
+    </script>
+</body>
+</html>
