@@ -3,199 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Holistic Systems Dashboard</title>
+    <title>Byron's Systems Portfolio</title>
     <style>
-        /* CSS: Styling for clarity and professionalism */
         :root {
-            --primary: #2c3e50; /* Deep Blue */
-            --accent: #27ae60;  /* Growth Green */
-            --bg: #f4f6f7;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
             --card-bg: #ffffff;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--primary);
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
         header {
-            text-align: center;
-            margin-bottom: 40px;
-            max-width: 600px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        p {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-        }
-
-        /* The Grid System */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            background: var(--primary);
+            color: white;
             width: 100%;
-            max-width: 1000px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        /* Card Component */
-        .card {
+        h1 { margin: 0; font-size: 2.5rem; letter-spacing: -1px; }
+        p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; letter-spacing: 1px; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+            padding: 50px 20px;
+        }
+
+        .project-card {
             background: var(--card-bg);
             border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            text-align: center;
-            transition: transform 0.2s ease;
-            border-top: 5px solid var(--primary);
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .house-name {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .score-display {
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 10px 0;
-        }
-
-        .btn-group {
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
+            flex-direction: column;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: var(--accent);
         }
 
-        .btn-add {
-            background-color: var(--accent);
-            color: white;
+        .card-header {
+            height: 8px;
+            width: 100%;
         }
 
-        .btn-add:hover { background-color: #219150; }
+        .card-body { padding: 30px; }
 
-        .btn-sub {
-            background-color: #e74c3c;
-            color: white;
+        h2 { margin: 0 0 10px 0; font-size: 1.5rem; }
+        p.desc { color: #7f8c8d; line-height: 1.5; margin-bottom: 20px; }
+
+        .tag {
+            display: inline-block;
+            background: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            font-weight: 600;
+            margin-right: 5px;
         }
-
-        .btn-sub:hover { background-color: #c0392b; }
 
         footer {
-            margin-top: 50px;
+            margin-top: auto;
+            padding: 20px;
+            color: #bdc3c7;
             font-size: 0.9rem;
-            color: #95a5a6;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Systems & Merit Tracker</h1>
-        <p>Real-time monitoring of holistic student development metrics.</p>
+        <h1>System Architecture Portfolio</h1>
+        <p class="role">POLYMATHIC EDUCATOR & INNOVATOR</p>
     </header>
 
-    <div class="dashboard-grid">
-        <div class="card" style="border-color: #f1c40f;">
-            <span class="house-name">Kōwhai</span>
-            <div id="score-1" class="score-display">0</div>
-            <div class="btn-group">
-                <button class="btn-sub" onclick="updateScore(1, -1)">-1</button>
-                <button class="btn-add" onclick="updateScore(1, 1)">+1 Merit</button>
+    <div class="grid-container">
+        
+        <a href="tracker.html" class="project-card">
+            <div class="card-header" style="background: #27ae60;"></div>
+            <div class="card-body">
+                <h2>Holistic Systems Dashboard</h2>
+                <p class="desc">Real-time tracking of House merits, community service, and cultural engagement metrics.</p>
+                <div>
+                    <span class="tag">OPERATIONAL</span>
+                    <span class="tag">DATA LOGGING</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="nexus.html" class="project-card">
+            <div class="card-header" style="background: #3498db;"></div>
+            <div class="card-body">
+                <h2>The Strategic Impact Nexus</h2>
+                <p class="desc">A decision-support engine using radar analysis to calculate the viability of new educational initiatives.</p>
+                <div>
+                    <span class="tag">STRATEGIC</span>
+                    <span class="tag">VISUALISATION</span>
+                </div>
+            </div>
+        </a>
+
+        <div class="project-card" style="opacity: 0.6; cursor: default;">
+            <div class="card-header" style="background: #95a5a6;"></div>
+            <div class="card-body">
+                <h2>Logistics Optimiser</h2>
+                <p class="desc">Future Module: Automated timetabling conflict resolution and resource allocation.</p>
+                <div>
+                    <span class="tag">IN DEVELOPMENT</span>
+                </div>
             </div>
         </div>
 
-        <div class="card" style="border-color: #27ae60;">
-            <span class="house-name">Kākāriki</span>
-            <div id="score-2" class="score-display">0</div>
-            <div class="btn-group">
-                <button class="btn-sub" onclick="updateScore(2, -1)">-1</button>
-                <button class="btn-add" onclick="updateScore(2, 1)">+1 Merit</button>
-            </div>
-        </div>
-
-        <div class="card" style="border-color: #2980b9;">
-            <span class="house-name">Kikorangi</span>
-            <div id="score-3" class="score-display">0</div>
-            <div class="btn-group">
-                <button class="btn-sub" onclick="updateScore(3, -1)">-1</button>
-                <button class="btn-add" onclick="updateScore(3, 1)">+1 Merit</button>
-            </div>
-        </div>
-
-        <div class="card" style="border-color: #c0392b;">
-            <span class="house-name">Whero</span>
-            <div id="score-4" class="score-display">0</div>
-            <div class="btn-group">
-                <button class="btn-sub" onclick="updateScore(4, -1)">-1</button>
-                <button class="btn-add" onclick="updateScore(4, 1)">+1 Merit</button>
-            </div>
-        </div>
     </div>
 
     <footer>
-        <p>System Proof of Concept | Focus: Efficiency & Clarity</p>
+        System State: LIVE | Focus: Integration & Efficiency
     </footer>
 
-    <script>
-        // JS: Logic to handle score updates and persistence
-        
-        // Initialize scores object
-        let scores = { 1: 0, 2: 0, 3: 0, 4: 0 };
-
-        // Load from LocalStorage if available (Proactive feature for data persistence)
-        if (localStorage.getItem('houseScores')) {
-            scores = JSON.parse(localStorage.getItem('houseScores'));
-            updateDisplay();
-        }
-
-        function updateScore(id, value) {
-            scores[id] += value;
-            // Prevent negative scores
-            if (scores[id] < 0) scores[id] = 0;
-            
-            saveAndDisplay();
-        }
-
-        function saveAndDisplay() {
-            // Save to browser memory
-            localStorage.setItem('houseScores', JSON.stringify(scores));
-            updateDisplay();
-        }
-
-        function updateDisplay() {
-            document.getElementById('score-1').innerText = scores[1];
-            document.getElementById('score-2').innerText = scores[2];
-            document.getElementById('score-3').innerText = scores[3];
-            document.getElementById('score-4').innerText = scores[4];
-        }
-    </script>
 </body>
 </html>
