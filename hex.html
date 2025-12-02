@@ -59,7 +59,6 @@
 
         h1 { margin: 0 0 5px 0; font-size: 1.8rem; letter-spacing: 1px; line-height: 1.2; }
         
-        /* DROPDOWN STYLE */
         .topic-select {
             width: 100%;
             padding: 10px;
@@ -160,7 +159,6 @@
 <body>
 
     <div class="layout">
-        
         <aside class="sidebar">
             <a href="index.html" class="nav-link">&larr; Dashboard</a>
             <h1>Systemic<br>Pathfinder</h1>
@@ -169,7 +167,7 @@
             <select id="topicSelect" class="topic-select" onchange="init()">
                 <option value="intro_rst">Unit 1: Intro to RST</option>
                 <option value="demo">Demo: General Knowledge</option>
-                </select>
+            </select>
 
             <div class="rules-box">
                 <div class="rule-item"><span class="dot blue"></span><span><strong>BLUE:</strong> Left &rarr; Right</span></div>
@@ -190,7 +188,6 @@
             <div id="error-box"></div>
             <div class="hex-container" id="grid"></div>
         </main>
-
     </div>
 
     <div id="modal">
@@ -214,10 +211,7 @@
             document.getElementById('error-box').innerHTML = `<strong>Error:</strong> ${msg}`;
         };
 
-        // --- TOPIC REPOSITORY ---
         const topics = {
-            
-            // UNIT 1: Intro Content
             intro_rst: [
                 {l:"T", q:"Belief in a god or gods.", a:"Theism"},
                 {l:"A", q:"Disbelief in God.", a:"Atheism"},
@@ -245,8 +239,6 @@
                 {l:"A", q:"Desire to achieve.", a:"Ambition"},
                 {l:"H", q:"Study of past events.", a:"History"}
             ],
-
-            // DEMO UNIT: For testing purposes
             demo: [
                 {l:"K", q:"Flightless bird symbol of NZ.", a:"Kiwi"},
                 {l:"R", q:"Sport played by the All Blacks.", a:"Rugby"},
@@ -283,11 +275,9 @@
                 const grid = document.getElementById('grid');
                 grid.innerHTML = ''; 
                 
-                // Get selected topic
                 const topicKey = document.getElementById('topicSelect').value;
-                const data = topics[topicKey] || topics['intro_rst']; // Fallback
+                const data = topics[topicKey] || topics['intro_rst'];
                 
-                // Shuffle data
                 const shuffled = [...data].sort(() => 0.5 - Math.random());
                 let idx = 0;
 
@@ -295,10 +285,54 @@
                     const row = document.createElement('div');
                     row.className = 'hex-row';
                     for(let c=0; c<5; c++) {
-                        // Loop through data if we run out (for small lists)
                         const item = shuffled[idx % shuffled.length];
                         idx++;
                         
                         const hex = document.createElement('div');
                         hex.className = 'hex';
-                        hex.innerText = item.
+                        hex.innerText = item.l;
+                        hex.dataset.q = item.q;
+                        hex.dataset.a = item.a;
+                        hex.dataset.l = item.l;
+                        hex.onclick = function() { openModal(this); };
+                        
+                        row.appendChild(hex);
+                    }
+                    grid.appendChild(row);
+                }
+            } catch (e) {
+                alert("Grid Error: " + e.message);
+            }
+        }
+
+        function openModal(el) {
+            if(el.classList.contains('blue') || el.classList.contains('red')) return;
+            activeHex = el;
+            
+            document.getElementById('m-letter').innerText = el.dataset.l;
+            document.getElementById('m-question').innerText = el.dataset.q;
+            
+            const ansBox = document.getElementById('m-answer');
+            ansBox.innerText = el.dataset.a;
+            ansBox.classList.remove('revealed');
+            
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function win(team) {
+            if(activeHex) activeHex.classList.add(team);
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function resetBoard() {
+            if(confirm("Start a new game with current topic?")) init();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
