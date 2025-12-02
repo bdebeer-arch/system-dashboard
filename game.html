@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE Knowledge Cipher</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #8e44ad; /* Purple for Wisdom/Theology */
+            --bg: #f0f2f5;
+            --red-team: #e74c3c;
+            --blue-team: #3498db;
+            --neutral: #95a5a6;
+            --assassin: #2c3e50;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Navigation Return Link */
+        nav { position: absolute; top: 20px; left: 20px; }
+        nav a { text-decoration: none; color: #7f8c8d; font-weight: bold; font-size: 0.9rem; }
+
+        header { text-align: center; margin-bottom: 20px; margin-top: 40px; }
+        h1 { margin: 0; color: var(--accent); letter-spacing: -1px; }
+        
+        /* Control Panel */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button.primary { background: var(--accent); color: white; border: none; font-weight: bold; }
+        button.spymaster { background: #34495e; color: white; border: none; }
+        
+        /* The Grid */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            aspect-ratio: 4/3; /* Standard card shape */
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            font-size: 0.9rem; /* small font to fit long theological terms */
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            user-select: none;
+            border-bottom: 4px solid #bdc3c7;
+            word-break: break-word;
+        }
+
+        .card:hover { transform: translateY(-3px); }
+
+        /* Card States (Revealed) */
+        .card.red { background-color: var(--red-team); color: white; border-color: #c0392b; }
+        .card.blue { background-color: var(--blue-team); color: white; border-color: #2980b9; }
+        .card.neutral { background-color: #dcdde1; color: #7f8c8d; border-color: #bdc3c7; }
+        .card.assassin { background-color: var(--assassin); color: white; border-color: black; }
+
+        /* Spymaster View (Outlines only) */
+        body.spymaster-active .card.red-key { border: 4px solid var(--red-team); color: var(--red-team); }
+        body.spymaster-active .card.blue-key { border: 4px solid var(--blue-team); color: var(--blue-team); }
+        body.spymaster-active .card.assassin-key { border: 4px solid var(--assassin); color: var(--assassin); }
+        body.spymaster-active .card.neutral-key { border: 4px solid #bdc3c7; opacity: 0.7; }
+        
+        /* Already revealed cards stay solid in spymaster view */
+        body.spymaster-active .card.revealed { border: none; color: white; }
+        body.spymaster-active .card.neutral.revealed { color: #7f8c8d; }
+
+        /* Scoreboard */
+        .scoreboard {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            gap: 30px;
+        }
+        .score-red { color: var(--red-team); }
+        .score-blue { color: var(--blue-team); }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html">&larr; Return to Dashboard</a>
+    </nav>
+
+    <header>
+        <h1>RE Knowledge Cipher</h1>
+        <p>Select a Unit to Generate the Grid</p>
+    </header
