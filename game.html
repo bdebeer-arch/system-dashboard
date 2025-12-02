@@ -14,9 +14,8 @@
             --neutral: #95a5a6;
             --assassin: #2c3e50;
         }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--primary);
             display: flex;
@@ -26,14 +25,10 @@
             margin: 0;
             padding: 20px;
         }
-
         nav { position: absolute; top: 20px; left: 20px; }
         nav a { text-decoration: none; color: #7f8c8d; font-weight: bold; font-size: 0.9rem; }
-
         header { text-align: center; margin-bottom: 20px; margin-top: 40px; }
         h1 { margin: 0; color: var(--accent); letter-spacing: -1px; }
-        
-        /* SEED CONTROL PANEL */
         .seed-panel {
             background: #dfe6e9;
             padding: 10px 20px;
@@ -45,8 +40,10 @@
             font-weight: bold;
             border: 2px solid #b2bec3;
         }
-        .seed-val { font-family: monospace; font-size: 1.2rem; color: var(--primary); width: 80px; text-align: center; border: none; background: transparent; }
-        
+        .seed-val { 
+            font-family: monospace; font-size: 1.2rem; color: var(--primary); 
+            width: 80px; text-align: center; border: none; background: transparent; 
+        }
         .controls {
             background: white;
             padding: 15px 25px;
@@ -59,16 +56,6 @@
             flex-wrap: wrap;
             justify-content: center;
         }
-
         select, button {
             padding: 10px 15px;
-            border: 1px solid #bdc3c7;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-
-        button.primary { background: var(--accent); color: white; border: none; font-weight: bold; }
-        button.spymaster { background: #34495e; color: white; border: none; }
-        
-        .game-board {
+            border: 1px solid #bdc3c
