@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Byron's Web Portfolio</title>
+    <title>RE Web Portfolio</title>
     <style>
         :root {
             --primary: #2c3e50;
-            --accent: #3498db;
-            --bg: #f8f9fa;
+            --bg: #f0f2f5;
             --card-bg: #ffffff;
+            --text-sub: #7f8c8d;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--primary);
             margin: 0;
@@ -28,153 +28,119 @@
             background: var(--primary);
             color: white;
             width: 100%;
-            padding: 40px 20px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        h1 { margin: 0; font-size: 2.5rem; letter-spacing: -1px; }
-        p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; letter-spacing: 1px; }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1100px;
-            width: 100%;
             padding: 50px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        .project-card {
+        h1 { margin: 0; font-size: 2.8rem; letter-spacing: -1px; }
+        p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; font-size: 1.1rem; letter-spacing: 1px; }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            padding: 60px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            justify-content: center;
+        }
+
+        .tool-card {
             background: var(--card-bg);
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
             border: 1px solid rgba(0,0,0,0.05);
-            height: 100%; /* Ensures cards are equal height */
         }
 
-        .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-            border-color: var(--accent);
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
         }
 
-        .card-header {
-            height: 8px;
+        .card-hero {
+            height: 120px;
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .card-body { 
-            padding: 30px; 
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column; 
+        /* Hero Icons (CSS Text Shapes) */
+        .icon-hero {
+            font-size: 3rem; color: white; font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
+        
+        .card-body { padding: 35px; flex-grow: 1; display: flex; flex-direction: column; }
 
-        h2 { margin: 0 0 10px 0; font-size: 1.5rem; }
-        p.desc { color: #7f8c8d; line-height: 1.5; margin-bottom: 20px; flex-grow: 1; }
+        h2 { margin: 0 0 15px 0; font-size: 1.8rem; color: var(--primary); }
+        p.desc { color: var(--text-sub); line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
 
-        .tag-container { margin-top: auto; }
-
-        .tag {
-            display: inline-block;
+        .btn-launch {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            text-align: center;
             background: #ecf0f1;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            font-weight: 600;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
+            color: var(--primary);
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
         }
+        
+        .tool-card:hover .btn-launch { background: var(--primary); color: white; }
 
         footer {
             margin-top: auto;
-            padding: 20px;
-            color: #bdc3c7;
+            padding: 30px;
+            color: var(--text-sub);
             font-size: 0.9rem;
+            text-align: center;
         }
+
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Web Portfolio</h1>
+        <h1>RE Web Portfolio</h1>
         <p class="role">JUST HAVING FUN</p>
     </header>
 
-    <div class="grid-container">
+    <div class="container">
         
-        <a href="tracker.html" class="project-card">
-            <div class="card-header" style="background: #27ae60;"></div>
+        <a href="game.html" class="tool-card">
+            <div class="card-hero" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
+                <div class="icon-hero">Aa</div>
+            </div>
             <div class="card-body">
-                <h2>Systems Dashboard</h2>
-                <p class="desc">Real-time tracking of House merits, community service, and cultural engagement metrics.</p>
-                <div class="tag-container">
-                    <span class="tag">OPERATIONAL</span>
-                    <span class="tag">DATA LOGGING</span>
-                </div>
+                <h2>Knowledge Cipher</h2>
+                <p class="desc">A team-based vocabulary engine using seeded cryptography. Features 'Spymaster' mode for synchronous classroom play.</p>
+                <span class="btn-launch">Launch Engine &rarr;</span>
             </div>
         </a>
 
-        <a href="nexus.html" class="project-card">
-            <div class="card-header" style="background: #3498db;"></div>
-            <div class="card-body">
-                <h2>The Strategic Impact Nexus</h2>
-                <p class="desc">A decision-support engine using radar analysis to calculate the viability of new educational initiatives.</p>
-                <div class="tag-container">
-                    <span class="tag">STRATEGIC</span>
-                    <span class="tag">VISUALISATION</span>
-                </div>
-            </div>
-        </a>
-
-        <a href="game.html" class="project-card">
-            <div class="card-header" style="background: #9b59b6;"></div>
-            <div class="card-body">
-                <h2>RE Knowledge Cipher</h2>
-                <p class="desc">Synced vocabulary cipher. Features 'Spymaster' mode and seeded RNG for classroom synchronisation.</p>
-                <div class="tag-container">
-                    <span class="tag">PEDAGOGY</span>
-                    <span class="tag">GAMIFICATION</span>
-                </div>
-            </div>
-        </a>
-
-        <a href="hex.html" class="project-card">
-            <div class="card-header" style="background: #e67e22;"></div>
+        <a href="hex.html" class="tool-card">
+            <div class="card-hero" style="background: linear-gradient(135deg, #d35400, #e67e22);">
+                <div class="icon-hero">&#x2B22;</div> </div>
             <div class="card-body">
                 <h2>Systemic Pathfinder</h2>
                 <p class="desc">Hexagonal competitive recall engine. Strategic territory capture via definition retrieval (Blockbusters logic).</p>
-                <div class="tag-container">
-                    <span class="tag">CONSOLIDATION</span>
-                    <span class="tag">RECALL</span>
-                </div>
+                <span class="btn-launch">Launch Engine &rarr;</span>
             </div>
         </a>
-
-        <div class="project-card" style="opacity: 0.6; cursor: default;">
-            <div class="card-header" style="background: #95a5a6;"></div>
-            <div class="card-body">
-                <h2>Logistics Optimiser</h2>
-                <p class="desc">Future Module: Automated timetabling conflict resolution and resource allocation.</p>
-                <div class="tag-container">
-                    <span class="tag">IN DEVELOPMENT</span>
-                </div>
-            </div>
-        </div>
 
     </div>
 
     <footer>
-        System State: LIVE | Focus: Integration & Efficiency
+        System State: LIVE | Focus: Student Engagement
     </footer>
 
 </body>
