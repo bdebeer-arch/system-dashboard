@@ -71,6 +71,26 @@
         button.spymaster { background: #34495e; color: white; border: none; }
         button.new-tab { background: #e67e22; color: white; border: none; font-weight: bold; }
         
+        /* CUSTOM INPUT PANEL */
+        .custom-panel {
+            margin-top: 50px;
+            border-top: 2px dashed #bdc3c7;
+            padding-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
         /* GRID STYLE */
         .game-board {
             display: grid;
@@ -146,6 +166,7 @@
     <div class="controls">
         <select id="unitSelect" onchange="loadSeed()">
             <option value="intro_rst">Unit 1: Intro to RST & Worldviews</option>
+            <option value="custom">-- Custom Input --</option>
         </select>
         
         <button class="spymaster" onclick="toggleSpymaster()">Toggle View</button>
@@ -159,6 +180,14 @@
 
     <div id="board" class="game-board"></div>
 
+    <div class="custom-panel">
+        <h3 style="margin-bottom: 5px;">Data Injection Port</h3>
+        <p style="font-size: 0.8rem; color: #7f8c8d; margin-top:0;">Paste comma-separated list (e.g., "Word 1", "Word 2")</p>
+        <textarea id="customInput" placeholder='"Theism", "Atheism", "Monotheism", ...'></textarea>
+        <br>
+        <button class="primary" onclick="loadCustomData()" style="margin-top: 10px;">Load Custom Grid</button>
+    </div>
+
     <script>
         // --- DATA REPOSITORY ---
         const units = {
@@ -169,7 +198,9 @@
                 "Window", "Baggage", "Whanau", "Grass",
                 "Maunga", "Hamilton", "Waka", "Silence",
                 "Small", "Yellow", "England", "Ingoa", "History"
-            ]
+            ],
+            // Placeholder for custom data
+            custom: []
         };
 
         let cards = [];
@@ -211,11 +242,10 @@
         }
 
         function openSpymasterTab() {
-            // Get current state
             const seed = document.getElementById('seedInput').value;
             const unit = document.getElementById('unitSelect').value;
-            
-            // Construct URL
+            // If custom, we can't easily pass the data via URL without it being huge. 
+            // For now, simple unit sync.
             const url = `${window.location.pathname}?seed=${seed}&unit=${unit}&role=spy`;
             window.open(url, '_blank');
         }
@@ -227,26 +257,55 @@
             const roleParam = urlParams.get('role');
 
             if (seedParam) {
-                // If URL has data, use it!
                 document.getElementById('seedInput').value = seedParam;
-                
                 if (unitParam && units[unitParam]) {
                     document.getElementById('unitSelect').value = unitParam;
                 }
-
-                loadSeed(); // Build board
-
+                loadSeed(); 
                 if (roleParam === 'spy') {
-                    toggleSpymaster(); // Auto-turn on spymaster
+                    toggleSpymaster(); 
                 }
             } else {
-                // Default clean start
                 newRandomSeed();
             }
         }
 
+        // --- CUSTOM DATA PARSER ---
+        function loadCustomData() {
+            const raw = document.getElementById('customInput').value;
+            
+            // Regex to match words inside quotes, or just comma separated
+            // This strips quotes and whitespace
+            const dirtyList = raw.split(',');
+            const cleanList = dirtyList.map(word => {
+                return word.replace(/['"]+/g, '').trim(); // Remove " and ' and spaces
+            }).filter(word => word.length > 0); // Remove empty strings
+
+            if (cleanList.length < 25) {
+                alert(`Insufficient Data: You provided ${cleanList.length} words. System requires minimum 25.`);
+                return;
+            }
+
+            // Inject into units object
+            units['custom'] = cleanList;
+            
+            // Select Custom in dropdown
+            document.getElementById('unitSelect').value = 'custom';
+            
+            // Reload game
+            loadSeed();
+            alert("System Update: Custom Grid Loaded Successfully.");
+        }
+
         function initGame() {
             const unitKey = document.getElementById('unitSelect').value;
+            
+            // Guard against empty custom data
+            if (unitKey === 'custom' && units.custom.length === 0) {
+                // Do nothing, wait for input
+                return;
+            }
+
             const wordList = [...units[unitKey]];
             
             if(wordList.length < 25) { alert("Error: Unit needs at least 25 words!"); return; }
@@ -282,7 +341,6 @@
                 cards.push({ element: card, type: type });
             });
 
-            // Ensure visual state matches logical state
             if (isSpymaster) {
                 document.body.classList.add('spymaster-active');
             } else {
@@ -301,15 +359,3 @@
         }
 
         function updateScore() {
-            const redLeft = cards.filter(c => c.type === 'red' && !c.element.classList.contains('revealed')).length;
-            const blueLeft = cards.filter(c => c.type === 'blue' && !c.element.classList.contains('revealed')).length;
-
-            document.getElementById('red-count').innerText = redLeft;
-            document.getElementById('blue-count').innerText = blueLeft;
-        }
-
-        // START
-        window.onload = checkUrlParams; 
-    </script>
-</body>
-</html>
