@@ -27,7 +27,6 @@
             min-height: 100vh;
         }
 
-        /* LAYOUT CONTAINER */
         .layout {
             display: flex;
             width: 100%;
@@ -36,7 +35,7 @@
             gap: 40px;
         }
 
-        /* SIDEBAR (INSTRUCTIONS) */
+        /* SIDEBAR */
         .sidebar {
             flex: 0 0 300px;
             background: var(--sidebar-bg);
@@ -44,6 +43,8 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             height: fit-content;
+            display: flex;
+            flex-direction: column;
         }
 
         .nav-link { 
@@ -56,25 +57,39 @@
         }
         .nav-link:hover { color: white; }
 
-        h1 { margin: 0 0 10px 0; font-size: 1.8rem; letter-spacing: 1px; line-height: 1.2; }
+        h1 { margin: 0 0 5px 0; font-size: 1.8rem; letter-spacing: 1px; line-height: 1.2; }
         
+        /* DROPDOWN STYLE */
+        .topic-select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #7f8c8d;
+            background: #2c3e50;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
         .rules-box {
             background: rgba(0,0,0,0.2);
             padding: 15px;
             border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
-        .rule-item { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .rule-item { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         .dot.blue { background: var(--blue-team); }
         .dot.red { background: var(--red-team); }
 
         .instruction-list {
-            font-size: 0.9rem;
-            line-height: 1.6;
+            font-size: 0.85rem;
+            line-height: 1.5;
             color: #bdc3c7;
-            margin-top: 20px;
+            margin-top: 15px;
             padding-left: 20px;
         }
 
@@ -87,7 +102,7 @@
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 30px;
+            margin-top: 20px;
             transition: background 0.2s;
         }
         .btn-reset:hover { background: #95a5a6; }
@@ -126,25 +141,12 @@
         .btn-red { background: var(--red-team); }
         .btn-cancel { background: #95a5a6; }
 
-        /* SPOILER (REDACTED) ANSWER STYLE */
+        /* SPOILER */
         .spoiler {
-            background-color: #2c3e50; /* Dark block */
-            color: #2c3e50; /* Text hidden */
-            padding: 5px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            user-select: none;
-            transition: 0.3s;
-            display: inline-block;
+            background-color: #2c3e50; color: #2c3e50; padding: 5px 15px;
+            border-radius: 4px; cursor: pointer; user-select: none; transition: 0.3s; display: inline-block;
         }
-        .spoiler:hover {
-            opacity: 0.8;
-        }
-        .spoiler.revealed {
-            background-color: transparent;
-            color: #2c3e50; /* Text visible */
-            font-weight: 800;
-        }
+        .spoiler.revealed { background-color: transparent; color: #2c3e50; font-weight: 800; }
 
         /* ERROR BOX */
         #error-box { background: #c0392b; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: none; }
@@ -164,22 +166,21 @@
             <h1>Systemic<br>Pathfinder</h1>
             <p style="color: #bdc3c7; font-size: 0.9rem;">Strategic Recall Engine</p>
 
+            <select id="topicSelect" class="topic-select" onchange="init()">
+                <option value="intro_rst">Unit 1: Intro to RST</option>
+                <option value="demo">Demo: General Knowledge</option>
+                </select>
+
             <div class="rules-box">
-                <div class="rule-item">
-                    <span class="dot blue"></span>
-                    <span><strong>BLUE Team:</strong> Cross Left &rarr; Right</span>
-                </div>
-                <div class="rule-item">
-                    <span class="dot red"></span>
-                    <span><strong>RED Team:</strong> Cross Top &darr; Bottom</span>
-                </div>
+                <div class="rule-item"><span class="dot blue"></span><span><strong>BLUE:</strong> Left &rarr; Right</span></div>
+                <div class="rule-item"><span class="dot red"></span><span><strong>RED:</strong> Top &darr; Bottom</span></div>
             </div>
 
             <ol class="instruction-list">
-                <li>Select a letter on the grid.</li>
-                <li>Read the definition.</li>
-                <li><strong>Click the "REDACTED" bar</strong> to check the answer.</li>
-                <li>Award the hex or Cancel.</li>
+                <li>Select a letter.</li>
+                <li>Read definition.</li>
+                <li><strong>Click REDACTED bar</strong> to reveal.</li>
+                <li>Award hex to correct team.</li>
             </ol>
 
             <button class="btn-reset" onclick="resetBoard()">Reset Board</button>
@@ -196,11 +197,9 @@
         <div class="modal-content">
             <h1 id="m-letter" style="color: #3498db; font-size: 4rem; margin: 0 0 10px 0;">A</h1>
             <p id="m-question" style="font-size: 1.4rem; line-height: 1.4;">Question...</p>
-            
             <p style="margin-top: 30px; font-size: 1.1rem; color: #95a5a6;">
                 Answer: <span id="m-answer" class="spoiler" onclick="this.classList.add('revealed')">Hidden</span>
             </p>
-
             <div class="btn-group">
                 <button class="btn-blue" onclick="win('blue')">Blue Win</button>
                 <button class="btn-red" onclick="win('red')">Red Win</button>
@@ -210,40 +209,72 @@
     </div>
 
     <script>
-        window.onerror = function(message) {
-            const box = document.getElementById('error-box');
-            box.style.display = 'block';
-            box.innerHTML = `<strong>System Error:</strong> ${message}`;
+        window.onerror = function(msg) {
+            document.getElementById('error-box').style.display = 'block';
+            document.getElementById('error-box').innerHTML = `<strong>Error:</strong> ${msg}`;
         };
 
-        // DATA REPOSITORY
-        const data = [
-            {l:"T", q:"Belief in a god or gods.", a:"Theism"},
-            {l:"A", q:"Disbelief in God.", a:"Atheism"},
-            {l:"M", q:"Belief in only one God.", a:"Monotheism"},
-            {l:"P", q:"Belief in many gods.", a:"Polytheism"},
-            {l:"S", q:"Not religious; worldly.", a:"Secular"},
-            {l:"W", q:"A philosophy of life.", a:"Worldview"},
-            {l:"C", q:"God as maker of the universe.", a:"Creator"},
-            {l:"D", q:"Of or like God.", a:"Divine"},
-            {l:"M", q:"The promised deliverer.", a:"Messiah"},
-            {l:"R", q:"Solemn ceremony of actions.", a:"Ritual"},
-            {l:"S", q:"Mark representing an object.", a:"Symbol"},
-            {l:"P", q:"Request for help from God.", a:"Prayer"},
-            {l:"S", q:"Sacred writings.", a:"Scripture"},
-            {l:"W", q:"Genealogy (Maori).", a:"Whakapapa"},
-            {l:"P", q:"Introduction (Maori).", a:"Pepeha"},
-            {l:"W", q:"Extended family.", a:"Whanau"},
-            {l:"I", q:"Tribe.", a:"Iwi"},
-            {l:"M", q:"Mountain.", a:"Maunga"},
-            {l:"A", q:"River.", a:"Awa"},
-            {l:"W", q:"Canoe.", a:"Waka"},
-            {l:"S", q:"Absence of sound.", a:"Silence"},
-            {l:"I", q:"Qualities of a person.", a:"Identity"},
-            {l:"C", q:"Moral qualities.", a:"Character"},
-            {l:"A", q:"Desire to achieve.", a:"Ambition"},
-            {l:"H", q:"Study of past events.", a:"History"}
-        ];
+        // --- TOPIC REPOSITORY ---
+        const topics = {
+            
+            // UNIT 1: Intro Content
+            intro_rst: [
+                {l:"T", q:"Belief in a god or gods.", a:"Theism"},
+                {l:"A", q:"Disbelief in God.", a:"Atheism"},
+                {l:"M", q:"Belief in only one God.", a:"Monotheism"},
+                {l:"P", q:"Belief in many gods.", a:"Polytheism"},
+                {l:"S", q:"Not religious; worldly.", a:"Secular"},
+                {l:"W", q:"A philosophy of life.", a:"Worldview"},
+                {l:"C", q:"God as maker of the universe.", a:"Creator"},
+                {l:"D", q:"Of or like God.", a:"Divine"},
+                {l:"M", q:"The promised deliverer.", a:"Messiah"},
+                {l:"R", q:"Solemn ceremony of actions.", a:"Ritual"},
+                {l:"S", q:"Mark representing an object.", a:"Symbol"},
+                {l:"P", q:"Request for help from God.", a:"Prayer"},
+                {l:"S", q:"Sacred writings.", a:"Scripture"},
+                {l:"W", q:"Genealogy (Maori).", a:"Whakapapa"},
+                {l:"P", q:"Introduction (Maori).", a:"Pepeha"},
+                {l:"W", q:"Extended family.", a:"Whanau"},
+                {l:"I", q:"Tribe.", a:"Iwi"},
+                {l:"M", q:"Mountain.", a:"Maunga"},
+                {l:"A", q:"River.", a:"Awa"},
+                {l:"W", q:"Canoe.", a:"Waka"},
+                {l:"S", q:"Absence of sound.", a:"Silence"},
+                {l:"I", q:"Qualities of a person.", a:"Identity"},
+                {l:"C", q:"Moral qualities.", a:"Character"},
+                {l:"A", q:"Desire to achieve.", a:"Ambition"},
+                {l:"H", q:"Study of past events.", a:"History"}
+            ],
+
+            // DEMO UNIT: For testing purposes
+            demo: [
+                {l:"K", q:"Flightless bird symbol of NZ.", a:"Kiwi"},
+                {l:"R", q:"Sport played by the All Blacks.", a:"Rugby"},
+                {l:"W", q:"Capital city of New Zealand.", a:"Wellington"},
+                {l:"H", q:"City known for its Gardens.", a:"Hamilton"},
+                {l:"A", q:"Largest city in New Zealand.", a:"Auckland"},
+                {l:"M", q:"Indigenous people of NZ.", a:"Maori"},
+                {l:"P", q:"Sweet meringue dessert.", a:"Pavlova"},
+                {l:"S", q:"Animal that outnumbers people in NZ.", a:"Sheep"},
+                {l:"F", q:"Leaf symbol used in sport.", a:"Fern"},
+                {l:"H", q:"Traditional war dance.", a:"Haka"},
+                {l:"T", q:"Founding document (Te ___).", a:"Treaty"},
+                {l:"M", q:"Mountain or Volcano.", a:"Maunga"},
+                {l:"K", q:"Word for food.", a:"Kai"},
+                {l:"A", q:"Word for love/compassion.", a:"Aroha"},
+                {l:"M", q:"Word for Hello/Welcome.", a:"Mana"},
+                {l:"T", q:"Word for funeral.", a:"Tangi"},
+                {l:"K", q:"School or learning place.", a:"Kura"},
+                {l:"W", q:"Word for spirit/soul.", a:"Wairua"},
+                {l:"T", q:"God of the Forest.", a:"Tane"},
+                {l:"T", q:"God of the Sea.", a:"Tangaroa"},
+                {l:"R", q:"God of the Sky.", a:"Rangi"},
+                {l:"P", q:"Earth Mother.", a:"Papa"},
+                {l:"M", q:"Demi-god who fished up the island.", a:"Maui"},
+                {l:"K", q:"Sweet vegetable.", a:"Kumara"},
+                {l:"T", q:"Bird with white tipped tail.", a:"Tui"}
+            ]
+        };
 
         let activeHex = null;
 
@@ -252,6 +283,11 @@
                 const grid = document.getElementById('grid');
                 grid.innerHTML = ''; 
                 
+                // Get selected topic
+                const topicKey = document.getElementById('topicSelect').value;
+                const data = topics[topicKey] || topics['intro_rst']; // Fallback
+                
+                // Shuffle data
                 const shuffled = [...data].sort(() => 0.5 - Math.random());
                 let idx = 0;
 
@@ -259,56 +295,10 @@
                     const row = document.createElement('div');
                     row.className = 'hex-row';
                     for(let c=0; c<5; c++) {
+                        // Loop through data if we run out (for small lists)
                         const item = shuffled[idx % shuffled.length];
                         idx++;
                         
                         const hex = document.createElement('div');
                         hex.className = 'hex';
-                        hex.innerText = item.l;
-                        hex.dataset.q = item.q;
-                        hex.dataset.a = item.a;
-                        hex.dataset.l = item.l;
-                        hex.onclick = function() { openModal(this); };
-                        
-                        row.appendChild(hex);
-                    }
-                    grid.appendChild(row);
-                }
-            } catch (e) {
-                alert("Grid Error: " + e.message);
-            }
-        }
-
-        function openModal(el) {
-            if(el.classList.contains('blue') || el.classList.contains('red')) return;
-            activeHex = el;
-            
-            // Set Content
-            document.getElementById('m-letter').innerText = el.dataset.l;
-            document.getElementById('m-question').innerText = el.dataset.q;
-            
-            // Setup Answer Spoiler
-            const ansBox = document.getElementById('m-answer');
-            ansBox.innerText = el.dataset.a;
-            ansBox.classList.remove('revealed'); // Reset to hidden state
-            
-            document.getElementById('modal').style.display = 'flex';
-        }
-
-        function win(team) {
-            if(activeHex) activeHex.classList.add(team);
-            closeModal();
-        }
-
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-
-        function resetBoard() {
-            if(confirm("Start a new game?")) init();
-        }
-
-        window.onload = init;
-    </script>
-</body>
-</html>
+                        hex.innerText = item.
