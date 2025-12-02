@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RE Knowledge Cipher</title>
+    <title>RE Knowledge Cipher (Synced)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -33,6 +33,20 @@
         header { text-align: center; margin-bottom: 20px; margin-top: 40px; }
         h1 { margin: 0; color: var(--accent); letter-spacing: -1px; }
         
+        /* SEED CONTROL PANEL */
+        .seed-panel {
+            background: #dfe6e9;
+            padding: 10px 20px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-weight: bold;
+            border: 2px solid #b2bec3;
+        }
+        .seed-val { font-family: monospace; font-size: 1.2rem; color: var(--primary); width: 80px; text-align: center; border: none; background: transparent; }
+        
         .controls {
             background: white;
             padding: 15px 25px;
@@ -58,184 +72,3 @@
         button.spymaster { background: #34495e; color: white; border: none; }
         
         .game-board {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 15px;
-            max-width: 900px;
-            width: 100%;
-        }
-
-        .card {
-            background: white;
-            aspect-ratio: 4/3;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 10px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s, background 0.3s;
-            user-select: none;
-            border-bottom: 4px solid #bdc3c7;
-            word-break: break-word;
-        }
-
-        .card:hover { transform: translateY(-3px); }
-
-        .card.red { background-color: var(--red-team); color: white; border-color: #c0392b; }
-        .card.blue { background-color: var(--blue-team); color: white; border-color: #2980b9; }
-        .card.neutral { background-color: #dcdde1; color: #7f8c8d; border-color: #bdc3c7; }
-        .card.assassin { background-color: var(--assassin); color: white; border-color: black; }
-
-        body.spymaster-active .card.red-key { border: 4px solid var(--red-team); color: var(--red-team); }
-        body.spymaster-active .card.blue-key { border: 4px solid var(--blue-team); color: var(--blue-team); }
-        body.spymaster-active .card.assassin-key { border: 4px solid var(--assassin); color: var(--assassin); }
-        body.spymaster-active .card.neutral-key { border: 4px solid #bdc3c7; opacity: 0.7; }
-        
-        body.spymaster-active .card.revealed { border: none; color: white; }
-        body.spymaster-active .card.neutral.revealed { color: #7f8c8d; }
-
-        .scoreboard {
-            margin-top: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            gap: 30px;
-        }
-        .score-red { color: var(--red-team); }
-        .score-blue { color: var(--blue-team); }
-    </style>
-</head>
-<body>
-
-    <nav>
-        <a href="index.html">&larr; Return to Dashboard</a>
-    </nav>
-
-    <header>
-        <h1>RE Knowledge Cipher</h1>
-        <p>Select a Unit to Generate the Grid</p>
-    </header>
-
-    <div class="controls">
-        <select id="unitSelect">
-            <option value="ethics">Unit 1: Christian Ethics</option>
-            <option value="world">Unit 2: World Religions</option>
-            <option value="bible">Unit 3: Biblical Studies</option>
-        </select>
-        <button class="primary" onclick="initGame()">Reset / Deal New Game</button>
-        <button class="spymaster" onclick="toggleSpymaster()">Toggle Spymaster View</button>
-    </div>
-
-    <div class="scoreboard">
-        <span class="score-red">RED Remaining: <span id="red-count">9</span></span>
-        <span class="score-blue">BLUE Remaining: <span id="blue-count">8</span></span>
-    </div>
-
-    <div id="board" class="game-board"></div>
-
-    <script>
-        const units = {
-            ethics: [
-                "Conscience", "Utilitarianism", "Virtue", "Deontology", "Justice", 
-                "Rights", "Dilemma", "Sanctity", "Euthanasia", "Poverty",
-                "Stewardship", "Freedom", "Responsibility", "Aquinas", "Kant",
-                "Situation", "Absolutism", "Relativism", "Charity", "Common Good",
-                "Solidarity", "Dignity", "Peace", "Conflict", "Morality", 
-                "Truth", "Compassion", "Law", "Sin", "Grace"
-            ],
-            world: [
-                "Monotheism", "Polytheism", "Nirvana", "Karma", "Reincarnation",
-                "Torah", "Quran", "Bible", "Vedas", "Tripitaka",
-                "Synagogue", "Mosque", "Church", "Temple", "Gurdwara",
-                "Ramadan", "Lent", "Diwali", "Passover", "Vesak",
-                "Prophet", "Guru", "Rabbi", "Imam", "Priest",
-                "Meditation", "Prayer", "Pilgrimage", "Hajj", "Samsara"
-            ],
-            bible: [
-                "Genesis", "Exodus", "Gospel", "Parable", "Miracle",
-                "Covenant", "Prophecy", "Messiah", "Resurrection", "Creation",
-                "Paul", "Moses", "Abraham", "Mary", "Peter",
-                "Revelation", "Psalm", "Epistle", "Disciple", "Apostle",
-                "Sinai", "Nazareth", "Jerusalem", "Bethlehem", "Jordan",
-                "Commandment", "Beatitude", "Salvation", "Trinity", "Spirit"
-            ]
-        };
-
-        let cards = [];
-        let isSpymaster = false;
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        function initGame() {
-            const unitKey = document.getElementById('unitSelect').value;
-            const wordList = [...units[unitKey]];
-            
-            if(wordList.length < 25) { alert("Error: Unit needs at least 25 words!"); return; }
-            const gameWords = shuffle(wordList).slice(0, 25);
-
-            let types = Array(9).fill('red')
-                .concat(Array(8).fill('blue'))
-                .concat(Array(7).fill('neutral'))
-                .concat(Array(1).fill('assassin'));
-            types = shuffle(types);
-
-            const board = document.getElementById('board');
-            board.innerHTML = '';
-            cards = [];
-
-            gameWords.forEach((word, index) => {
-                const type = types[index];
-                const card = document.createElement('div');
-                card.className = `card ${type}-key`;
-                card.innerText = word;
-                
-                card.onclick = () => {
-                    if (!isSpymaster) {
-                        card.classList.add('revealed');
-                        card.classList.add(type);
-                        updateScore();
-                    }
-                };
-
-                board.appendChild(card);
-                cards.push({ element: card, type: type });
-            });
-
-            isSpymaster = false;
-            document.body.classList.remove('spymaster-active');
-            updateScore();
-        }
-
-        function toggleSpymaster() {
-            isSpymaster = !isSpymaster;
-            if (isSpymaster) {
-                document.body.classList.add('spymaster-active');
-            } else {
-                document.body.classList.remove('spymaster-active');
-            }
-        }
-
-        function updateScore() {
-            const redLeft = cards.filter(c => c.type === 'red' && !c.element.classList.contains('revealed')).length;
-            const blueLeft = cards.filter(c => c.type === 'blue' && !c.element.classList.contains('revealed')).length;
-
-            document.getElementById('red-count').innerText = redLeft;
-            document.getElementById('blue-count').innerText = blueLeft;
-        }
-
-        window.onload = initGame;
-    </script>
-</body>
-</html>
