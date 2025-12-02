@@ -5,236 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Hexagon Pathfinder</title>
     <style>
-        :root {
-            --bg: #2c3e50;
-            --hex-bg: #ecf0f1;
-            --hex-hover: #bdc3c7;
-            --blue-team: #3498db;
-            --red-team: #e74c3c;
-            --text: #2c3e50;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-
-        nav { position: absolute; top: 20px; left: 20px; }
-        nav a { text-decoration: none; color: #95a5a6; font-weight: bold; font-size: 0.9rem; }
-
-        header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
-        h1 { margin: 0; letter-spacing: 2px; text-transform: uppercase; }
-        p { color: #bdc3c7; margin-top: 5px; font-size: 0.9rem; }
-
-        .hex-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-        }
-
-        .hex-row {
-            display: flex;
-            margin-top: -18px;
-        }
+        body { font-family: sans-serif; background: #2c3e50; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        nav { align-self: flex-start; margin-bottom: 20px; }
+        nav a { color: #bdc3c7; text-decoration: none; font-weight: bold; }
         
-        .hex-row:nth-child(even) {
-            margin-left: 55px;
-        }
+        h1 { margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        p { color: #95a5a6; margin-top: 5px; }
+
+        /* ERROR BOX FOR DIAGNOSTICS */
+        #error-box { background: #e74c3c; color: white; padding: 20px; border-radius: 8px; margin-top: 20px; display: none; }
+
+        /* HEXAGON STYLES */
+        .hex-container { display: flex; flex-direction: column; align-items: center; margin-top: 30px; }
+        .hex-row { display: flex; margin-top: -18px; }
+        .hex-row:nth-child(even) { margin-left: 53px; }
 
         .hex {
-            width: 100px;
-            height: 110px;
-            background-color: var(--hex-bg);
-            margin: 0 5px;
+            width: 100px; height: 110px; background: #ecf0f1; margin: 0 3px;
             clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text);
-            font-weight: 800;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: transform 0.2s, background-color 0.3s;
-            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            color: #2c3e50; font-weight: 800; font-size: 2rem; cursor: pointer;
+            transition: 0.2s;
         }
+        .hex:hover { transform: scale(1.1); background: #bdc3c7; z-index: 10; }
+        .hex.blue { background: #3498db; color: white; }
+        .hex.red { background: #e74c3c; color: white; }
 
-        .hex:hover { transform: scale(1.05); z-index: 10; background-color: var(--hex-hover); }
-        
-        .hex.blue { background-color: var(--blue-team); color: white; }
-        .hex.red { background-color: var(--red-team); color: white; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .modal {
-            background: white;
-            color: var(--text);
-            padding: 40px;
-            border-radius: 12px;
-            text-align: center;
-            max-width: 600px;
-            width: 90%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-
-        .modal h2 { font-size: 4rem; margin: 0 0 20px 0; color: var(--blue-team); }
-        .modal p { font-size: 1.5rem; color: #34495e; margin-bottom: 30px; line-height: 1.4; }
-        
-        .btn-group { display: flex; gap: 15px; justify-content: center; }
-        
-        button {
-            padding: 15px 30px; border: none; border-radius: 8px;
-            font-size: 1.2rem; font-weight: bold; cursor: pointer; color: white;
-            transition: opacity 0.2s;
-        }
-        button:hover { opacity: 0.9; }
-        
-        .btn-blue { background: var(--blue-team); }
-        .btn-red { background: var(--red-team); }
+        /* MODAL */
+        #modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; color: #2c3e50; padding: 40px; border-radius: 10px; text-align: center; max-width: 500px; }
+        .btn-group { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; font-size: 1rem; }
+        .btn-blue { background: #3498db; }
+        .btn-red { background: #e74c3c; }
         .btn-cancel { background: #95a5a6; }
-
     </style>
 </head>
 <body>
 
-    <nav>
-        <a href="index.html">&larr; Return to Dashboard</a>
-    </nav>
+    <nav><a href="index.html">&larr; Return to Dashboard</a></nav>
 
     <header>
         <h1>Systemic Pathfinder</h1>
         <p>Blue: Left &harr; Right | Red: Top &Darr; Bottom</p>
-        <button onclick="resetBoard()" style="margin-top: 15px; padding: 5px 15px; font-size: 0.8rem; background: #7f8c8d;">Reset Board</button>
+        <button onclick="location.reload()" style="background: #7f8c8d; margin-top: 15px;">Reset Board</button>
     </header>
 
-    <div class="hex-container" id="grid">
-        </div>
+    <div id="error-box"></div>
+    <div class="hex-container" id="grid"></div>
 
-    <div class="modal-overlay" id="modal">
-        <div class="modal">
-            <h2 id="modal-letter">A</h2>
-            <p id="modal-question">Question goes here...</p>
+    <div id="modal">
+        <div class="modal-content">
+            <h1 id="m-letter" style="color: #3498db; font-size: 4rem;">A</h1>
+            <p id="m-question" style="font-size: 1.4rem;">Question...</p>
             <div class="btn-group">
-                <button class="btn-blue" onclick="resolveHex('blue')">Blue Win</button>
-                <button class="btn-red" onclick="resolveHex('red')">Red Win</button>
+                <button class="btn-blue" onclick="win('blue')">Blue Win</button>
+                <button class="btn-red" onclick="win('red')">Red Win</button>
                 <button class="btn-cancel" onclick="closeModal()">Cancel</button>
             </div>
-            <p style="font-size: 0.9rem; margin-top: 20px; color: #95a5a6;">Answer: <span id="modal-answer" style="font-weight:bold;"></span></p>
+            <p style="margin-top: 20px; color: #95a5a6;">Answer: <strong id="m-answer"></strong></p>
         </div>
     </div>
 
     <script>
-        // DATA REPOSITORY
-        const dataset = [
-            { l: "T", q: "Belief in a god or gods.", a: "Theism" },
-            { l: "A", q: "Disbelief or lack of belief in the existence of God.", a: "Atheism" },
-            { l: "M", q: "Belief in only one God.", a: "Monotheism" },
-            { l: "P", q: "Belief in many gods.", a: "Polytheism" },
-            { l: "S", q: "Not subject to or bound by religious rule; worldly.", a: "Secular" },
-            { l: "W", q: "A particular philosophy of life or conception of the world.", a: "Worldview" },
-            { l: "C", q: "God as the maker of the universe.", a: "Creator" },
-            { l: "D", q: "Of, from, or like God.", a: "Divine" },
-            { l: "M", q: "The promised deliverer (Hebrew). Used in Handel's Chorus.", a: "Messiah" },
-            { l: "R", q: "A religious or solemn ceremony consisting of a series of actions.", a: "Ritual" },
-            { l: "S", q: "A mark or character used as a conventional representation of an object.", a: "Symbol" },
-            { l: "P", q: "A solemn request for help or expression of thanks addressed to God.", a: "Prayer" },
-            { l: "S", q: "The sacred writings of Christianity contained in the Bible.", a: "Scripture" },
-            { l: "W", q: "Genealogy; the recitation of ancestors.", a: "Whakapapa" },
-            { l: "P", q: "Introduction of oneself in Māori culture.", a: "Pepeha" },
-            { l: "W", q: "Extended family or community of related families.", a: "Whanau" },
-            { l: "I", q: "Tribe or people.", a: "Iwi" },
-            { l: "M", q: "Mountain; a key part of one's pepeha.", a: "Maunga" },
-            { l: "A", q: "River; a key part of one's pepeha.", a: "Awa" },
-            { l: "W", q: "Canoe; the migration vessel of ancestors.", a: "Waka" },
-            { l: "S", q: "Complete absence of sound. A form of prayer or respect.", a: "Silence" },
-            { l: "I", q: "The qualities/beliefs that distinguish a person.", a: "Identity" },
-            { l: "C", q: "The mental and moral qualities distinctive to an individual.", a: "Character" },
-            { l: "A", q: "A strong desire to do or to achieve something.", a: "Ambition" },
-            { l: "H", q: "The study of past events.", a: "History" }
+        // ERROR HANDLING WRAPPER
+        window.onerror = function(message, source, lineno, colno, error) {
+            const box = document.getElementById('error-box');
+            box.style.display = 'block';
+            box.innerHTML = `<strong>System Error:</strong> ${message} <br>Line: ${lineno}`;
+        };
+
+        // DATASET
+        const data = [
+            {l:"T", q:"Belief in a god or gods.", a:"Theism"},
+            {l:"A", q:"Disbelief in God.", a:"Atheism"},
+            {l:"M", q:"Belief in only one God.", a:"Monotheism"},
+            {l:"P", q:"Belief in many gods.", a:"Polytheism"},
+            {l:"S", q:"Not religious; worldly.", a:"Secular"},
+            {l:"W", q:"A philosophy of life.", a:"Worldview"},
+            {l:"C", q:"God as maker of the universe.", a:"Creator"},
+            {l:"D", q:"Of or like God.", a:"Divine"},
+            {l:"M", q:"The promised deliverer.", a:"Messiah"},
+            {l:"R", q:"Solemn ceremony of actions.", a:"Ritual"},
+            {l:"S", q:"Mark representing an object.", a:"Symbol"},
+            {l:"P", q:"Request for help from God.", a:"Prayer"},
+            {l:"S", q:"Sacred writings.", a:"Scripture"},
+            {l:"W", q:"Genealogy (Maori).", a:"Whakapapa"},
+            {l:"P", q:"Introduction (Maori).", a:"Pepeha"},
+            {l:"W", q:"Extended family.", a:"Whanau"},
+            {l:"I", q:"Tribe.", a:"Iwi"},
+            {l:"M", q:"Mountain.", a:"Maunga"},
+            {l:"A", q:"River.", a:"Awa"},
+            {l:"W", q:"Canoe.", a:"Waka"},
+            {l:"S", q:"Absence of sound.", a:"Silence"},
+            {l:"I", q:"Qualities of a person.", a:"Identity"},
+            {l:"C", q:"Moral qualities.", a:"Character"},
+            {l:"A", q:"Desire to achieve.", a:"Ambition"},
+            {l:"H", q:"Study of past events.", a:"History"}
         ];
 
         let activeHex = null;
 
-        // GAME LOGIC
-        function initBoard() {
+        function init() {
             try {
                 const grid = document.getElementById('grid');
-                grid.innerHTML = '';
-                
-                const shuffledData = [...dataset].sort(() => 0.5 - Math.random());
-                let dataIndex = 0;
+                // Shuffle data
+                const shuffled = [...data].sort(() => 0.5 - Math.random());
+                let idx = 0;
 
-                for (let r = 0; r < 5; r++) {
+                // Create 5x5 Grid
+                for(let r=0; r<5; r++) {
                     const row = document.createElement('div');
                     row.className = 'hex-row';
-                    
-                    for (let c = 0; c < 5; c++) {
-                        if (dataIndex >= shuffledData.length) dataIndex = 0; 
-                        const item = shuffledData[dataIndex++];
+                    for(let c=0; c<5; c++) {
+                        const item = shuffled[idx % shuffled.length];
+                        idx++;
                         
                         const hex = document.createElement('div');
                         hex.className = 'hex';
-                        hex.innerText = item.l; 
-                        
+                        hex.innerText = item.l;
                         hex.dataset.q = item.q;
                         hex.dataset.a = item.a;
                         hex.dataset.l = item.l;
+                        hex.onclick = function() { openModal(this); };
                         
-                        hex.onclick = () => openModal(hex);
                         row.appendChild(hex);
                     }
                     grid.appendChild(row);
                 }
-            } catch (err) {
-                alert("System Error: " + err.message);
+            } catch (e) {
+                document.getElementById('error-box').style.display = 'block';
+                document.getElementById('error-box').innerText = e.message;
             }
         }
 
-        function openModal(hexElement) {
-            if (hexElement.classList.contains('blue') || hexElement.classList.contains('red')) return;
-
-            activeHex = hexElement;
-            document.getElementById('modal-letter').innerText = hexElement.dataset.l;
-            document.getElementById('modal-question').innerText = hexElement.dataset.q;
-            document.getElementById('modal-answer').innerText = hexElement.dataset.a;
-            
+        function openModal(el) {
+            if(el.classList.contains('blue') || el.classList.contains('red')) return;
+            activeHex = el;
+            document.getElementById('m-letter').innerText = el.dataset.l;
+            document.getElementById('m-question').innerText = el.dataset.q;
+            document.getElementById('m-answer').innerText = el.dataset.a;
             document.getElementById('modal').style.display = 'flex';
         }
 
-        function resolveHex(team) {
-            if (activeHex) {
-                activeHex.classList.add(team);
-            }
+        function win(team) {
+            if(activeHex) activeHex.classList.add(team);
             closeModal();
         }
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
-            activeHex = null;
         }
 
-        function resetBoard() {
-            if(confirm("Clear the board and start new game?")) {
-                initBoard();
-            }
-        }
-
-        window.onload = initBoard;
+        // Start
+        init();
 
     </script>
 </body>
