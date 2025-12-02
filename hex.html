@@ -38,7 +38,7 @@
 
         /* SIDEBAR (INSTRUCTIONS) */
         .sidebar {
-            flex: 0 0 300px; /* Fixed width */
+            flex: 0 0 300px;
             background: var(--sidebar-bg);
             padding: 25px;
             border-radius: 12px;
@@ -126,10 +126,29 @@
         .btn-red { background: var(--red-team); }
         .btn-cancel { background: #95a5a6; }
 
+        /* SPOILER (REDACTED) ANSWER STYLE */
+        .spoiler {
+            background-color: #2c3e50; /* Dark block */
+            color: #2c3e50; /* Text hidden */
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.3s;
+            display: inline-block;
+        }
+        .spoiler:hover {
+            opacity: 0.8;
+        }
+        .spoiler.revealed {
+            background-color: transparent;
+            color: #2c3e50; /* Text visible */
+            font-weight: 800;
+        }
+
         /* ERROR BOX */
         #error-box { background: #c0392b; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: none; }
 
-        /* RESPONSIVE */
         @media (max-width: 800px) {
             .layout { flex-direction: column; align-items: center; }
             .sidebar { width: 100%; max-width: 500px; }
@@ -142,7 +161,6 @@
         
         <aside class="sidebar">
             <a href="index.html" class="nav-link">&larr; Dashboard</a>
-            
             <h1>Systemic<br>Pathfinder</h1>
             <p style="color: #bdc3c7; font-size: 0.9rem;">Strategic Recall Engine</p>
 
@@ -159,10 +177,9 @@
 
             <ol class="instruction-list">
                 <li>Select a letter on the grid.</li>
-                <li>Answer the definition question.</li>
-                <li><strong>Correct?</strong> The team claims the hex.</li>
-                <li><strong>Incorrect?</strong> The hex remains neutral.</li>
-                <li>First team to connect their sides wins.</li>
+                <li>Read the definition.</li>
+                <li><strong>Click the "REDACTED" bar</strong> to check the answer.</li>
+                <li>Award the hex or Cancel.</li>
             </ol>
 
             <button class="btn-reset" onclick="resetBoard()">Reset Board</button>
@@ -170,8 +187,7 @@
 
         <main class="game-area">
             <div id="error-box"></div>
-            <div class="hex-container" id="grid">
-                </div>
+            <div class="hex-container" id="grid"></div>
         </main>
 
     </div>
@@ -180,24 +196,27 @@
         <div class="modal-content">
             <h1 id="m-letter" style="color: #3498db; font-size: 4rem; margin: 0 0 10px 0;">A</h1>
             <p id="m-question" style="font-size: 1.4rem; line-height: 1.4;">Question...</p>
+            
+            <p style="margin-top: 30px; font-size: 1.1rem; color: #95a5a6;">
+                Answer: <span id="m-answer" class="spoiler" onclick="this.classList.add('revealed')">Hidden</span>
+            </p>
+
             <div class="btn-group">
                 <button class="btn-blue" onclick="win('blue')">Blue Win</button>
                 <button class="btn-red" onclick="win('red')">Red Win</button>
                 <button class="btn-cancel" onclick="closeModal()">Cancel</button>
             </div>
-            <p style="margin-top: 20px; color: #95a5a6;">Answer: <strong id="m-answer"></strong></p>
         </div>
     </div>
 
     <script>
-        // ERROR HANDLING
-        window.onerror = function(message, source, lineno, colno, error) {
+        window.onerror = function(message) {
             const box = document.getElementById('error-box');
             box.style.display = 'block';
             box.innerHTML = `<strong>System Error:</strong> ${message}`;
         };
 
-        // DATA REPOSITORY (Unit 1.1 Content)
+        // DATA REPOSITORY
         const data = [
             {l:"T", q:"Belief in a god or gods.", a:"Theism"},
             {l:"A", q:"Disbelief in God.", a:"Atheism"},
@@ -231,7 +250,7 @@
         function init() {
             try {
                 const grid = document.getElementById('grid');
-                grid.innerHTML = ''; // Clear existing
+                grid.innerHTML = ''; 
                 
                 const shuffled = [...data].sort(() => 0.5 - Math.random());
                 let idx = 0;
@@ -256,16 +275,23 @@
                     grid.appendChild(row);
                 }
             } catch (e) {
-                alert("Grid Build Error: " + e.message);
+                alert("Grid Error: " + e.message);
             }
         }
 
         function openModal(el) {
             if(el.classList.contains('blue') || el.classList.contains('red')) return;
             activeHex = el;
+            
+            // Set Content
             document.getElementById('m-letter').innerText = el.dataset.l;
             document.getElementById('m-question').innerText = el.dataset.q;
-            document.getElementById('m-answer').innerText = el.dataset.a;
+            
+            // Setup Answer Spoiler
+            const ansBox = document.getElementById('m-answer');
+            ansBox.innerText = el.dataset.a;
+            ansBox.classList.remove('revealed'); // Reset to hidden state
+            
             document.getElementById('modal').style.display = 'flex';
         }
 
