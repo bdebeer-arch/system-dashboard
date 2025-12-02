@@ -1,66 +1,262 @@
-
 <!DOCTYPE html>
-
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE Knowledge Cipher</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #8e44ad; /* Purple for Wisdom/Theology */
+            --bg: #f0f2f5;
+            --red-team: #e74c3c;
+            --blue-team: #3498db;
+            --neutral: #95a5a6;
+            --assassin: #2c3e50;
+        }
 
-    <title>KodeNames</title>
-    <meta name="description" content="Kodenames" />
-    <meta name="author" content="SitePoint" />
-    <link rel="stylesheet" href="styles/styles.css?v=1.0" />
-  </head>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
 
-  <body>
-    <div>
-      <div id="header">
-        <a href="https://www.patreon.com/bunnydoctor" target="_blank"
-          >My Patreon</a
-        >
-        <span id="redScore"></span>
-        <span id="blueScore"></span>
-        <input type="text" id="seed" placeholder="seed" size="8" autofocus />
-        <button id="reset" onclick="fire()">Reset</button>
-        <span id="confirmText">confirm?</span>
-        <input type="checkbox" id="confirm" />
-        <select id="gameMode">
-          <option value="default">Default Word Set</option>
-          <option value="spanish">Spanish Word Set</option>
-          <option value="french">French Word Set</option>
-          <option value="2knouns">2K Nouns</option>
-          <option value="movies">Top 250 Movies</option>
-          <option value="custom">Custom Words</option>
-        </select>
-        <span id="google_translate_element"></span>
-        <button id="spymaster" onclick="spyMaster()">SpyMaster</button>
-      </div>
+        /* Navigation Return Link */
+        nav { position: absolute; top: 20px; left: 20px; }
+        nav a { text-decoration: none; color: #7f8c8d; font-weight: bold; font-size: 0.9rem; }
+
+        header { text-align: center; margin-bottom: 20px; margin-top: 40px; }
+        h1 { margin: 0; color: var(--accent); letter-spacing: -1px; }
+        
+        /* Control Panel */
+        .controls {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        button.primary { background: var(--accent); color: white; border: none; font-weight: bold; }
+        button.spymaster { background: #34495e; color: white; border: none; }
+        
+        /* The Grid */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            aspect-ratio: 4/3; /* Standard card shape */
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            font-weight: 700;
+            font-size: 0.9rem; /* small font to fit long theological terms */
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            user-select: none;
+            border-bottom: 4px solid #bdc3c7;
+            word-break: break-word;
+        }
+
+        .card:hover { transform: translateY(-3px); }
+
+        /* Card States (Revealed) */
+        .card.red { background-color: var(--red-team); color: white; border-color: #c0392b; }
+        .card.blue { background-color: var(--blue-team); color: white; border-color: #2980b9; }
+        .card.neutral { background-color: #dcdde1; color: #7f8c8d; border-color: #bdc3c7; }
+        .card.assassin { background-color: var(--assassin); color: white; border-color: black; }
+
+        /* Spymaster View (Outlines only) */
+        body.spymaster-active .card.red-key { border: 4px solid var(--red-team); color: var(--red-team); }
+        body.spymaster-active .card.blue-key { border: 4px solid var(--blue-team); color: var(--blue-team); }
+        body.spymaster-active .card.assassin-key { border: 4px solid var(--assassin); color: var(--assassin); }
+        body.spymaster-active .card.neutral-key { border: 4px solid #bdc3c7; opacity: 0.7; }
+        
+        /* Already revealed cards stay solid in spymaster view */
+        body.spymaster-active .card.revealed { border: none; color: white; }
+        body.spymaster-active .card.neutral.revealed { color: #7f8c8d; }
+
+        /* Scoreboard */
+        .scoreboard {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            gap: 30px;
+        }
+        .score-red { color: var(--red-team); }
+        .score-blue { color: var(--blue-team); }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="index.html">&larr; Return to Dashboard</a>
+    </nav>
+
+    <header>
+        <h1>RE Knowledge Cipher</h1>
+        <p>Select a Unit to Generate the Grid</p>
+    </header>
+
+    <div class="controls">
+        <select id="unitSelect">
+            <option value="ethics">Unit 1: Christian Ethics</option>
+            <option value="world">Unit 2: World Religions</option>
+            <option value="bible">Unit 3: Biblical Studies</option>
+            </select>
+        <button class="primary" onclick="initGame()">Reset / Deal New Game</button>
+        <button class="spymaster" onclick="toggleSpymaster()">Toggle Spymaster View</button>
     </div>
-    <div id="board"></div>
-    <script
-      src="https://code.jquery.com/jquery-3.1.0.min.js"
-      integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="
-      crossorigin="anonymous"
-    ></script>
-    <script type="text/javascript">
-      function googleTranslateElementInit() {
-        new google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-            gaTrack: true,
-            gaId: "UA-48676831-6",
-          },
-          "google_translate_element"
-        )
-      }
+
+    <div class="scoreboard">
+        <span class="score-red">RED Remaining: <span id="red-count">9</span></span>
+        <span class="score-blue">BLUE Remaining: <span id="blue-count">8</span></span>
+    </div>
+
+    <div id="board" class="game-board">
+        </div>
+
+    <script>
+        // --- DATA REPOSITORY ---
+        // You can edit these lists easily! Ensure at least 25 words per unit.
+        const units = {
+            ethics: [
+                "Conscience", "Utilitarianism", "Virtue", "Deontology", "Justice", 
+                "Rights", "Dilemma", "Sanctity", "Euthanasia", "Poverty",
+                "Stewardship", "Freedom", "Responsibility", "Aquinas", "Kant",
+                "Situation", "Absolutism", "Relativism", "Charity", "Common Good",
+                "Solidarity", "Dignity", "Peace", "Conflict", "Morality", 
+                "Truth", "Compassion", "Law", "Sin", "Grace"
+            ],
+            world: [
+                "Monotheism", "Polytheism", "Nirvana", "Karma", "Reincarnation",
+                "Torah", "Quran", "Bible", "Vedas", "Tripitaka",
+                "Synagogue", "Mosque", "Church", "Temple", "Gurdwara",
+                "Ramadan", "Lent", "Diwali", "Passover", "Vesak",
+                "Prophet", "Guru", "Rabbi", "Imam", "Priest",
+                "Meditation", "Prayer", "Pilgrimage", "Hajj", "Samsara"
+            ],
+            bible: [
+                "Genesis", "Exodus", "Gospel", "Parable", "Miracle",
+                "Covenant", "Prophecy", "Messiah", "Resurrection", "Creation",
+                "Paul", "Moses", "Abraham", "Mary", "Peter",
+                "Revelation", "Psalm", "Epistle", "Disciple", "Apostle",
+                "Sinai", "Nazareth", "Jerusalem", "Bethlehem", "Jordan",
+                "Commandment", "Beatitude", "Salvation", "Trinity", "Spirit"
+            ]
+        };
+
+        // --- GAME LOGIC ---
+        let cards = [];
+        let isSpymaster = false;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initGame() {
+            const unitKey = document.getElementById('unitSelect').value;
+            const wordList = [...units[unitKey]]; // Copy array
+            
+            // 1. Get 25 Random Words
+            if(wordList.length < 25) { alert("Error: Unit needs at least 25 words!"); return; }
+            const gameWords = shuffle(wordList).slice(0, 25);
+
+            // 2. Assign Colors (9 Red, 8 Blue, 7 Neutral, 1 Assassin)
+            let types = Array(9).fill('red')
+                .concat(Array(8).fill('blue'))
+                .concat(Array(7).fill('neutral'))
+                .concat(Array(1).fill('assassin'));
+            types = shuffle(types);
+
+            // 3. Build Board
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            cards = [];
+
+            gameWords.forEach((word, index) => {
+                const type = types[index];
+                
+                const card = document.createElement('div');
+                card.className = `card ${type}-key`; // Add key class for Spymaster
+                card.innerText = word;
+                
+                // Click Event
+                card.onclick = () => {
+                    if (!isSpymaster) {
+                        card.classList.add('revealed');
+                        card.classList.add(type);
+                        updateScore();
+                    }
+                };
+
+                board.appendChild(card);
+                cards.push({ element: card, type: type });
+            });
+
+            // Reset UI
+            isSpymaster = false;
+            document.body.classList.remove('spymaster-active');
+            updateScore();
+        }
+
+        function toggleSpymaster() {
+            isSpymaster = !isSpymaster;
+            if (isSpymaster) {
+                document.body.classList.add('spymaster-active');
+            } else {
+                document.body.classList.remove('spymaster-active');
+            }
+        }
+
+        function updateScore() {
+            // Count unrevealed reds and blues
+            const redLeft = cards.filter(c => c.type === 'red' && !c.element.classList.contains('revealed')).length;
+            const blueLeft = cards.filter(c => c.type === 'blue' && !c.element.classList.contains('revealed')).length;
+
+            document.getElementById('red-count').innerText = redLeft;
+            document.getElementById('blue-count').innerText = blueLeft;
+        }
+
+        // Initialize on load
+        window.onload = initGame;
+
     </script>
-    <script
-      type="text/javascript"
-      src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-    ></script>
-    <script src="scripts/data.js"></script>
-    <script src="scripts/seedrandom.js"></script>
-    <script src="scripts/index.js"></script>
-    <script src="scripts/analytics.js"></script>
-  </body>
+</body>
 </html>
