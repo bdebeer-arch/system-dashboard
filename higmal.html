@@ -14,6 +14,24 @@
             color: #333;
         }
 
+        /* Nav Styling */
+        nav {
+            margin-bottom: 20px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #004d99;
+            font-weight: bold;
+            padding: 5px 10px;
+            border: 1px solid #004d99;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        nav a:hover {
+            background-color: #004d99;
+            color: white;
+        }
+
         /* Container Styling */
         .container {
             max-width: 900px;
@@ -129,7 +147,7 @@
         #q2 { background-color: #90ee90; } /* Light Green */
         /* Bottom-Left: Low Gain, High Loss (Avoid) */
         #q3 { background-color: #ff6347; } /* Light Red (Tomato for clear loss) */
-        /* Bottom-Right: Low Gain, Low Loss (Safe/Maintenance) */
+        /* Bottom-Right: Low Gain, Min Loss (Safe/Maintenance) */
         #q4 { background-color: #ffa07a; } /* Light Orange (Light Salmon) */
 
         .quadrant h3 {
@@ -149,12 +167,10 @@
     </style>
 </head>
 <body>
-
- <nav>
+    <nav>
         <a href="index.html">&larr; Return to Dashboard</a>
     </nav>
 
-    
     <div class="container">
         <h1>HiGMal: High Gain Max Loss Analysis Tool</h1>
 
@@ -162,10 +178,10 @@
             This tool helps conceptualise the strategic positioning of ideas by assessing their potential maximum relative **Gain** versus their potential maximum relative **Loss**.
         </p>
 
-        <h2>1. List Ideas/Items (Max 10)</h2>
+        <h2>1. List Ideas/Items (Default Focus: 10)</h2>
         <div id="item-input-group">
-            <input type="text" id="new-item-input" placeholder="Enter an idea or task...">
-            <button id="add-item-btn">Add Item</button>
+            <input type="text" id="new-item-input" placeholder="Enter ideas (e.g., 'Idea A, Idea B, Idea C' or paste a list)...">
+            <button id="add-item-btn">Add Item(s)</button>
         </div>
 
         <ul id="initial-list" class="item-list">
@@ -174,7 +190,7 @@
 
         <h2>2. Strategic Arrangement (Simulated Drag-and-Drop)</h2>
         <p>
-            *Please Note: Due to the complexity of full drag-and-drop in a simple HTML/JS solution, the user is required to **manually** arrange the list based on their judgement and then 'Lock In' to populate the quadrants.*
+            *Please Note: The system will index the items based on the order you arrange them. **Max Gain** at the top, **Max Loss** at the top. Use the 'Lock In' button after arranging.*
         </p>
 
         <div class="item-list-container">
@@ -192,6 +208,7 @@
 
 
         <h2>3. Quadrant Analysis</h2>
+        
 
         <div id="quadrant-analysis">
             <span class="axis-label" id="gain-label">Relative Gain</span>
@@ -231,7 +248,8 @@
         // --- Core Application Logic (British English Naming) ---
 
         let ideas = [];
-        const maxItems = 10;
+        // Removed maxItems constraint
+
         const initialListEl = document.getElementById('initial-list');
         const gainOrderEl = document.getElementById('gain-order');
         const lossOrderEl = document.getElementById('loss-order');
@@ -272,15 +290,24 @@
             addDragDropHandlers(lossOrderEl);
         }
 
-        // Functionality to add a new idea
+        // Functionality to add new idea(s) (supports comma or newline separation)
         document.getElementById('add-item-btn').addEventListener('click', () => {
-            const itemText = newItemInputEl.value.trim();
-            if (itemText && ideas.length < maxItems) {
-                ideas.push(itemText);
-                newItemInputEl.value = '';
-                renderLists();
-            } else if (ideas.length >= maxItems) {
-                alert(`Cannot add more than ${maxItems} items. Please focus on the most critical ideas.`);
+            const input = newItemInputEl.value.trim();
+            if (input) {
+                // Split by comma or newline, then filter out empty strings
+                const newItems = input.split(/,|\n/).map(item => item.trim()).filter(item => item.length > 0);
+
+                if (newItems.length > 0) {
+                    // Only add items that are not already in the list to prevent duplication
+                    newItems.forEach(item => {
+                        if (!ideas.includes(item)) {
+                            ideas.push(item);
+                        }
+                    });
+
+                    newItemInputEl.value = '';
+                    renderLists();
+                }
             }
         });
 
@@ -318,6 +345,7 @@
                     e.preventDefault(); // Allows drop
                     const bounding = item.getBoundingClientRect();
                     const offset = bounding.y + (bounding.height / 2);
+                    // Visual cue for drop location
                     if (e.clientY > offset) {
                         item.style.borderBottom = '2px solid #004d99';
                         item.style.borderTop = 'none';
@@ -369,7 +397,7 @@
 
             // Ensure both orders are the same length (all items have been considered)
             if (currentGainOrder.length !== currentLossOrder.length) {
-                alert('Please ensure the same items are listed in both orderings before analysis.');
+                alert('Please ensure both the Max Gain Ordering and Max Loss Ordering lists contain the same items before running the analysis.');
                 return;
             }
 
@@ -429,7 +457,7 @@
                 document.getElementById(targetQuadrantId).appendChild(listItem);
             });
 
-            alert(`Analysis complete! Ideas have been mapped to the quadrants based on your ${type} ordering.`);
+            alert(`Analysis complete! Ideas have been mapped to the quadrants based on your manual orderings. Ensure you press 'Lock In' for both gain and loss to see the full result.`);
         }
 
         // Initial setup
