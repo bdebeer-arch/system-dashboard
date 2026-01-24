@@ -8,7 +8,6 @@
         :root {
             --primary-blue: #0047ab;
             --bg-gray: #f4f7f6;
-            --card-white: #ffffff;
             --edit-highlight: #fff9db;
         }
 
@@ -18,7 +17,6 @@
             margin: 0; padding: 0;
         }
 
-        /* COLLAPSIBLE PANEL */
         .controls-wrapper {
             position: sticky;
             top: 0;
@@ -62,7 +60,6 @@
             cursor: pointer; font-weight: bold;
         }
 
-        /* MASONRY GRID LAYOUT */
         #imageGallery {
             columns: 4 280px;
             column-gap: 20px;
@@ -78,20 +75,18 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
             cursor: grab;
             display: inline-block;
             width: 100%;
         }
-
-        .image-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
 
         .image-card img {
             width: 100%;
             height: auto;
             display: block;
             pointer-events: none;
-            min-height: 100px;
+            min-height: 150px;
             background: #eee;
         }
 
@@ -107,14 +102,13 @@
         }
 
         .label-tag:focus { background: var(--edit-highlight); }
-        .dragging { opacity: 0.3; transform: scale(0.9); }
+        .dragging { opacity: 0.3; }
     </style>
 </head>
 <body>
 
 <div class="controls-wrapper">
-    <h4 style="margin:0 0 10px 0; text-align:center; color:var(--primary-blue);">Google Drive Image URL Input</h4>
-    <textarea id="urlInput" placeholder="Paste Google Drive 'Share' links here..."></textarea>
+    <textarea id="urlInput" placeholder="Paste ANY Google Drive links here (one per line)..."></textarea>
     <div class="button-row">
         <button class="btn-download" onclick="downloadData()">Download Configuration</button>
     </div>
@@ -126,7 +120,7 @@
     const urlInput = document.getElementById('urlInput');
     const gallery = document.getElementById('imageGallery');
 
-    // Your actual Google Drive files - now working via cleaner function
+    // These will now work because of the 'cleaner' function
     const demoUrls = [
         "https://drive.google.com/file/d/18nKe1S8CMbKP2vEw9mwnG0MB_eKD-biO",
         "https://drive.google.com/file/d/1EdWyzszNrCm8g11ob_bM267yx7_12haA",
@@ -135,30 +129,31 @@
         "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
     ];
 
-    // CRITICAL FUNCTION: Converts Google Drive "View" links to "Direct Image" links
-    function cleanGoogleDriveLink(url) {
-        const regex = /\/d\/([a-zA-Z0-9_-]+)/;
-        const match = url.match(regex);
+    // UNIVERSAL CLEANER: Works for both Demos and User Inputs
+    function cleanLink(url) {
+        const driveRegex = /\/d\/([a-zA-Z0-9_-]+)/;
+        const match = url.match(driveRegex);
         if (match && match[1]) {
             return `https://docs.google.com/uc?export=view&id=${match[1]}`;
         }
-        return url; // Return original if not a Drive link
+        return url;
     }
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
-        const urls = rawText ? rawText.split('\n').map(u => u.trim()).filter(u => u) : demoUrls;
+        // Uses input if present, otherwise falls back to demoUrls
+        const sourceList = rawText ? rawText.split('\n').map(u => u.trim()).filter(u => u) : demoUrls;
         
         gallery.innerHTML = '';
 
-        urls.forEach((url) => {
-            const cleanUrl = cleanGoogleDriveLink(url);
+        sourceList.forEach((url) => {
+            const finalUrl = cleanLink(url);
             const card = document.createElement('div');
             card.className = 'image-card';
             card.draggable = true;
 
             card.innerHTML = `
-                <img src="${cleanUrl}" onerror="this.src='https://via.placeholder.com/300?text=Invalid+Drive+Link'">
+                <img src="${finalUrl}" loading="lazy">
                 <div class="label-tag" contenteditable="true" spellcheck="false">Click to name...</div>
             `;
 
@@ -168,25 +163,18 @@
         });
     }
 
-    // Standard Drag-and-Drop Reflow
+    // Drag-and-drop reflow
     gallery.addEventListener('dragover', e => {
         e.preventDefault();
         const draggable = document.querySelector('.dragging');
         if (!draggable) return;
-        const afterElement = getDragAfterElement(gallery, e.clientY);
+        const afterElement = [...gallery.querySelectorAll('.image-card:not(.dragging)')].find(child => {
+            const box = child.getBoundingClientRect();
+            return e.clientY < box.top + box.height / 2;
+        });
         if (afterElement == null) gallery.appendChild(draggable);
         else gallery.insertBefore(draggable, afterElement);
     });
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.image-card:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
-            else return closest;
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
 
     function downloadData() {
         const cards = [...gallery.querySelectorAll('.image-card')];
@@ -194,7 +182,7 @@
         const blob = new Blob([content], { type: 'text/plain' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'gallery_export.txt';
+        a.download = 'gallery_config.txt';
         a.click();
     }
 
