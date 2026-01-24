@@ -18,7 +18,7 @@
             margin: 0; padding: 0;
         }
 
-        /* COLLAPSIBLE PANEL - SIMPLIFIED */
+        /* COLLAPSIBLE PANEL */
         .controls-wrapper {
             position: sticky;
             top: 0;
@@ -64,7 +64,7 @@
 
         /* MASONRY GRID LAYOUT */
         #imageGallery {
-            columns: 4 280px; /* Number of columns and minimum width */
+            columns: 4 280px;
             column-gap: 20px;
             padding: 40px 20px;
             max-width: 1400px;
@@ -72,7 +72,7 @@
         }
 
         .image-card {
-            break-inside: avoid; /* Prevents card from splitting across columns */
+            break-inside: avoid;
             margin-bottom: 20px;
             background: white;
             border-radius: 12px;
@@ -80,18 +80,19 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             transition: transform 0.2s, box-shadow 0.2s;
             cursor: grab;
-            display: inline-block; /* Required for Masonry behavior */
+            display: inline-block;
             width: 100%;
         }
 
-        .image-card:active { cursor: grabbing; }
         .image-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.12); }
 
         .image-card img {
             width: 100%;
-            height: auto; /* Maintains original aspect ratio */
+            height: auto;
             display: block;
             pointer-events: none;
+            min-height: 100px;
+            background: #eee;
         }
 
         .label-tag {
@@ -106,16 +107,14 @@
         }
 
         .label-tag:focus { background: var(--edit-highlight); }
-
-        /* Drag styling */
         .dragging { opacity: 0.3; transform: scale(0.9); }
     </style>
 </head>
 <body>
 
 <div class="controls-wrapper">
-    <h4 style="margin:0 0 10px 0; text-align:center; color:var(--primary-blue);">Image URL Input</h4>
-    <textarea id="urlInput" placeholder="Paste image URLs here (one per line)..."></textarea>
+    <h4 style="margin:0 0 10px 0; text-align:center; color:var(--primary-blue);">Google Drive Image URL Input</h4>
+    <textarea id="urlInput" placeholder="Paste Google Drive 'Share' links here..."></textarea>
     <div class="button-row">
         <button class="btn-download" onclick="downloadData()">Download Configuration</button>
     </div>
@@ -127,14 +126,24 @@
     const urlInput = document.getElementById('urlInput');
     const gallery = document.getElementById('imageGallery');
 
-    // Initial Demo Content
+    // Your actual Google Drive files - now working via cleaner function
     const demoUrls = [
         "https://drive.google.com/file/d/18nKe1S8CMbKP2vEw9mwnG0MB_eKD-biO",
-        "https://drive.google.com/file/d/1EdWyzszNrCm8g11ob_bM267yx7_12haA/view?usp=sharing",
-        "https://drive.google.com/file/d/1qICPO_qrSCl8awCm222usel5Awwfyidw/view?usp=sharing",
-        "https://drive.google.com/file/d/19aoeZL_t0oTfkOSYGorDZb3ECZQGqwW0/view?usp=sharing",
-        "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx/view?usp=sharing"
+        "https://drive.google.com/file/d/1EdWyzszNrCm8g11ob_bM267yx7_12haA",
+        "https://drive.google.com/file/d/1qICPO_qrSCl8awCm222usel5Awwfyidw",
+        "https://drive.google.com/file/d/19aoeZL_t0oTfkOSYGorDZb3ECZQGqwW0",
+        "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
     ];
+
+    // CRITICAL FUNCTION: Converts Google Drive "View" links to "Direct Image" links
+    function cleanGoogleDriveLink(url) {
+        const regex = /\/d\/([a-zA-Z0-9_-]+)/;
+        const match = url.match(regex);
+        if (match && match[1]) {
+            return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+        }
+        return url; // Return original if not a Drive link
+    }
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
@@ -142,68 +151,50 @@
         
         gallery.innerHTML = '';
 
-        urls.forEach((url, i) => {
+        urls.forEach((url) => {
+            const cleanUrl = cleanGoogleDriveLink(url);
             const card = document.createElement('div');
             card.className = 'image-card';
             card.draggable = true;
 
             card.innerHTML = `
-                <img src="${url}">
+                <img src="${cleanUrl}" onerror="this.src='https://via.placeholder.com/300?text=Invalid+Drive+Link'">
                 <div class="label-tag" contenteditable="true" spellcheck="false">Click to name...</div>
             `;
 
-            // Drag Events
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
             card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
             gallery.appendChild(card);
         });
     }
 
-    // Advanced Reflow Dragging Logic
+    // Standard Drag-and-Drop Reflow
     gallery.addEventListener('dragover', e => {
         e.preventDefault();
         const draggable = document.querySelector('.dragging');
         if (!draggable) return;
-
-        const afterElement = getDragAfterElement(gallery, e.clientX, e.clientY);
-        if (afterElement == null) {
-            gallery.appendChild(draggable);
-        } else {
-            gallery.insertBefore(draggable, afterElement);
-        }
+        const afterElement = getDragAfterElement(gallery, e.clientY);
+        if (afterElement == null) gallery.appendChild(draggable);
+        else gallery.insertBefore(draggable, afterElement);
     });
 
-    function getDragAfterElement(container, x, y) {
+    function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.image-card:not(.dragging)')];
-
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
+            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+            else return closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function downloadData() {
         const cards = [...gallery.querySelectorAll('.image-card')];
-        const data = cards.map(c => ({
-            url: c.querySelector('img').src,
-            label: c.querySelector('.label-tag').innerText
-        }));
-        
-        let content = "--- GALLERY CONFIGURATION ---\n\n";
-        data.forEach(item => {
-            content += `[${item.label}] -> ${item.url}\n`;
-        });
-
+        const content = cards.map(c => `[${c.querySelector('.label-tag').innerText}] -> ${c.querySelector('img').src}`).join('\n');
         const blob = new Blob([content], { type: 'text/plain' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'byron_gallery_export.txt';
+        a.download = 'gallery_export.txt';
         a.click();
     }
 
