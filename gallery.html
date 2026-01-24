@@ -3,109 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Image Gallery</title>
-    
+    <title>Polymathic Image Portal | Byron</title>
     <style>
+        :root {
+            --primary-blue: #0047ab;
+            --bg-gray: #f4f7f6;
+            --card-white: #ffffff;
+            --error-red: #fff5f5;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-gray);
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 40px 20px;
+            color: #2c3e50;
         }
 
-        .header-container {
-            max-width: 1200px;
-            margin: 0 auto 30px auto;
-            text-align: center;
-        }
-
-        /* The Input Area */
-        textarea {
-            width: 100%;
-            max-width: 800px;
-            height: 100px;
-            padding: 15px;
-            border: 2px solid #0047ab;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 14px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        /* The Responsive Grid */
-        #imageGallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
+        .container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        /* The Floating Image Cards */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: var(--primary-blue);
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .input-section {
+            background: var(--card-white);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 1px solid #dcdde1;
+            border-radius: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+        }
+
+        /* The Grid */
+        #imageGallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        /* Floating Card Style */
         .image-card {
-            background: white;
+            background: var(--card-white);
+            height: 300px;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); /* The 'Floating' Effect */
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 250px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
         }
 
         .image-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-
-        .image-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Ensures images fill the cell evenly */
-            display: block;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="header-container">
-        <h1>Image Display Portal</h1>
-        <p>Paste your image URLs below (one per line) to update the gallery instantly.</p>
-        <textarea id="urlInput" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.png"></textarea>
-    </div>
-
-    <div id="imageGallery">
-        </div>
-
-    <script>
-        const input = document.getElementById('urlInput');
-        const gallery = document.getElementById('imageGallery');
-
-        input.addEventListener('input', () => {
-            // Clear existing gallery
-            gallery.innerHTML = '';
-
-            // Split input by new line, trim whitespace, and filter out empty entries
-            const urls = input.value.split(/\n/).map(url => url.trim()).filter(url => url !== "");
-
-            urls.forEach(url => {
-                // Create a container div for the 'floating' effect
-                const card = document.createElement('div');
-                card.className = 'image-card';
-
-                const img = document.createElement('img');
-                img.src = url;
-                img.alt = "Gallery Image";
-                img.loading = "lazy"; // Improves page speed
-
-                // Hide the card if the image fails to load
-                img.onerror = () => card.style.display = 'none';
-
-                card.appendChild(img);
-                gallery.appendChild(card);
-            });
-        });
-    </script>
-
-</body>
-</html>
+            transform
