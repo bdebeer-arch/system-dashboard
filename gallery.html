@@ -3,83 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polymathic Image Portal | Byron</title>
+    <title>Interactive Resource Portal | Byron</title>
     <style>
         :root {
             --primary-blue: #0047ab;
-            --bg-gray: #f4f7f6;
-            --card-white: #ffffff;
-            --error-red: #fff5f5;
+            --bg-gray: #f0f2f5;
+            --panel-white: rgba(255, 255, 255, 0.98);
+            --success-green: #27ae60;
         }
 
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background-color: var(--bg-gray);
-            margin: 0;
-            padding: 40px 20px;
-            color: #2c3e50;
+            margin: 0; padding: 0;
         }
 
-        .container {
+        /* COLLAPSIBLE PANEL */
+        .controls-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--panel-white);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #ddd;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            max-height: 500px;
+            opacity: 1;
+            overflow: hidden;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .controls-wrapper:not(:hover):not(:focus-within) {
+            max-height: 15px;
+            opacity: 0.4;
+            padding: 8px 20px;
+            cursor: pointer;
+        }
+
+        .controls-wrapper:not(:hover):not(:focus-within)::after {
+            content: "↓ HOVER TO EDIT OR DOWNLOAD DATA ↓";
+            display: block;
+            text-align: center;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--primary-blue);
+            font-weight: bold;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            color: var(--primary-blue);
-            font-weight: 300;
-            margin-bottom: 10px;
-        }
-
-        .input-section {
-            background: var(--card-white);
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 40px;
-        }
-
         textarea {
-            width: 100%;
-            height: 150px;
-            padding: 15px;
-            border: 1px solid #dcdde1;
-            border-radius: 10px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            resize: vertical;
+            width: 100%; height: 100px;
+            padding: 10px; border: 1px solid #ccc;
+            border-radius: 6px; font-family: monospace;
             box-sizing: border-box;
-            transition: border-color 0.3s;
+            background: #fff;
         }
 
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(0, 71, 171, 0.1);
+        .button-row {
+            grid-column: span 2;
+            text-align: right;
+            margin-top: 10px;
         }
 
-        /* The Grid */
+        .btn-download {
+            background-color: var(--success-green);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .btn-download:hover { opacity: 0.8; }
+
+        /* GALLERY GRID */
         #imageGallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 25px;
+            padding: 40px 20px;
+            max-width: 1300px;
+            margin: 0 auto;
         }
 
-        /* Floating Card Style */
         .image-card {
-            background: var(--card-white);
-            height: 300px;
+            background: white;
             border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             position: relative;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+            transition: transform 0.3s ease;
+            cursor: grab;
         }
 
-        .image-card:hover {
-            transform
+        .image-card:active { cursor: grabbing; }
+
+        .image-card img {
+            width: 100%; height: 220px;
+            object-fit: cover; pointer-events: none;
+        }
+
+        .label-tag {
+            padding: 12px;
+            background: #fff;
+            color: #2c3e50;
+            font-weight: 600;
+            text-align: center;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls-wrapper">
+    <div class="controls-grid">
+        <div>
+            <h4 style="margin:0 0 5px 0;">Image URLs</h4>
+            <textarea id="urlInput" placeholder="Paste URLs here..."></textarea>
+        </div>
+        <div>
+            <h4 style="margin:0 0 5px 0;">Student Labels</h4>
+            <textarea id="labelInput" placeholder="Paste Names here..."></textarea>
+        </div>
+        <div class="button-row">
+            <button class="btn-download" onclick="downloadData()">Download Current Configuration</button>
+        </div>
+    </div>
+</div>
+
+<div id="imageGallery"></div>
+
+<script>
+    const urlInput = document.getElementById('urlInput');
+    const labelInput = document.getElementById('labelInput');
+    const gallery = document.getElementById('imageGallery');
+
+    const demoData = [
+        { url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500', label: 'Systems Innovation' },
+        { url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500', label: 'Collaborative Group' }
+    ];
+
+    function renderGallery() {
+        gallery.innerHTML = '';
+        const urls = urlInput.value.split('\n').map(u => u.trim()).filter(u => u);
+        const labels = labelInput.value.split('\n').map(l => l.trim());
+
+        const activeData = urls.length > 0 
+            ? urls.map((url, i) => ({ url, label: labels[i] || `Item ${i + 1}` }))
+            : demoData;
+
+        activeData.forEach((item) => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.draggable = true;
+            card.innerHTML = `<img src="${item.url}"><div class="label-tag">${item.label}</div>`;
+            
+            card.addEventListener('dragstart', () => card.classList.add('dragging'));
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                syncInputsToGrid(); // Update the text boxes after a drag
+            });
+            gallery.appendChild(card);
+        });
+    }
+
+    // Drag-and-drop sorting logic
+    gallery.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggable = document.querySelector('.dragging');
+        const afterElement = [...gallery.querySelectorAll('.image-card:not(.dragging)')].find(child => {
+            const box = child.getBoundingClientRect();
+            return e.clientY < box.top + box.height / 2;
+        });
+        if (!afterElement) gallery.appendChild(draggable);
+        else gallery.insertBefore(draggable, afterElement);
+    });
+
+    // Function to update the text boxes based on the NEW drag-and-drop order
+    function syncInputsToGrid() {
+        const cards = [...gallery.querySelectorAll('.image-card')];
+        const newUrls = cards.map(c => c.querySelector('img').src);
+        const newLabels = cards.map(c => c.querySelector('.label-tag').innerText);
+        
+        urlInput.value = newUrls.join('\n');
+        labelInput.value = newLabels.join('\n');
+    }
+
+    function downloadData() {
+        const content = `--- URLS ---\n${urlInput.value}\n\n--- LABELS ---\n${labelInput.value}`;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'gallery_config.txt';
+        a.click();
+    }
+
+    urlInput.addEventListener('input', renderGallery);
+    labelInput.addEventListener('input', renderGallery);
+    renderGallery();
+</script>
+
+</body>
+</html>
