@@ -2,105 +2,30 @@
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polymathic Resource Portal | Byron</title>
+    <title>Gallery</title>
     <style>
-        :root {
-            --primary-blue: #0047ab;
-            --bg-gray: #f4f7f6;
-            --edit-highlight: #fff9db;
-        }
-
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: var(--bg-gray);
-            margin: 0; padding: 0;
-        }
-
+        :root { --primary-blue: #0047ab; --bg-gray: #f4f7f6; --edit-highlight: #fff9db; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-gray); margin: 0; padding: 0; }
+        
         .controls-wrapper {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #ddd;
-            transition: all 0.4s ease;
-            max-height: 250px;
-            opacity: 1;
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
+            border-bottom: 1px solid #ddd; transition: all 0.4s ease;
+            max-height: 250px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             overflow: hidden;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        .controls-wrapper:not(:hover):not(:focus-within) {
-            max-height: 15px;
-            opacity: 0.4;
-            padding: 8px 20px;
-        }
+        /* Auto-hide logic */
+        .controls-wrapper:not(:hover):not(:focus-within) { max-height: 15px; opacity: 0.4; padding: 8px 20px; }
 
-        textarea {
-            width: 100%; height: 120px;
-            padding: 12px; border: 1px solid #ccc;
-            border-radius: 8px; font-family: monospace;
-            box-sizing: border-box;
-            display: block; margin: 0 auto;
-            max-width: 1200px;
-        }
+        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: monospace; box-sizing: border-box; }
 
-        .button-row {
-            max-width: 1200px;
-            margin: 10px auto 0;
-            text-align: right;
-        }
+        #imageGallery { columns: 4 280px; column-gap: 20px; padding: 40px 20px; max-width: 1400px; margin: 0 auto; }
 
-        .btn-download {
-            background-color: var(--primary-blue);
-            color: white; border: none;
-            padding: 8px 20px; border-radius: 5px;
-            cursor: pointer; font-weight: bold;
-        }
+        .image-card { break-inside: avoid; margin-bottom: 20px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.2s; cursor: grab; width: 100%; display: inline-block; }
+        .image-card img { width: 100%; height: auto; display: block; pointer-events: none; min-height: 150px; background: #eee; }
 
-        #imageGallery {
-            columns: 4 280px;
-            column-gap: 20px;
-            padding: 40px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .image-card {
-            break-inside: avoid;
-            margin-bottom: 20px;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
-            cursor: grab;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .image-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-            pointer-events: none;
-            min-height: 150px;
-            background: #eee;
-        }
-
-        .label-tag {
-            padding: 15px;
-            background: #fff;
-            color: #2c3e50;
-            font-weight: 600;
-            text-align: center;
-            outline: none;
-            cursor: text;
-            border-top: 1px solid #f0f0f0;
-        }
-
+        .label-tag { padding: 15px; background: #fff; color: #2c3e50; font-weight: 600; text-align: center; outline: none; border-top: 1px solid #f0f0f0; }
         .label-tag:focus { background: var(--edit-highlight); }
         .dragging { opacity: 0.3; }
     </style>
@@ -108,9 +33,9 @@
 <body>
 
 <div class="controls-wrapper">
-    <textarea id="urlInput" placeholder="Paste ANY Google Drive links here (one per line)..."></textarea>
-    <div class="button-row">
-        <button class="btn-download" onclick="downloadData()">Download Configuration</button>
+    <textarea id="urlInput" placeholder="Paste Google Drive links here (one per line)..."></textarea>
+    <div style="text-align:right; margin-top:10px;">
+        <button onclick="downloadData()" style="background:var(--primary-blue); color:white; border:none; padding:8px 20px; border-radius:5px; cursor:pointer;">Download Config</button>
     </div>
 </div>
 
@@ -120,31 +45,23 @@
     const urlInput = document.getElementById('urlInput');
     const gallery = document.getElementById('imageGallery');
 
-    // These will now work because of the 'cleaner' function
-    const demoUrls = [
-        "https://drive.google.com/file/d/18nKe1S8CMbKP2vEw9mwnG0MB_eKD-biO",
-        "https://drive.google.com/file/d/1EdWyzszNrCm8g11ob_bM267yx7_12haA",
-        "https://drive.google.com/file/d/1qICPO_qrSCl8awCm222usel5Awwfyidw",
-        "https://drive.google.com/file/d/19aoeZL_t0oTfkOSYGorDZb3ECZQGqwW0",
-        "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
-    ];
-
-    // UNIVERSAL CLEANER: Works for both Demos and User Inputs
+    // REFINED CLEANER: Uses the Thumbnail API (Often bypasses CORS issues)
     function cleanLink(url) {
         const driveRegex = /\/d\/([a-zA-Z0-9_-]+)/;
         const match = url.match(driveRegex);
         if (match && match[1]) {
-            return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+            // Using =s1000 to get a high-quality 1000px version
+            return `https://lh3.googleusercontent.com/u/0/d/${match[1]}=s1000`;
         }
         return url;
     }
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
-        // Uses input if present, otherwise falls back to demoUrls
-        const sourceList = rawText ? rawText.split('\n').map(u => u.trim()).filter(u => u) : demoUrls;
+        if (!rawText) return; // Wait for input
         
         gallery.innerHTML = '';
+        const sourceList = rawText.split('\n').map(u => u.trim()).filter(u => u);
 
         sourceList.forEach((url) => {
             const finalUrl = cleanLink(url);
@@ -153,8 +70,8 @@
             card.draggable = true;
 
             card.innerHTML = `
-                <img src="${finalUrl}" loading="lazy">
-                <div class="label-tag" contenteditable="true" spellcheck="false">Click to name...</div>
+                <img src="${finalUrl}" loading="lazy" onerror="handleError(this)">
+                <div class="label-tag" contenteditable="true">Click to Name</div>
             `;
 
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
@@ -163,7 +80,16 @@
         });
     }
 
-    // Drag-and-drop reflow
+    // Fallback if the first link fails
+    function handleError(img) {
+        const originalUrl = img.src;
+        if (originalUrl.includes('googleusercontent')) {
+            const id = originalUrl.split('/d/')[1].split('=')[0];
+            img.src = `https://docs.google.com/uc?export=view&id=${id}`;
+        }
+    }
+
+    // Standard Drag-and-Drop Reflow
     gallery.addEventListener('dragover', e => {
         e.preventDefault();
         const draggable = document.querySelector('.dragging');
@@ -176,19 +102,7 @@
         else gallery.insertBefore(draggable, afterElement);
     });
 
-    function downloadData() {
-        const cards = [...gallery.querySelectorAll('.image-card')];
-        const content = cards.map(c => `[${c.querySelector('.label-tag').innerText}] -> ${c.querySelector('img').src}`).join('\n');
-        const blob = new Blob([content], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'gallery_config.txt';
-        a.click();
-    }
-
     urlInput.addEventListener('input', renderGallery);
-    window.addEventListener('load', renderGallery);
 </script>
-
 </body>
 </html>
