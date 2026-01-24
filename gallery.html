@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Image Gallery</title>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+        }
+
+        /* The Input Area */
+        textarea {
+            width: 100%;
+            max-width: 800px;
+            height: 100px;
+            padding: 15px;
+            border: 2px solid #0047ab;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* The Responsive Grid */
+        #imageGallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* The Floating Image Cards */
+        .image-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); /* The 'Floating' Effect */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 250px;
+        }
+
+        .image-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures images fill the cell evenly */
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>Image Display Portal</h1>
+        <p>Paste your image URLs below (one per line) to update the gallery instantly.</p>
+        <textarea id="urlInput" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.png"></textarea>
+    </div>
+
+    <div id="imageGallery">
+        </div>
+
+    <script>
+        const input = document.getElementById('urlInput');
+        const gallery = document.getElementById('imageGallery');
+
+        input.addEventListener('input', () => {
+            // Clear existing gallery
+            gallery.innerHTML = '';
+
+            // Split input by new line, trim whitespace, and filter out empty entries
+            const urls = input.value.split(/\n/).map(url => url.trim()).filter(url => url !== "");
+
+            urls.forEach(url => {
+                // Create a container div for the 'floating' effect
+                const card = document.createElement('div');
+                card.className = 'image-card';
+
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = "Gallery Image";
+                img.loading = "lazy"; // Improves page speed
+
+                // Hide the card if the image fails to load
+                img.onerror = () => card.style.display = 'none';
+
+                card.appendChild(img);
+                gallery.appendChild(card);
+            });
+        });
+    </script>
+
+</body>
+</html>
