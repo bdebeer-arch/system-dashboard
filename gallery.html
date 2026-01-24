@@ -19,6 +19,20 @@
             margin: 0; padding: 0;
         }
 
+        /* NAVIGATION */
+        nav {
+            padding: 15px 20px;
+            background: var(--card-white);
+            border-bottom: 1px solid #ddd;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
         /* COMPACT CONTROLS */
         .controls-wrapper {
             position: sticky;
@@ -35,7 +49,7 @@
         }
 
         .controls-wrapper:not(:hover):not(:focus-within) {
-            max-height: 10px;
+            max-height: 12px;
             opacity: 0.3;
             padding: 5px 15px;
         }
@@ -75,20 +89,15 @@
             width: 100%;
         }
 
-        .image-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-        }
-
         .image-card img {
             width: 100%;
             height: auto;
             display: block;
             pointer-events: none;
             background: #eee;
+            min-height: 100px;
         }
 
-        /* INLINE EDITABLE LABELS */
         .label-tag {
             padding: 15px;
             background: #fff;
@@ -98,23 +107,20 @@
             outline: none;
             cursor: text;
             border-top: 1px solid #f0f0f0;
-            min-height: 20px;
         }
 
-        .label-tag:focus {
-            background: var(--edit-highlight);
-        }
-
-        .dragging {
-            opacity: 0.3;
-            transform: scale(0.95);
-        }
+        .label-tag:focus { background: var(--edit-highlight); }
+        .dragging { opacity: 0.3; transform: scale(0.95); }
     </style>
 </head>
 <body>
 
+<nav>
+    <a href="index.html">&larr; Return to Dashboard</a>
+</nav>
+
 <div class="controls-wrapper">
-    <textarea id="urlInput" placeholder="Paste Google Drive or Image URLs here (one per line)..."></textarea>
+    <textarea id="urlInput" placeholder="Paste Google Drive or Image URLs here..."></textarea>
 </div>
 
 <header style="text-align:center; padding: 20px 0 0 0;">
@@ -127,26 +133,34 @@
     const urlInput = document.getElementById('urlInput');
     const gallery = document.getElementById('imageGallery');
 
-    // Link Sanitiser for Google Drive
+    const demoUrls = [
+        "https://drive.google.com/file/d/18nKe1S8CMbKP2vEw9mwnG0MB_eKD-biO",
+        "https://drive.google.com/file/d/1EdWyzszNrCm8g11ob_bM267yx7_12haA",
+        "https://drive.google.com/file/d/1qICPO_qrSCl8awCm222usel5Awwfyidw",
+        "https://drive.google.com/file/d/19aoeZL_t0oTfkOSYGorDZb3ECZQGqwW0",
+        "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
+    ];
+
     function cleanLink(url) {
+        // Handle Google Drive conversion
         if (url.includes('drive.google.com')) {
-            const parts = url.split('/');
-            const idIndex = parts.indexOf('d') + 1;
-            const id = parts[idIndex] || url.match(/id=([^&]+)/)?.[1];
-            if (id) return `https://lh3.googleusercontent.com/d/${id}`;
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://docs.google.com/uc?export=view&id=${match[1]}`;
+            }
+        }
+        // Handle Wikia/Fandom specific cleanup if needed
+        if (url.includes('wikia.nocookie.net')) {
+            return url.split('/revision/')[0]; // Strips thumbnail resizing which often causes blocks
         }
         return url;
     }
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
-        if (!rawText) {
-            gallery.innerHTML = '';
-            return;
-        }
+        const sourceList = rawText ? rawText.split('\n').map(u => u.trim()).filter(u => u) : demoUrls;
         
         gallery.innerHTML = '';
-        const sourceList = rawText.split('\n').map(u => u.trim()).filter(u => u);
 
         sourceList.forEach((url) => {
             const finalUrl = cleanLink(url);
@@ -155,8 +169,8 @@
             card.draggable = true;
 
             card.innerHTML = `
-                <img src="${finalUrl}" loading="lazy" crossorigin="anonymous">
-                <div class="label-tag" contenteditable="true" spellcheck="false">Student Name</div>
+                <img src="${finalUrl}" loading="lazy">
+                <div class="label-tag" contenteditable="true" spellcheck="false">Name</div>
             `;
 
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
@@ -181,6 +195,7 @@
     });
 
     urlInput.addEventListener('input', renderGallery);
+    window.addEventListener('load', renderGallery);
 </script>
 
 </body>
