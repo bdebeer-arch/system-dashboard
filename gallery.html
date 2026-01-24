@@ -142,20 +142,19 @@
         "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
     ];
 
-    function cleanLink(url) {
-        // Fix 1: Use drive.google.com/uc for higher reliability
-        if (url.includes('drive.google.com')) {
-            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) {
-                return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-            }
+function cleanLink(url) {
+    if (url.includes('drive.google.com')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            // Use Google Drive thumbnail service (reliable)
+            return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
         }
-        // Fix 2: Strip Wikia revisions to bypass hotlink blocks
-        if (url.includes('wikia.nocookie.net')) {
-            return url.split('/revision/')[0];
-        }
-        return url;
     }
+    if (url.includes('wikia.nocookie.net')) {
+        return url.split('/revision/')[0];
+    }
+    return url;
+}
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
