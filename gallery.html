@@ -2,42 +2,124 @@
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
-    <title>Gallery</title>
+    <meta name="referrer" content="no-referrer">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Labeler | Byron</title>
     <style>
-        :root { --primary-blue: #0047ab; --bg-gray: #f4f7f6; --edit-highlight: #fff9db; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg-gray); margin: 0; padding: 0; }
-        
+        :root {
+            --primary-blue: #0047ab;
+            --bg-gray: #f4f7f6;
+            --card-white: #ffffff;
+            --edit-highlight: #fff9db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-gray);
+            margin: 0; padding: 0;
+        }
+
+        /* COMPACT CONTROLS */
         .controls-wrapper {
-            position: sticky; top: 0; z-index: 1000;
-            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
-            border-bottom: 1px solid #ddd; transition: all 0.4s ease;
-            max-height: 250px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #ddd;
+            transition: all 0.3s ease;
+            max-height: 180px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             overflow: hidden;
         }
 
-        /* Auto-hide logic */
-        .controls-wrapper:not(:hover):not(:focus-within) { max-height: 15px; opacity: 0.4; padding: 8px 20px; }
+        .controls-wrapper:not(:hover):not(:focus-within) {
+            max-height: 10px;
+            opacity: 0.3;
+            padding: 5px 15px;
+        }
 
-        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: monospace; box-sizing: border-box; }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            box-sizing: border-box;
+            max-width: 1200px;
+            display: block;
+            margin: 0 auto;
+        }
 
-        #imageGallery { columns: 4 280px; column-gap: 20px; padding: 40px 20px; max-width: 1400px; margin: 0 auto; }
+        /* MASONRY GRID */
+        #imageGallery {
+            columns: 4 280px;
+            column-gap: 20px;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-        .image-card { break-inside: avoid; margin-bottom: 20px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.2s; cursor: grab; width: 100%; display: inline-block; }
-        .image-card img { width: 100%; height: auto; display: block; pointer-events: none; min-height: 150px; background: #eee; }
+        .image-card {
+            break-inside: avoid;
+            margin-bottom: 20px;
+            background: var(--card-white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+            cursor: grab;
+            display: inline-block;
+            width: 100%;
+        }
 
-        .label-tag { padding: 15px; background: #fff; color: #2c3e50; font-weight: 600; text-align: center; outline: none; border-top: 1px solid #f0f0f0; }
-        .label-tag:focus { background: var(--edit-highlight); }
-        .dragging { opacity: 0.3; }
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            pointer-events: none;
+            background: #eee;
+        }
+
+        /* INLINE EDITABLE LABELS */
+        .label-tag {
+            padding: 15px;
+            background: #fff;
+            color: #2c3e50;
+            font-weight: 600;
+            text-align: center;
+            outline: none;
+            cursor: text;
+            border-top: 1px solid #f0f0f0;
+            min-height: 20px;
+        }
+
+        .label-tag:focus {
+            background: var(--edit-highlight);
+        }
+
+        .dragging {
+            opacity: 0.3;
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
 
 <div class="controls-wrapper">
-    <textarea id="urlInput" placeholder="Paste Google Drive links here (one per line)..."></textarea>
-    <div style="text-align:right; margin-top:10px;">
-        <button onclick="downloadData()" style="background:var(--primary-blue); color:white; border:none; padding:8px 20px; border-radius:5px; cursor:pointer;">Download Config</button>
-    </div>
+    <textarea id="urlInput" placeholder="Paste Google Drive or Image URLs here (one per line)..."></textarea>
 </div>
+
+<header style="text-align:center; padding: 20px 0 0 0;">
+    <h1 style="color: var(--primary-blue); font-weight: 300;">Gallery Labeler</h1>
+</header>
 
 <div id="imageGallery"></div>
 
@@ -45,20 +127,23 @@
     const urlInput = document.getElementById('urlInput');
     const gallery = document.getElementById('imageGallery');
 
-    // REFINED CLEANER: Uses the Thumbnail API (Often bypasses CORS issues)
+    // Link Sanitiser for Google Drive
     function cleanLink(url) {
-        const driveRegex = /\/d\/([a-zA-Z0-9_-]+)/;
-        const match = url.match(driveRegex);
-        if (match && match[1]) {
-            // Using =s1000 to get a high-quality 1000px version
-            return `https://lh3.googleusercontent.com/u/0/d/${match[1]}=s1000`;
+        if (url.includes('drive.google.com')) {
+            const parts = url.split('/');
+            const idIndex = parts.indexOf('d') + 1;
+            const id = parts[idIndex] || url.match(/id=([^&]+)/)?.[1];
+            if (id) return `https://lh3.googleusercontent.com/d/${id}`;
         }
         return url;
     }
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
-        if (!rawText) return; // Wait for input
+        if (!rawText) {
+            gallery.innerHTML = '';
+            return;
+        }
         
         gallery.innerHTML = '';
         const sourceList = rawText.split('\n').map(u => u.trim()).filter(u => u);
@@ -70,8 +155,8 @@
             card.draggable = true;
 
             card.innerHTML = `
-                <img src="${finalUrl}" loading="lazy" onerror="handleError(this)">
-                <div class="label-tag" contenteditable="true">Click to Name</div>
+                <img src="${finalUrl}" loading="lazy" crossorigin="anonymous">
+                <div class="label-tag" contenteditable="true" spellcheck="false">Student Name</div>
             `;
 
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
@@ -80,29 +165,23 @@
         });
     }
 
-    // Fallback if the first link fails
-    function handleError(img) {
-        const originalUrl = img.src;
-        if (originalUrl.includes('googleusercontent')) {
-            const id = originalUrl.split('/d/')[1].split('=')[0];
-            img.src = `https://docs.google.com/uc?export=view&id=${id}`;
-        }
-    }
-
-    // Standard Drag-and-Drop Reflow
+    // Drag-and-drop reflow logic
     gallery.addEventListener('dragover', e => {
         e.preventDefault();
         const draggable = document.querySelector('.dragging');
         if (!draggable) return;
+        
         const afterElement = [...gallery.querySelectorAll('.image-card:not(.dragging)')].find(child => {
             const box = child.getBoundingClientRect();
             return e.clientY < box.top + box.height / 2;
         });
+        
         if (afterElement == null) gallery.appendChild(draggable);
         else gallery.insertBefore(draggable, afterElement);
     });
 
     urlInput.addEventListener('input', renderGallery);
 </script>
+
 </body>
 </html>
