@@ -3,119 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Te Whare Tapa Whā: Pyramidal Model</title>
+    <title>Te Whare Tapa Whā: Interactive Toolkit</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f6fa; color: #2f3640; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); max-width: 850px; width: 100%; }
-        h1 { color: #273c75; text-align: center; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-style: italic; }
-        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .control { display: flex; flex-direction: column; padding: 12px; border-radius: 10px; background: #f1f2f6; border-bottom: 4px solid #dcdde1; }
-        .control.whenua { border-bottom-color: #44bd32; background: #e3f9e5; }
-        label { font-size: 0.8em; font-weight: bold; margin-bottom: 8px; }
-        input[type="number"] { padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1.1em; }
-        .chart-container { position: relative; height: 450px; width: 100%; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; color: #1a1a1a; padding: 20px; line-height: 1.6; }
+        .wrapper { max-width: 1000px; margin: auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        h1, h2 { color: #2c3e50; text-align: center; }
+        
+        /* Unlock Section */
+        .unlock-container { text-align: center; margin-bottom: 30px; padding: 15px; background: #e8f4fd; border-radius: 10px; border: 2px dashed #3498db; }
+        .btn-unlock { background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-unlock:hover { background: #2980b9; }
+
+        .main-layout { display: flex; gap: 40px; flex-wrap: wrap; margin-top: 20px; }
+        .controls { flex: 1; min-width: 300px; }
+        .chart-main { flex: 1.5; min-width: 350px; }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        
+        /* Diagnostic Section */
+        .diagnostic-section { margin-top: 50px; border-top: 2px solid #eee; padding-top: 30px; }
+        .mini-charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+        .mini-card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 10px; text-align: center; }
+        .mini-chart-container { height: 200px; }
+        textarea { width: 100%; margin-top: 10px; border-radius: 5px; border: 1px solid #ddd; padding: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Te Whare Tapa Whā</h1>
-    <p class="subtitle">A Pyramidal Reflection of Holistic Wellbeing</p>
+<div class="wrapper">
+    <h1>Te Whare Tapa Whā Reflection</h1>
+    
+    <div class="unlock-container">
+        <p>Current View: <strong>4-Wall Model</strong></p>
+        <button class="btn-unlock" id="unlockBtn" onclick="toggleWhenua()">Unlock Whenua (Foundation)</button>
+    </div>
 
-    <div class="input-grid">
-        <div class="control">
-            <label>Taha Tinana<br>(Physical Wellbeing)</label>
-            <input type="number" id="tinana" value="7" min="0" max="10" oninput="updateChart()">
+    <div class="main-layout">
+        <div class="controls">
+            <div class="input-group">
+                <label>Taha Tinana (Physical)</label>
+                <input type="number" id="tinana" value="5" min="0" max="10" oninput="updateMainChart()">
+            </div>
+            <div class="input-group">
+                <label>Taha Hinengaro (Mental)</label>
+                <input type="number" id="hinengaro" value="5" min="0" max="10" oninput="updateMainChart()">
+            </div>
+            <div class="input-group">
+                <label>Taha Whānau (Social)</label>
+                <input type="number" id="whanau" value="5" min="0" max="10" oninput="updateMainChart()">
+            </div>
+            <div class="input-group">
+                <label>Taha Wairua (Spiritual)</label>
+                <input type="number" id="wairua" value="5" min="0" max="10" oninput="updateMainChart()">
+            </div>
+            <div id="whenua-input" style="display:none;" class="input-group">
+                <label style="color:#27ae60;">Whenua (Belonging/Foundation)</label>
+                <input type="number" id="whenua" value="5" min="0" max="10" oninput="updateMainChart()">
+            </div>
         </div>
-        <div class="control">
-            <label>Taha Hinengaro<br>(Mental Wellbeing)</label>
-            <input type="number" id="hinengaro" value="6" min="0" max="10" oninput="updateChart()">
-        </div>
-        <div class="control">
-            <label>Taha Whānau<br>(Social Wellbeing)</label>
-            <input type="number" id="whanau" value="8" min="0" max="10" oninput="updateChart()">
-        </div>
-        <div class="control">
-            <label>Taha Wairua<br>(Spiritual Wellbeing)</label>
-            <input type="number" id="wairua" value="5" min="0" max="10" oninput="updateChart()">
-        </div>
-        <div class="control whenua">
-            <label>Whenua<br>(Belonging & Roots)</label>
-            <input type="number" id="whenua" value="9" min="0" max="10" oninput="updateChart()">
+
+        <div class="chart-main">
+            <canvas id="mainChart"></canvas>
         </div>
     </div>
 
-    <div class="chart-container">
-        <canvas id="whareChart"></canvas>
+    <div class="diagnostic-section">
+        <h2>Case Studies: Diagnosis & Description</h2>
+        <p style="text-align:center;">Choose one of these anonymous profiles. What does their "whare" tell you about their current state?</p>
+        <div class="mini-charts-grid" id="miniCharts">
+            </div>
     </div>
 </div>
 
 <script>
-    const ctx = document.getElementById('whareChart').getContext('2d');
-    
-    let whareChart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: [
-                ['Taha Tinana', '(Physical)'],
-                ['Taha Hinengaro', '(Mental)'],
-                ['Taha Whānau', '(Social)'],
-                ['Taha Wairua', '(Spiritual)']
-            ],
-            datasets: [{
-                label: 'The Four Walls',
-                data: [7, 6, 8, 5],
-                backgroundColor: 'rgba(39, 60, 117, 0.4)',
-                borderColor: '#273c75',
-                pointBackgroundColor: '#273c75',
-                borderWidth: 2
-            }, {
-                // The Orthogonal Base/Apex representing Whenua
-                label: 'Whenua (Foundation)',
-                data: [9, 9, 9, 9], 
-                backgroundColor: 'rgba(68, 189, 50, 0.15)',
-                borderColor: '#44bd32',
-                borderDash: [5, 5],
-                pointRadius: 0,
-                fill: true
-            }]
-        },
-        options: {
-            scales: {
-                r: {
-                    min: 0,
-                    max: 10,
-                    ticks: { display: false },
-                    grid: { color: '#dcdde1' },
-                    pointLabels: {
-                        font: { size: 12, weight: '600' },
-                        centerPointLabels: true
-                    }
-                }
-            },
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
+    let isWhenuaUnlocked = false;
+    let mainChart;
 
-    function updateChart() {
-        const whenuaVal = document.getElementById('whenua').value;
-        // Update the main dimensions
-        whareChart.data.datasets[0].data = [
+    function initMainChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: [['Taha Tinana', '(Physical)'], ['Taha Hinengaro', '(Mental)'], ['Taha Whānau', '(Social)'], ['Taha Wairua', '(Spiritual)']],
+                datasets: [{
+                    label: 'My Wellbeing',
+                    data: [5, 5, 5, 5],
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    borderColor: '#3498db',
+                    borderWidth: 2
+                }, {
+                    label: 'Whenua (Foundation)',
+                    data: [0, 0, 0, 0], // Hidden until unlocked
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    borderColor: '#27ae60',
+                    borderDash: [5, 5],
+                    fill: true,
+                    hidden: true
+                }]
+            },
+            options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } } }
+        });
+    }
+
+    function toggleWhenua() {
+        isWhenuaUnlocked = !isWhenuaUnlocked;
+        const btn = document.getElementById('unlockBtn');
+        const input = document.getElementById('whenua-input');
+        
+        if(isWhenuaUnlocked) {
+            btn.innerText = "Lock Whenua View";
+            input.style.display = "block";
+            mainChart.data.datasets[1].hidden = false;
+        } else {
+            btn.innerText = "Unlock Whenua (Foundation)";
+            input.style.display = "none";
+            mainChart.data.datasets[1].hidden = true;
+        }
+        updateMainChart();
+    }
+
+    function updateMainChart() {
+        mainChart.data.datasets[0].data = [
             document.getElementById('tinana').value,
             document.getElementById('hinengaro').value,
             document.getElementById('whanau').value,
             document.getElementById('wairua').value
         ];
-        // Update Whenua as the "orthogonal" background layer
-        whareChart.data.datasets[1].data = [whenuaVal, whenuaVal, whenuaVal, whenuaVal];
-        
-        whareChart.update();
+        if(isWhenuaUnlocked) {
+            const v = document.getElementById('whenua').value;
+            mainChart.data.datasets[1].data = [v, v, v, v];
+        }
+        mainChart.update();
     }
-</script>
 
+    function createMiniCharts() {
+        const container = document.getElementById('miniCharts');
+        for(let i=1; i<=3; i++) {
+            const card = document.createElement('div');
+            card.className = 'mini-card';
+            const randomData = Array.from({length: 4}, () => Math.floor(Math.random() * 10) + 1);
+            card.innerHTML = `
+                <h3>Profile ${String.fromCharCode(64 + i)}</h3>
+                <div class="mini-chart-container"><canvas id="mini${i}"></canvas></div>
+                <textarea placeholder="Diagnose this state..."></textarea>
+            `;
+            container.appendChild(card);
+            
+            new Chart(document.getElementById(`mini${i}`).getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: ['P', 'M', 'S', 'Sp'],
+                    datasets: [{
+                        data: randomData,
+                        backgroundColor: 'rgba(149, 165, 166, 0.2)',
+                        borderColor: '#95a5a6',
+                        pointRadius: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, scales: { r: { min: 0, max: 10, ticks: { display: false } } } }
+            });
+        }
+    }
+
+    window.onload = () => {
+        initMainChart();
+        createMiniCharts();
+    };
+</script>
 </body>
 </html>
