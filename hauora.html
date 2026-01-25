@@ -3,69 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Te Whare Tapa Whā + Whenua</title>
+    <title>Te Whare Tapa Whā: Pyramidal Model</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f4f8; color: #2d3436; display: flex; flex-direction: column; align-items: center; padding: 40px; }
-        .container { background: #ffffff; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 900px; width: 100%; }
-        h1 { color: #0984e3; text-align: center; margin-bottom: 10px; }
-        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .control { display: flex; flex-direction: column; background: #f9f9f9; padding: 10px; border-radius: 8px; border-left: 4px solid #0984e3; }
-        .control.whenua { border-left-color: #27ae60; background: #eef9f1; }
-        label { font-size: 0.85em; font-weight: 700; margin-bottom: 5px; }
-        input[type="number"] { padding: 10px; border: 1px solid #dfe6e9; border-radius: 5px; font-size: 1em; }
-        .chart-container { position: relative; height: 450px; margin: 0 auto; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f6fa; color: #2f3640; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); max-width: 850px; width: 100%; }
+        h1 { color: #273c75; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; font-style: italic; }
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .control { display: flex; flex-direction: column; padding: 12px; border-radius: 10px; background: #f1f2f6; border-bottom: 4px solid #dcdde1; }
+        .control.whenua { border-bottom-color: #44bd32; background: #e3f9e5; }
+        label { font-size: 0.8em; font-weight: bold; margin-bottom: 8px; }
+        input[type="number"] { padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1.1em; }
+        .chart-container { position: relative; height: 450px; width: 100%; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Te Whare Tapa Whā & Whenua</h1>
-    <p style="text-align: center; margin-bottom: 30px;">Reflect on your five dimensions of wellbeing (0-10).</p>
+    <h1>Te Whare Tapa Whā</h1>
+    <p class="subtitle">A Pyramidal Reflection of Holistic Wellbeing</p>
 
     <div class="input-grid">
         <div class="control">
-            <label for="tinana">Taha Tinana</label>
+            <label>Taha Tinana<br>(Physical Wellbeing)</label>
             <input type="number" id="tinana" value="7" min="0" max="10" oninput="updateChart()">
         </div>
         <div class="control">
-            <label for="hinengaro">Taha Hinengaro</label>
+            <label>Taha Hinengaro<br>(Mental Wellbeing)</label>
             <input type="number" id="hinengaro" value="6" min="0" max="10" oninput="updateChart()">
         </div>
         <div class="control">
-            <label for="whanau">Taha Whānau</label>
+            <label>Taha Whānau<br>(Social Wellbeing)</label>
             <input type="number" id="whanau" value="8" min="0" max="10" oninput="updateChart()">
         </div>
         <div class="control">
-            <label for="wairua">Taha Wairua</label>
+            <label>Taha Wairua<br>(Spiritual Wellbeing)</label>
             <input type="number" id="wairua" value="5" min="0" max="10" oninput="updateChart()">
         </div>
         <div class="control whenua">
-            <label for="whenua">Whenua (Belonging)</label>
+            <label>Whenua<br>(Belonging & Roots)</label>
             <input type="number" id="whenua" value="9" min="0" max="10" oninput="updateChart()">
         </div>
     </div>
 
     <div class="chart-container">
-        <canvas id="pyramidChart"></canvas>
+        <canvas id="whareChart"></canvas>
     </div>
 </div>
 
 <script>
-    const ctx = document.getElementById('pyramidChart').getContext('2d');
-    let pyramidChart = new Chart(ctx, {
+    const ctx = document.getElementById('whareChart').getContext('2d');
+    
+    let whareChart = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['Taha Tinana', 'Taha Hinengaro', 'Taha Whānau', 'Taha Wairua', 'Whenua'],
+            labels: [
+                ['Taha Tinana', '(Physical)'],
+                ['Taha Hinengaro', '(Mental)'],
+                ['Taha Whānau', '(Social)'],
+                ['Taha Wairua', '(Spiritual)']
+            ],
             datasets: [{
-                label: 'Wellbeing Profile',
-                data: [7, 6, 8, 5, 9],
-                fill: true,
-                backgroundColor: 'rgba(9, 132, 227, 0.2)',
-                borderColor: '#0984e3',
-                pointBackgroundColor: '#0984e3',
-                pointRadius: 5,
+                label: 'The Four Walls',
+                data: [7, 6, 8, 5],
+                backgroundColor: 'rgba(39, 60, 117, 0.4)',
+                borderColor: '#273c75',
+                pointBackgroundColor: '#273c75',
                 borderWidth: 2
+            }, {
+                // The Orthogonal Base/Apex representing Whenua
+                label: 'Whenua (Foundation)',
+                data: [9, 9, 9, 9], 
+                backgroundColor: 'rgba(68, 189, 50, 0.15)',
+                borderColor: '#44bd32',
+                borderDash: [5, 5],
+                pointRadius: 0,
+                fill: true
             }]
         },
         options: {
@@ -73,25 +87,33 @@
                 r: {
                     min: 0,
                     max: 10,
-                    ticks: { stepSize: 2, display: false },
-                    grid: { color: '#dfe6e9' },
-                    angleLines: { color: '#dfe6e9' },
-                    pointLabels: { font: { size: 14, weight: 'bold' }, color: '#2d3436' }
+                    ticks: { display: false },
+                    grid: { color: '#dcdde1' },
+                    pointLabels: {
+                        font: { size: 12, weight: '600' },
+                        centerPointLabels: true
+                    }
                 }
             },
-            plugins: { legend: { display: false } }
+            plugins: {
+                legend: { position: 'bottom' }
+            }
         }
     });
 
     function updateChart() {
-        pyramidChart.data.datasets[0].data = [
+        const whenuaVal = document.getElementById('whenua').value;
+        // Update the main dimensions
+        whareChart.data.datasets[0].data = [
             document.getElementById('tinana').value,
             document.getElementById('hinengaro').value,
             document.getElementById('whanau').value,
-            document.getElementById('wairua').value,
-            document.getElementById('whenua').value
+            document.getElementById('wairua').value
         ];
-        pyramidChart.update();
+        // Update Whenua as the "orthogonal" background layer
+        whareChart.data.datasets[1].data = [whenuaVal, whenuaVal, whenuaVal, whenuaVal];
+        
+        whareChart.update();
     }
 </script>
 
