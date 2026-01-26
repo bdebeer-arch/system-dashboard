@@ -13,275 +13,207 @@
 
         body, html {
             margin: 0; padding: 0; height: 100%; overflow: hidden;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             background: #f0f2f5;
         }
 
-        /* Input Bar */
+        /* Setup Bar */
         #setup {
-            position: absolute; top: 0; width: 100%; height: 120px;
-            background: #ffffff; display: flex; align-items: center;
-            justify-content: center; gap: 20px; z-index: 200;
-            border-bottom: 3px solid #3498db; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative; height: 130px; z-index: 1000;
+            background: white; display: flex; align-items: center;
+            justify-content: center; gap: 20px; border-bottom: 3px solid #3498db;
         }
 
-        .input-group { display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 4px; }
-        
-        textarea { 
-            padding: 10px; width: 300px; height: 60px; 
-            border-radius: 8px; border: 2px solid #ddd; 
-            font-size: 13px; resize: none; transition: border 0.3s;
-        }
-        textarea:focus { border-color: #3498db; outline: none; }
+        textarea { width: 280px; height: 70px; border-radius: 8px; border: 2px solid #ddd; padding: 8px; resize: none; }
+        button { padding: 15px 30px; cursor: pointer; background: #27ae60; color: white; border: none; border-radius: 50px; font-weight: bold; }
 
-        #start-btn { 
-            padding: 15px 35px; cursor: pointer; 
-            background: #27ae60; color: white; 
-            border: none; border-radius: 50px; 
-            font-weight: 900; box-shadow: 0 4px 0 #1e8449; transition: 0.1s;
-        }
-        #start-btn:active { transform: translateY(3px); box-shadow: none; }
-
-        /* The Stage */
+        /* Stage */
         #stage {
-            position: relative; width: 100vw; height: calc(100vh - 120px);
-            margin-top: 120px; display: flex;
+            position: relative; width: 100vw; height: calc(100vh - 130px);
+            display: flex; touch-action: none;
         }
 
-        .half { flex: 1; position: relative; overflow: hidden; transition: background 1.5s ease; }
+        .half { flex: 1; position: relative; overflow: hidden; pointer-events: none; }
         #left-half { background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress)); }
-        #right-half { background-color: #ffffff; }
+        #right-half { background-color: #ffffff; border-left: 1px solid #eee; }
 
-        /* The Arena (Bigger & Better) */
-        #arena-container {
+        /* The Arena Circle */
+        #arena-circle {
             position: absolute; left: 50%; top: 50%;
             transform: translate(-50%, -50%);
-            width: 300px; height: 300px;
-            z-index: 100; display: flex; align-items: center; justify-content: center;
-        }
-
-        #arena-circle {
-            width: 240px; height: 240px;
-            background: white;
-            border: 8px solid #3498db;
+            width: 260px; height: 260px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 10px solid #3498db;
             border-radius: 50%;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none; /* Let drag events pass through to detection logic */
+            z-index: 100; box-shadow: 0 10px 50px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
         }
 
-        /* Match States */
-        .arena-glow-neg { border-left-color: #e74c3c !important; box-shadow: -15px 0 30px rgba(231, 76, 60, 0.4) !important; }
-        .arena-glow-pos { border-right-color: #2ecc71 !important; box-shadow: 15px 0 30px rgba(46, 204, 113, 0.4) !important; }
-        .arena-pulse { transform: scale(1.1); }
+        /* Visual feedback colors */
+        .glow-neg { border-left-color: #e74c3c !important; transform: translate(-50%, -50%) scale(1.05); }
+        .glow-pos { border-right-color: #2ecc71 !important; transform: translate(-50%, -50%) scale(1.05); }
 
-        .slot-text { font-size: 13px; color: #aaa; margin: 10px; font-weight: bold; text-align: center; }
-        .active-word { color: #2c3e50; font-size: 16px; border: 1px solid #eee; padding: 4px 10px; border-radius: 4px; background: #f9f9f9; }
+        .slot { font-size: 13px; color: #888; font-weight: bold; text-align: center; margin: 10px; height: 24px; }
+        .filled { color: #2c3e50; font-size: 16px; background: #eee; padding: 2px 8px; border-radius: 4px; }
 
-        /* Floating Items */
+        /* Floating Words */
         .word {
-            position: absolute; padding: 14px 22px; border-radius: 50px;
+            position: absolute; padding: 12px 20px; border-radius: 50px;
             cursor: grab; user-select: none; font-weight: bold;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15); z-index: 10;
-            background: white; border: 2px solid transparent;
-            font-size: 14px; transition: transform 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 500;
+            white-space: nowrap; transition: transform 0.1s linear;
         }
-        .word:active { cursor: grabbing; transform: scale(1.15); z-index: 500; }
-        .neg-word { background: #2c3e50; color: #fff; }
-        .pos-word { background: #fff; color: #186a3b; border-color: #2ecc71; }
+        .neg-word { background: #2c3e50; color: white; }
+        .pos-word { background: white; color: #186a3b; border: 2px solid #2ecc71; }
 
-        /* Review Sidebar */
+        /* Sidebar */
         #review {
-            position: absolute; left: 20px; bottom: 20px; width: 260px;
-            max-height: 250px; background: rgba(255, 255, 255, 0.95);
-            padding: 15px; overflow-y: auto; border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #ddd;
+            position: absolute; right: 20px; bottom: 20px; width: 220px;
+            max-height: 200px; background: rgba(0,0,0,0.8);
+            color: white; padding: 15px; border-radius: 12px; overflow-y: auto; z-index: 1100;
         }
-        .match-card { border-left: 5px solid #3498db; margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
 <div id="setup">
-    <div class="input-group">
-        <label>List 1: Challenges</label>
-        <textarea id="list1" placeholder="Type or paste here..."></textarea>
-    </div>
-    <div class="input-group">
-        <label>List 2: Strengths</label>
-        <textarea id="list2" placeholder="Type or paste here..."></textarea>
-    </div>
-    <button id="start-btn" onclick="spawnWords()">GO LIVE</button>
+    <textarea id="list1" placeholder="Challenges (Enter or comma)"></textarea>
+    <button onclick="init()">START ARENA</button>
+    <textarea id="list2" placeholder="Strengths (Enter or comma)"></textarea>
 </div>
 
 <div id="stage">
     <div id="left-half" class="half"></div>
-    
-    <div id="arena-container">
-        <div id="arena-circle">
-            <div id="slot-neg" class="slot-text">DRAG CHALLENGE</div>
-            <div style="font-weight: 900; color: #3498db; font-size: 20px;">ARENA</div>
-            <div id="slot-pos" class="slot-text">DRAG STRENGTH</div>
-        </div>
+    <div id="arena-circle">
+        <div id="s-neg" class="slot">DROP CHALLENGE</div>
+        <div style="font-size: 24px; font-weight: 900; color: #3498db;">ARENA</div>
+        <div id="s-pos" class="slot">DROP STRENGTH</div>
     </div>
-
     <div id="right-half" class="half"></div>
-    
-    <div id="review">
-        <div style="font-weight: bold; margin-bottom: 10px; color: #34495e;">Completed Matches</div>
-        <div id="match-log"></div>
-    </div>
+    <div id="review"><strong>Matches:</strong><div id="log"></div></div>
 </div>
 
 <script>
-    let words = [];
+    let items = [];
+    let dragObj = null;
     let activeNeg = null;
     let activePos = null;
-    let matchesMade = 0;
-    let totalItems = 0;
+    let totalMatches = 0;
+    let matchCount = 0;
 
-    function spawnWords() {
+    function init() {
         const parse = (id) => document.getElementById(id).value.split(/[,\n]/).map(s => s.trim()).filter(s => s);
         const l1 = parse('list1'); const l2 = parse('list2');
         
         document.getElementById('left-half').innerHTML = '';
         document.getElementById('right-half').innerHTML = '';
-        document.getElementById('match-log').innerHTML = '';
-        words = []; matchesMade = 0; activeNeg = null; activePos = null;
-        totalItems = Math.max(l1.length, l2.length);
+        document.getElementById('log').innerHTML = '';
+        items = []; matchCount = 0; activeNeg = null; activePos = null;
+        totalMatches = Math.max(l1.length, l2.length);
         updateProgress();
 
-        l1.forEach(t => createWord(t, 'neg', document.getElementById('left-half')));
-        l2.forEach(t => createWord(t, 'pos', document.getElementById('right-half')));
-        
-        requestAnimationFrame(animate);
+        l1.forEach(t => createWord(t, 'neg'));
+        l2.forEach(t => createWord(t, 'pos'));
+        requestAnimationFrame(loop);
     }
 
-    function createWord(text, type, container) {
+    function createWord(text, type) {
         const el = document.createElement('div');
         el.className = `word ${type}-word`;
         el.innerText = text;
-        container.appendChild(el);
+        document.getElementById('stage').appendChild(el);
 
         const data = {
-            el: el,
-            type: type,
-            x: Math.random() * (container.offsetWidth - 150),
-            y: Math.random() * (container.offsetHeight - 80),
-            vx: (Math.random() - 0.5) * 1.5,
-            vy: (Math.random() - 0.5) * 1.5,
-            isDragging: false
+            el, type,
+            x: type === 'neg' ? Math.random() * (window.innerWidth/2 - 150) : (window.innerWidth/2) + Math.random() * (window.innerWidth/2 - 150),
+            y: Math.random() * (window.innerHeight - 300) + 50,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            dragging: false
         };
 
         el.onmousedown = (e) => {
-            data.isDragging = true;
-            data.vx = 0; data.vy = 0;
+            dragObj = data;
+            data.dragging = true;
         };
 
-        window.onmousemove = (e) => {
-            if (!data.isDragging) return;
-            const stageRect = document.getElementById('stage').getBoundingClientRect();
-            
-            // Mouse tracking
-            if (type === 'neg') {
-                data.x = e.clientX - 60;
-            } else {
-                data.x = e.clientX - (window.innerWidth / 2) - 60;
-            }
-            data.y = e.clientY - stageRect.top - 25;
-
-            // Visual Cue: Highlight arena if word is hovering near center
-            const dist = Math.hypot(e.clientX - window.innerWidth/2, e.clientY - (stageRect.top + stageRect.height/2));
-            const arena = document.getElementById('arena-circle');
-            if (dist < 180) {
-                arena.classList.add(type === 'neg' ? 'arena-glow-neg' : 'arena-glow-pos');
-            } else {
-                arena.classList.remove('arena-glow-neg', 'arena-glow-pos');
-            }
-        };
-
-        window.onmouseup = (e) => {
-            if (!data.isDragging) return;
-            data.isDragging = false;
-            
-            const stageRect = document.getElementById('stage').getBoundingClientRect();
-            const dist = Math.hypot(e.clientX - window.innerWidth/2, e.clientY - (stageRect.top + stageRect.height/2));
-
-            // Magnet Snapping: If within 200px of center, it matches
-            if (dist < 200) {
-                snapToArena(data);
-            } else {
-                // Return to floating with new velocity
-                data.vx = (Math.random() - 0.5) * 1.5;
-                data.vy = (Math.random() - 0.5) * 1.5;
-                document.getElementById('arena-circle').classList.remove('arena-glow-neg', 'arena-glow-pos');
-            }
-        };
-
-        words.push(data);
+        items.push(data);
     }
 
-    function snapToArena(data) {
-        const arena = document.getElementById('arena-circle');
-        if (data.type === 'neg') {
-            if(activeNeg) activeNeg.el.style.display = 'block';
-            activeNeg = data;
-            document.getElementById('slot-neg').innerHTML = `<div class="active-word">${data.el.innerText}</div>`;
-        } else {
-            if(activePos) activePos.el.style.display = 'block';
-            activePos = data;
-            document.getElementById('slot-pos').innerHTML = `<div class="active-word">${data.el.innerText}</div>`;
+    window.onmousemove = (e) => {
+        if (!dragObj) return;
+        const stage = document.getElementById('stage').getBoundingClientRect();
+        dragObj.x = e.clientX - 60;
+        dragObj.y = e.clientY - stage.top - 20;
+
+        // Visual Feedback
+        const arena = document.getElementById('arena-circle').getBoundingClientRect();
+        const dist = Math.hypot(e.clientX - (arena.left + arena.width/2), e.clientY - (arena.top + arena.height/2));
+        const arenaEl = document.getElementById('arena-circle');
+        
+        arenaEl.classList.toggle('glow-neg', dist < 150 && dragObj.type === 'neg');
+        arenaEl.classList.toggle('glow-pos', dist < 150 && dragObj.type === 'pos');
+    };
+
+    window.onmouseup = (e) => {
+        if (!dragObj) return;
+        const arena = document.getElementById('arena-circle').getBoundingClientRect();
+        const dist = Math.hypot(e.clientX - (arena.left + arena.width/2), e.clientY - (arena.top + arena.height/2));
+
+        if (dist < 150) {
+            if (dragObj.type === 'neg') {
+                if (activeNeg) activeNeg.el.style.display = 'block';
+                activeNeg = dragObj;
+                document.getElementById('s-neg').innerHTML = `<span class="filled">${dragObj.el.innerText}</span>`;
+            } else {
+                if (activePos) activePos.el.style.display = 'block';
+                activePos = dragObj;
+                document.getElementById('s-pos').innerHTML = `<span class="filled">${dragObj.el.innerText}</span>`;
+            }
+            dragObj.el.style.display = 'none';
         }
-        data.el.style.display = 'none';
-        arena.classList.add('arena-pulse');
-        setTimeout(() => arena.classList.remove('arena-pulse'), 300);
 
-        if (activeNeg && activePos) {
-            setTimeout(finalizeMatch, 600);
-        }
-    }
+        document.getElementById('arena-circle').classList.remove('glow-neg', 'glow-pos');
+        dragObj.dragging = false;
+        dragObj = null;
 
-    function finalizeMatch() {
-        const log = document.getElementById('match-log');
-        const card = document.createElement('div');
-        card.className = 'match-card';
-        card.innerHTML = `<strong>Challenge:</strong> ${activeNeg.el.innerText}<br><strong>Strength:</strong> ${activePos.el.innerText}`;
-        log.prepend(card);
+        if (activeNeg && activePos) finalize();
+    };
 
-        words = words.filter(w => w !== activeNeg && w !== activePos);
+    function finalize() {
+        const entry = document.createElement('div');
+        entry.style.fontSize = '12px'; entry.style.borderBottom = '1px solid #444'; entry.style.padding = '5px 0';
+        entry.innerHTML = `🛡️ ${activeNeg.el.innerText}<br>✨ ${activePos.el.innerText}`;
+        document.getElementById('log').prepend(entry);
+
+        items = items.filter(i => i !== activeNeg && i !== activePos);
         activeNeg = null; activePos = null;
+        document.getElementById('s-neg').innerText = 'DROP CHALLENGE';
+        document.getElementById('s-pos').innerText = 'DROP STRENGTH';
         
-        document.getElementById('slot-neg').innerText = 'DRAG CHALLENGE';
-        document.getElementById('slot-pos').innerText = 'DRAG STRENGTH';
-        document.getElementById('arena-circle').className = '';
-        
-        matchesMade++;
+        matchCount++;
         updateProgress();
     }
 
     function updateProgress() {
-        const ratio = totalItems > 0 ? (matchesMade / totalItems) * 100 : 0;
-        document.documentElement.style.setProperty('--progress', ratio + '%');
+        const p = (matchCount / totalMatches) * 100;
+        document.documentElement.style.setProperty('--progress', p + '%');
     }
 
-    function animate() {
-        const stageH = window.innerHeight - 120;
-        const halfW = window.innerWidth / 2;
-
-        words.forEach(w => {
-            if (!w.isDragging) {
-                w.x += w.vx; w.y += w.vy;
-                if (w.x < 10 || w.x > halfW - 140) w.vx *= -1;
-                if (w.y < 10 || w.y > stageH - 60) w.vy *= -1;
-                w.el.style.transform = `translate(${w.x}px, ${w.y}px)`;
+    function loop() {
+        const stage = document.getElementById('stage').getBoundingClientRect();
+        items.forEach(i => {
+            if (!i.dragging) {
+                i.x += i.vx; i.y += i.vy;
+                if (i.x < 0 || i.x > window.innerWidth - 120) i.vx *= -1;
+                if (i.y < 0 || i.y > stage.height - 50) i.vy *= -1;
             }
+            i.el.style.transform = `translate(${i.x}px, ${i.y}px)`;
         });
-        requestAnimationFrame(animate);
+        requestAnimationFrame(loop);
     }
 </script>
-
 </body>
 </html>
