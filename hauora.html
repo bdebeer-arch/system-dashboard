@@ -3,51 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Te Whare Tapa Whā: 3D Projection</title>
+    <title>Hauora Reflection Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; color: #2c3e50; padding: 20px; }
-        .wrapper { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .unlock-sidebar { position: absolute; top: 25px; right: 25px; text-align: right; }
-        .btn-mini { background: #dfe6e9; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.3s; color: #636e72; }
-        .btn-mini.active { background: #27ae60; color: white; }
-        .main-layout { display: grid; grid-template-columns: 300px 1fr; gap: 30px; margin-top: 40px; }
-        .input-group { margin-bottom: 12px; padding: 12px; background: #fafafa; border-radius: 8px; border: 1px solid #edf2f7; }
-        .input-group.whenua { border-color: #27ae60; background: #f0fff4; display: none; }
+        #export-content { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px; }
+        .main-layout { display: grid; grid-template-columns: 300px 1fr; gap: 40px; }
+        .input-group { margin-bottom: 15px; padding: 12px; background: #fafafa; border-radius: 8px; border-left: 4px solid #3498db; }
+        label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 8px; }
         input[type="range"] { width: 100%; cursor: pointer; accent-color: #3498db; }
-        #three-container { width: 100%; height: 400px; background: #1a1a1a; border-radius: 8px; display: none; margin-top: 20px; position: relative; }
-        .diagnostic-section { margin-top: 40px; border-top: 1px solid #edf2f7; padding-top: 30px; display: flex; gap: 10px; }
-        .mini-card { flex: 1; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; font-size: 10px; }
+        .reflection-box { margin-top: 30px; }
+        textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 15px; font-size: 14px; min-height: 100px; background: #fcfcfc; }
+        .btn-export { background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 20px; }
+        .btn-export:hover { background: #219150; }
+        @media print { .btn-export { display: none; } }
     </style>
 </head>
 <body>
 
-<div class="wrapper">
-    <h1>Te Whare Tapa Whā</h1>
-    <div class="unlock-sidebar">
-        <button id="unlockBtn" class="btn-mini" onclick="toggle3D()">Unlock 3D Whare</button>
+<div id="export-content">
+    <div class="header-flex">
+        <h1>Te Whare Tapa Whā Reflection</h1>
+        <input type="text" placeholder="Student Name" style="border:none; border-bottom:1px solid #ccc; font-size: 16px; padding: 5px;">
     </div>
 
     <div class="main-layout">
         <div class="controls">
-            <div class="input-group"><label>Physical</label><input type="range" id="t1" min="1" max="10" value="7" oninput="update()"></div>
-            <div class="input-group"><label>Mental</label><input type="range" id="t2" min="1" max="10" value="6" oninput="update()"></div>
-            <div class="input-group"><label>Social</label><input type="range" id="t3" min="1" max="10" value="8" oninput="update()"></div>
-            <div class="input-group"><label>Spiritual</label><input type="range" id="t4" min="1" max="10" value="5" oninput="update()"></div>
-            <div class="input-group whenua" id="whenuaBox"><label style="color:#27ae60;">Whenua (Height)</label><input type="range" id="t5" min="1" max="10" value="5" oninput="update()"></div>
+            <div class="input-group"><label>Taha Tinana (Physical)</label><input type="range" id="t1" min="1" max="10" value="5" oninput="update()"></div>
+            <div class="input-group"><label>Taha Hinengaro (Mental)</label><input type="range" id="t2" min="1" max="10" value="5" oninput="update()"></div>
+            <div class="input-group"><label>Taha Whānau (Social)</label><input type="range" id="t3" min="1" max="10" value="5" oninput="update()"></div>
+            <div class="input-group"><label>Taha Wairua (Spiritual)</label><input type="range" id="t4" min="1" max="10" value="5" oninput="update()"></div>
         </div>
-        <div id="chart-panel">
+        <div class="chart-box">
             <canvas id="mainChart"></canvas>
-            <div id="three-container"></div>
         </div>
     </div>
 
-    <div class="diagnostic-section" id="miniGrid"></div>
+    <div class="reflection-box">
+        <h3>Personal Reflection</h3>
+        <textarea placeholder="Identify one area of strength and one goal for growth..."></textarea>
+    </div>
+
+    <button class="btn-export" onclick="exportPDF()">Export as PDF Snapshot</button>
 </div>
 
 <script>
-    let is3D = false, mainChart, scene, camera, renderer, pyramid;
+    let mainChart;
 
     function init() {
         const ctx = document.getElementById('mainChart').getContext('2d');
@@ -55,79 +58,43 @@
             type: 'radar',
             data: {
                 labels: ['Physical', 'Mental', 'Social', 'Spiritual'],
-                datasets: [{ data: [7, 6, 8, 5], backgroundColor: 'rgba(52, 152, 219, 0.4)', borderColor: '#3498db', fill: true }]
+                datasets: [{ 
+                    label: 'Current State', 
+                    data: [5, 5, 5, 5], 
+                    backgroundColor: 'rgba(52, 152, 219, 0.4)', 
+                    borderColor: '#3498db', 
+                    borderWidth: 3,
+                    fill: true 
+                }]
             },
-            options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+            options: { 
+                responsive: true,
+                scales: { r: { min: 0, max: 10, ticks: { display: false }, grid: { color: '#eee' } } },
+                plugins: { legend: { display: false } }
+            }
         });
-        setupThreeJS();
-        initMinis();
-    }
-
-    function setupThreeJS() {
-        const container = document.getElementById('three-container');
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, container.clientWidth / 400, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(container.clientWidth, 400);
-        container.appendChild(renderer.domElement);
-
-        const geometry = new THREE.ConeGeometry(4, 5, 4); // 4 sides = Square Pyramid
-        const material = new THREE.MeshPhongMaterial({ color: 0x27ae60, transparent: true, opacity: 0.7, wireframe: false });
-        pyramid = new THREE.Mesh(geometry, material);
-        scene.add(pyramid);
-
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(5, 5, 5).normalize();
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        camera.position.z = 12;
-        camera.position.y = 2;
-
-        function animate() {
-            requestAnimationFrame(animate);
-            pyramid.rotation.y += 0.01;
-            renderer.render(scene, camera);
-        }
-        animate();
-    }
-
-    function toggle3D() {
-        is3D = !is3D;
-        document.getElementById('mainChart').style.display = is3D ? 'none' : 'block';
-        document.getElementById('three-container').style.display = is3D ? 'block' : 'none';
-        document.getElementById('whenuaBox').style.display = is3D ? 'block' : 'none';
-        document.getElementById('unlockBtn').classList.toggle('active');
-        document.getElementById('unlockBtn').innerText = is3D ? "Back to 2D" : "Unlock 3D Whare";
-        update();
     }
 
     function update() {
-        const v = [1,2,3,4,5].map(i => +document.getElementById('t'+i).value);
-        mainChart.data.datasets[0].data = v.slice(0,4);
+        const v = [1,2,3,4].map(i => document.getElementById('t'+i).value);
+        mainChart.data.datasets[0].data = v;
         mainChart.update();
-
-        if (is3D) {
-            const avgBase = (v[0] + v[1] + v[2] + v[3]) / 4;
-            pyramid.scale.set(avgBase / 5, v[4] / 5, avgBase / 5);
-        }
     }
 
-    function initMinis() {
-        for (let i = 0; i < 3; i++) {
-            const div = document.createElement('div');
-            div.className = 'mini-card';
-            div.innerHTML = `<canvas id="m${i}"></canvas>`;
-            document.getElementById('miniGrid').appendChild(div);
-            new Chart(document.getElementById('m'+i), {
-                type: 'radar',
-                data: { labels: ['P','M','S','Sp'], datasets: [{ data: [5,5,5,5], borderColor: '#bdc3c7', pointRadius: 0 }] },
-                options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } }, plugins: { legend: { display: false } } }
-            });
-        }
+    function exportPDF() {
+        const element = document.getElementById('export-content');
+        const opt = {
+            margin:       0.5,
+            filename:     'Hauora_Reflection.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
     }
 
     window.onload = init;
 </script>
+
 </body>
 </html>
