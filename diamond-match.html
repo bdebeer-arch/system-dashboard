@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hauora Diamond Match</title>
+    <style>
+        :root {
+            /* Progress variable: 0 is dark, 100 is bright */
+            --progress: 0%;
+            --dark-bg: #1a1a2e;
+            --bright-bg: #e0f7fa;
+            --accent: #ffd700;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f0f2f5;
+            transition: background 0.5s ease;
+        }
+
+        /* Setup Area */
+        #setup-zone {
+            background: #fff;
+            padding: 20px;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        textarea {
+            width: 300px;
+            height: 80px;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        button:hover { background: #34495e; }
+
+        /* Game Layout */
+        #game-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .column {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: background 0.8s ease;
+        }
+
+        /* The Left side gets brighter */
+        #left-col {
+            background-color: color-mix(in srgb, var(--dark-bg), var(--bright-bg) var(--progress));
+            color: white;
+        }
+        
+        #left-col h2 { color: white; }
+        /* When progress is high, make text dark for readability */
+        #left-col.light-mode { color: #333; }
+        #left-col.light-mode h2 { color: #333; }
+
+        #right-col {
+            background-color: #ffffff;
+            border-left: 2px dashed #ccc;
+        }
+
+        .item {
+            padding: 15px;
+            border-radius: 8px;
+            cursor: grab;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .neg-item { background: #4a4e69; color: white; }
+        .pos-item { background: #95d5b2; color: #1b4332; }
+
+        /* Match Zone */
+        #match-zone {
+            width: 200px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 4px dashed #3498db;
+            margin: 20px;
+            border-radius: 15px;
+        }
+
+        /* Review Section */
+        #review-panel {
+            width: 250px;
+            background: #222;
+            color: #fff;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .pair-card {
+            background: #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            border-left: 4px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div id="setup-zone">
+    <div>
+        <label>Negative Factors (Left):</label><br>
+        <textarea id="list1" placeholder="Stress, Poor Sleep, Conflict..."></textarea>
+    </div>
+    <div>
+        <label>Positive Factors (Right):</label><br>
+        <textarea id="list2" placeholder="Exercise, Whānau, Meditation..."></textarea>
+    </div>
+    <div style="align-self: center;">
+        <button onclick="initializeGame()">Start Session</button>
+    </div>
+</div>
+
+<div id="game-container">
+    <div id="left-col" class="column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h2>Challenges</h2>
+        <div id="neg-items-container"></div>
+    </div>
+
+    <div id="match-zone" ondrop="dropMatch(event)" ondragover="allowDrop(event)">
+        <p style="text-align: center; color: #777;">Drag items here to pair them</p>
+    </div>
+
+    <div id="right-col" class="column" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <h2>Strengths</h2>
+        <div id="pos-items-container"></div>
+    </div>
+
+    <div id="review-panel">
+        <h3>Completed Matches</h3>
+        <div id="review-list"></div>
+    </div>
+</div>
+
+<script>
+    let activePair = { neg: null, pos: null };
+    let totalInitialItems = 0;
+    let matchesMade = 0;
+
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+        ev.dataTransfer.setData("type", ev.target.classList.contains('neg-item') ? 'neg' : 'pos');
+    }
+
+    function dropMatch(ev) {
+        ev.preventDefault();
+        const id = ev.dataTransfer.getData("text");
+        const type = ev.dataTransfer.getData("type");
+        const el = document.getElementById(id);
+
+        if (type === 'neg') activePair.neg = el;
+        if (type === 'pos') activePair.pos = el;
+
+        checkMatch();
+    }
+
+    function checkMatch() {
+        if (activePair.neg && activePair.pos) {
+            // Create Review Entry
+            const reviewList = document.getElementById('review-list');
+            const entry = document.createElement('div');
+            entry.className = 'pair-card';
+            entry.innerHTML = `<strong>${activePair.neg.innerText}</strong> ↔️ ${activePair.pos.innerText}`;
+            reviewList.prepend(entry);
+
+            // Remove from columns
+            activePair.neg.remove();
+            activePair.pos.remove();
+
+            // Reset Pair
+            activePair = { neg: null, pos: null };
+            
+            // Update Progress
+            matchesMade++;
+            updateBrightness();
+        }
+    }
+
+    function updateBrightness() {
+        const percentage = (matchesMade / totalInitialItems) * 100;
+        document.documentElement.style.setProperty('--progress', percentage + '%');
+        
+        const leftCol = document.getElementById('left-col');
+        if (percentage > 50) {
+            leftCol.classList.add('light-mode');
+        }
+    }
+
+    function initializeGame() {
+        const l1 = document.getElementById('list1').value.split(',').map(i => i.trim()).filter(i => i);
+        const l2 = document.getElementById('list2').value.split(',').map(i => i.trim()).filter(i => i);
+
+        const negContainer = document.getElementById('neg-items-container');
+        const posContainer = document.getElementById('pos-items-container');
+        
+        negContainer.innerHTML = '';
+        posContainer.innerHTML = '';
+        document.getElementById('review-list').innerHTML = '';
+        matchesMade = 0;
+        updateBrightness();
+
+        totalInitialItems = Math.max(l1.length, l2.length);
+
+        l1.forEach((text, index) => {
+            const div = document.createElement('div');
+            div.className = 'item neg-item';
+            div.draggable = true;
+            div.id = 'neg-' + index;
+            div.innerText = text;
+            div.ondragstart = drag;
+            negContainer.appendChild(div);
+        });
+
+        l2.forEach((text, index) => {
+            const div = document.createElement('div');
+            div.className = 'item pos-item';
+            div.draggable = true;
+            div.id = 'pos-' + index;
+            div.innerText = text;
+            div.ondragstart = drag;
+            posContainer.appendChild(div);
+        });
+
+        alert("Game Ready! Drag one item from each side into the center zone.");
+    }
+</script>
+
+</body>
+</html>
