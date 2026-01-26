@@ -13,116 +13,153 @@
 
         body, html {
             margin: 0; padding: 0; height: 100%; overflow: hidden;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
         }
 
         /* Input Bar */
         #setup {
-            position: absolute; top: 0; width: 100%; height: 60px;
-            background: #fff; display: flex; align-items: center;
-            justify-content: center; gap: 10px; z-index: 100;
-            border-bottom: 2px solid #ddd;
+            position: absolute; top: 0; width: 100%; height: 130px;
+            background: #ffffff; display: flex; align-items: center;
+            justify-content: center; gap: 20px; z-index: 100;
+            border-bottom: 2px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        input { padding: 8px; width: 250px; border-radius: 4px; border: 1px solid #ccc; }
-        button { padding: 8px 15px; cursor: pointer; background: #2c3e50; color: white; border: none; border-radius: 4px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        
+        textarea { 
+            padding: 8px; width: 280px; height: 70px; 
+            border-radius: 6px; border: 1px solid #aaa; 
+            font-size: 13px; resize: none;
+        }
+
+        #start-btn { 
+            padding: 15px 30px; cursor: pointer; 
+            background: #27ae60; color: white; 
+            border: none; border-radius: 8px; 
+            font-weight: bold; transition: 0.2s;
+        }
+        #start-btn:hover { background: #2ecc71; transform: translateY(-2px); }
 
         /* The Arena */
         #stage {
-            position: relative; width: 100vw; height: calc(100vh - 60px);
-            margin-top: 60px; display: flex;
+            position: relative; width: 100vw; height: calc(100vh - 130px);
+            margin-top: 130px; display: flex;
         }
 
-        .half {
-            flex: 1; position: relative; overflow: hidden;
-            transition: background 1s ease;
-        }
-
-        #left-half { 
-            background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress));
-        }
+        .half { flex: 1; position: relative; overflow: hidden; transition: background 1.5s ease; }
         
-        #right-half { background-color: #fff; border-left: 1px solid #eee; }
+        /* Left side transitions from dark to light */
+        #left-half { 
+            background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress)); 
+            border-right: 1px solid rgba(0,0,0,0.1);
+        }
+        #right-half { background-color: #ffffff; }
 
-        /* The Central Match Zone */
+        /* Central Arena */
         #arena-circle {
-            position: absolute;
-            left: 50%; top: 50%;
+            position: absolute; left: 50%; top: 50%;
             transform: translate(-50%, -50%);
-            width: 180px; height: 180px;
+            width: 200px; height: 200px;
             background: rgba(255, 255, 255, 0.9);
-            border: 4px dashed #3498db;
+            border: 5px solid #3498db;
             border-radius: 50%;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            z-index: 50; box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            text-align: center; font-size: 0.8em; color: #666;
+            z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Floating Words */
+        /* Match Cues */
+        #arena-circle.has-neg { border-left-width: 12px; border-left-color: #e74c3c; }
+        #arena-circle.has-pos { border-right-width: 12px; border-right-color: #2ecc71; }
+        #arena-circle.pulse { transform: translate(-50%, -50%) scale(1.15); }
+
+        .slot { font-size: 12px; color: #888; margin: 8px; font-style: italic; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .filled { color: #222; font-weight: bold; font-style: normal; font-size: 14px; }
+
+        /* Floating Items */
         .word {
-            position: absolute;
-            padding: 10px 18px;
-            border-radius: 20px;
-            cursor: grab;
-            user-select: none;
-            font-weight: bold;
-            white-space: nowrap;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.1s;
-            z-index: 10;
+            position: absolute; padding: 12px 20px; border-radius: 30px;
+            cursor: grab; user-select: none; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10;
+            transition: transform 0.2s ease; border: 2px solid transparent;
         }
-        .word:active { cursor: grabbing; transform: scale(1.1); z-index: 60; }
-
-        .neg-word { background: #4a4e69; color: white; }
-        .pos-word { background: #95d5b2; color: #1b4332; }
+        .word:active { cursor: grabbing; transform: scale(1.1); }
+        
+        .neg-word { background: #2c3e50; color: #ecf0f1; }
+        .pos-word { background: #e8f8f5; color: #186a3b; border-color: #27ae60; }
 
         /* Review Sidebar */
         #review {
-            position: absolute; right: 0; bottom: 0; width: 200px;
-            max-height: 250px; background: rgba(0,0,0,0.8);
-            color: white; padding: 10px; overflow-y: auto; font-size: 0.8em;
-            z-index: 110; border-top-left-radius: 10px;
+            position: absolute; right: 20px; bottom: 20px; width: 240px;
+            max-height: 300px; background: rgba(0,0,0,0.85);
+            color: white; padding: 15px; overflow-y: auto; 
+            z-index: 110; border-radius: 12px; font-size: 0.9em;
+            border: 1px solid #444;
         }
+        .match-entry { border-bottom: 1px solid #444; padding: 8px 0; color: #ddd; }
+        .match-entry b { color: #5dade2; }
     </style>
 </head>
 <body>
 
 <div id="setup">
-    <input id="list1" placeholder="List 1 (Negatives) - comma separated">
-    <input id="list2" placeholder="List 2 (Positives) - comma separated">
-    <button onclick="spawnWords()">Initialize Arena</button>
+    <div class="input-group">
+        <label>CHALLENGES (Negatives)</label>
+        <textarea id="list1" placeholder="Stress, Lack of sleep&#10;Poor food&#10;Conflict"></textarea>
+    </div>
+    <div class="input-group">
+        <label>STRENGTHS (Positives)</label>
+        <textarea id="list2" placeholder="Exercise, Deep breaths&#10;Whānau time&#10;Nature"></textarea>
+    </div>
+    <button id="start-btn" onclick="spawnWords()">INITIALIZE ARENA</button>
 </div>
 
 <div id="stage">
     <div id="left-half" class="half"></div>
-    <div id="arena-circle">DROP PAIR<br>HERE</div>
+    
+    <div id="arena-circle">
+        <div id="slot-neg" class="slot">Drop Challenge...</div>
+        <div style="font-weight: 900; color: #3498db; letter-spacing: 1px;">ARENA</div>
+        <div id="slot-pos" class="slot">Drop Strength...</div>
+    </div>
+
     <div id="right-half" class="half"></div>
     
-    <div id="review"><strong>Matches:</strong><div id="match-log"></div></div>
+    <div id="review">
+        <div style="font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 5px;">Pairing Log</div>
+        <div id="match-log"></div>
+    </div>
 </div>
 
 <script>
     let words = [];
     let activeNeg = null;
     let activePos = null;
+    let matchesMade = 0;
     let totalItems = 0;
-    let matches = 0;
+
+    function parseInput(val) {
+        // Regex splits by comma OR new line
+        return val.split(/[,\n]/).map(s => s.trim()).filter(s => s.length > 0);
+    }
 
     function spawnWords() {
-        const l1 = document.getElementById('list1').value.split(',').map(s => s.trim()).filter(s => s);
-        const l2 = document.getElementById('list2').value.split(',').map(s => s.trim()).filter(s => s);
+        const l1 = parseInput(document.getElementById('list1').value);
+        const l2 = parseInput(document.getElementById('list2').value);
         
         const leftHalf = document.getElementById('left-half');
         const rightHalf = document.getElementById('right-half');
         
+        // Reset
         leftHalf.innerHTML = ''; rightHalf.innerHTML = '';
         document.getElementById('match-log').innerHTML = '';
-        words = [];
-        matches = 0;
+        words = []; matchesMade = 0;
+        activeNeg = null; activePos = null;
         totalItems = Math.max(l1.length, l2.length);
-        updateProgress();
+        updateArenaUI();
 
         l1.forEach(text => createWord(text, 'neg', leftHalf));
         l2.forEach(text => createWord(text, 'pos', rightHalf));
@@ -139,10 +176,10 @@
         const data = {
             el: el,
             type: type,
-            x: Math.random() * (container.offsetWidth - 100),
-            y: Math.random() * (container.offsetHeight - 50),
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
+            x: Math.random() * (container.offsetWidth - 150),
+            y: Math.random() * (container.offsetHeight - 60),
+            vx: (Math.random() - 0.5) * 1.2,
+            vy: (Math.random() - 0.5) * 1.2,
             isDragging: false
         };
 
@@ -153,9 +190,13 @@
 
         window.onmousemove = (e) => {
             if (data.isDragging) {
-                data.x = e.clientX - (type === 'pos' ? window.innerWidth/2 : 0) - 50;
-                data.y = e.clientY - 80;
-                checkArena(data);
+                const stageRect = document.getElementById('stage').getBoundingClientRect();
+                if (type === 'neg') {
+                    data.x = e.clientX - 50;
+                } else {
+                    data.x = e.clientX - (window.innerWidth / 2) - 50;
+                }
+                data.y = e.clientY - stageRect.top - 20;
             }
         };
 
@@ -163,63 +204,85 @@
             if (data.isDragging) {
                 data.isDragging = false;
                 el.style.zIndex = 10;
+                handleDrop(data);
             }
         };
 
         words.push(data);
     }
 
-    function checkArena(data) {
-        const arena = document.getElementById('arena-circle').getBoundingClientRect();
-        const centerX = arena.left + arena.width/2;
-        const centerY = arena.top + arena.height/2;
-        
-        // Use Global coordinates for checking the "Drop"
+    function handleDrop(data) {
+        const arena = document.getElementById('arena-circle');
+        const rect = arena.getBoundingClientRect();
         const wordRect = data.el.getBoundingClientRect();
-        const dist = Math.hypot(wordRect.left - arena.left, wordRect.top - arena.top);
 
-        if (dist < 100) {
-            if (data.type === 'neg') activeNeg = data;
-            if (data.type === 'pos') activePos = data;
-            
+        const inArena = (
+            wordRect.left < rect.right && wordRect.right > rect.left &&
+            wordRect.top < rect.bottom && wordRect.bottom > rect.top
+        );
+
+        if (inArena) {
+            if (data.type === 'neg') {
+                if(activeNeg) activeNeg.el.style.display = 'block'; 
+                activeNeg = data;
+                data.el.style.display = 'none';
+                document.getElementById('slot-neg').innerHTML = `<span class="filled">${data.el.innerText}</span>`;
+                arena.classList.add('has-neg');
+            } else {
+                if(activePos) activePos.el.style.display = 'block';
+                activePos = data;
+                data.el.style.display = 'none';
+                document.getElementById('slot-pos').innerHTML = `<span class="filled">${data.el.innerText}</span>`;
+                arena.classList.add('has-pos');
+            }
+
+            // Pulse effect
+            arena.classList.add('pulse');
+            setTimeout(() => arena.classList.remove('pulse'), 400);
+
             if (activeNeg && activePos) {
-                logMatch(activeNeg.el.innerText, activePos.el.innerText);
-                removeWord(activeNeg);
-                removeWord(activePos);
-                activeNeg = null; activePos = null;
-                matches++;
-                updateProgress();
+                setTimeout(finalizeMatch, 500); // Small delay to enjoy the match
             }
         }
     }
 
-    function removeWord(data) {
-        data.el.remove();
-        words = words.filter(w => w !== data);
-    }
-
-    function logMatch(n, p) {
+    function finalizeMatch() {
         const log = document.getElementById('match-log');
-        log.innerHTML = `<div>${n} + ${p}</div>` + log.innerHTML;
+        const div = document.createElement('div');
+        div.className = 'match-entry';
+        div.innerHTML = `<b>Challenge:</b> ${activeNeg.el.innerText}<br><b>Strength:</b> ${activePos.el.innerText}`;
+        log.prepend(div);
+
+        // Remove from simulation
+        words = words.filter(w => w !== activeNeg && w !== activePos);
+        
+        // Reset Arena UI
+        activeNeg = null; activePos = null;
+        document.getElementById('slot-neg').innerText = 'Drop Challenge...';
+        document.getElementById('slot-pos').innerText = 'Drop Strength...';
+        document.getElementById('arena-circle').classList.remove('has-neg', 'has-pos');
+        
+        matchesMade++;
+        updateArenaUI();
     }
 
-    function updateProgress() {
-        const p = (matches / totalItems) * 100;
-        document.documentElement.style.setProperty('--progress', p + '%');
+    function updateArenaUI() {
+        const ratio = totalItems > 0 ? (matchesMade / totalItems) * 100 : 0;
+        document.documentElement.style.setProperty('--progress', ratio + '%');
     }
 
     function animate() {
-        const stageHeight = window.innerHeight - 60;
-        const halfWidth = window.innerWidth / 2;
+        const stageH = window.innerHeight - 130;
+        const halfW = window.innerWidth / 2;
 
         words.forEach(w => {
             if (!w.isDragging) {
                 w.x += w.vx;
                 w.y += w.vy;
 
-                // Bounce off edges
-                if (w.x < 0 || w.x > halfWidth - 100) w.vx *= -1;
-                if (w.y < 0 || w.y > stageHeight - 50) w.vy *= -1;
+                // Bounce
+                if (w.x < 10 || w.x > halfW - 140) w.vx *= -1;
+                if (w.y < 10 || w.y > stageH - 50) w.vy *= -1;
 
                 w.el.style.left = w.x + 'px';
                 w.el.style.top = w.y + 'px';
