@@ -3,264 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hauora Diamond Match</title>
+    <title>Hauora Arena Match</title>
     <style>
         :root {
-            /* Progress variable: 0 is dark, 100 is bright */
             --progress: 0%;
-            --dark-bg: #1a1a2e;
-            --bright-bg: #e0f7fa;
-            --accent: #ffd700;
+            --dark-side: #1a1a2e;
+            --bright-side: #ffffff;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #f0f2f5;
-            transition: background 0.5s ease;
+        body, html {
+            margin: 0; padding: 0; height: 100%; overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
         }
 
-        /* Setup Area */
-        #setup-zone {
-            background: #fff;
-            padding: 20px;
+        /* Input Bar */
+        #setup {
+            position: absolute; top: 0; width: 100%; height: 60px;
+            background: #fff; display: flex; align-items: center;
+            justify-content: center; gap: 10px; z-index: 100;
             border-bottom: 2px solid #ddd;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
         }
 
-        textarea {
-            width: 300px;
-            height: 80px;
-            border-radius: 8px;
-            padding: 10px;
-            border: 1px solid #ccc;
+        input { padding: 8px; width: 250px; border-radius: 4px; border: 1px solid #ccc; }
+        button { padding: 8px 15px; cursor: pointer; background: #2c3e50; color: white; border: none; border-radius: 4px; }
+
+        /* The Arena */
+        #stage {
+            position: relative; width: 100vw; height: calc(100vh - 60px);
+            margin-top: 60px; display: flex;
         }
 
-        button {
-            padding: 10px 20px;
-            cursor: pointer;
-            background: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
+        .half {
+            flex: 1; position: relative; overflow: hidden;
+            transition: background 1s ease;
         }
 
-        button:hover { background: #34495e; }
-
-        /* Game Layout */
-        #game-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .column {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: background 0.8s ease;
-        }
-
-        /* The Left side gets brighter */
-        #left-col {
-            background-color: color-mix(in srgb, var(--dark-bg), var(--bright-bg) var(--progress));
-            color: white;
+        #left-half { 
+            background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress));
         }
         
-        #left-col h2 { color: white; }
-        /* When progress is high, make text dark for readability */
-        #left-col.light-mode { color: #333; }
-        #left-col.light-mode h2 { color: #333; }
+        #right-half { background-color: #fff; border-left: 1px solid #eee; }
 
-        #right-col {
-            background-color: #ffffff;
-            border-left: 2px dashed #ccc;
-        }
-
-        .item {
-            padding: 15px;
-            border-radius: 8px;
-            cursor: grab;
-            text-align: center;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .neg-item { background: #4a4e69; color: white; }
-        .pos-item { background: #95d5b2; color: #1b4332; }
-
-        /* Match Zone */
-        #match-zone {
-            width: 200px;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        /* The Central Match Zone */
+        #arena-circle {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px; height: 180px;
+            background: rgba(255, 255, 255, 0.9);
             border: 4px dashed #3498db;
-            margin: 20px;
-            border-radius: 15px;
+            border-radius: 50%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 50; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            text-align: center; font-size: 0.8em; color: #666;
         }
 
-        /* Review Section */
-        #review-panel {
-            width: 250px;
-            background: #222;
-            color: #fff;
-            padding: 20px;
-            overflow-y: auto;
+        /* Floating Words */
+        .word {
+            position: absolute;
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: grab;
+            user-select: none;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            z-index: 10;
         }
+        .word:active { cursor: grabbing; transform: scale(1.1); z-index: 60; }
 
-        .pair-card {
-            background: #333;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            font-size: 0.9em;
-            border-left: 4px solid var(--accent);
+        .neg-word { background: #4a4e69; color: white; }
+        .pos-word { background: #95d5b2; color: #1b4332; }
+
+        /* Review Sidebar */
+        #review {
+            position: absolute; right: 0; bottom: 0; width: 200px;
+            max-height: 250px; background: rgba(0,0,0,0.8);
+            color: white; padding: 10px; overflow-y: auto; font-size: 0.8em;
+            z-index: 110; border-top-left-radius: 10px;
         }
     </style>
 </head>
 <body>
 
-<div id="setup-zone">
-    <div>
-        <label>Negative Factors (Left):</label><br>
-        <textarea id="list1" placeholder="Stress, Poor Sleep, Conflict..."></textarea>
-    </div>
-    <div>
-        <label>Positive Factors (Right):</label><br>
-        <textarea id="list2" placeholder="Exercise, Whānau, Meditation..."></textarea>
-    </div>
-    <div style="align-self: center;">
-        <button onclick="initializeGame()">Start Session</button>
-    </div>
+<div id="setup">
+    <input id="list1" placeholder="List 1 (Negatives) - comma separated">
+    <input id="list2" placeholder="List 2 (Positives) - comma separated">
+    <button onclick="spawnWords()">Initialize Arena</button>
 </div>
 
-<div id="game-container">
-    <div id="left-col" class="column" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <h2>Challenges</h2>
-        <div id="neg-items-container"></div>
-    </div>
-
-    <div id="match-zone" ondrop="dropMatch(event)" ondragover="allowDrop(event)">
-        <p style="text-align: center; color: #777;">Drag items here to pair them</p>
-    </div>
-
-    <div id="right-col" class="column" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <h2>Strengths</h2>
-        <div id="pos-items-container"></div>
-    </div>
-
-    <div id="review-panel">
-        <h3>Completed Matches</h3>
-        <div id="review-list"></div>
-    </div>
+<div id="stage">
+    <div id="left-half" class="half"></div>
+    <div id="arena-circle">DROP PAIR<br>HERE</div>
+    <div id="right-half" class="half"></div>
+    
+    <div id="review"><strong>Matches:</strong><div id="match-log"></div></div>
 </div>
 
 <script>
-    let activePair = { neg: null, pos: null };
-    let totalInitialItems = 0;
-    let matchesMade = 0;
+    let words = [];
+    let activeNeg = null;
+    let activePos = null;
+    let totalItems = 0;
+    let matches = 0;
 
-    function allowDrop(ev) {
-        ev.preventDefault();
+    function spawnWords() {
+        const l1 = document.getElementById('list1').value.split(',').map(s => s.trim()).filter(s => s);
+        const l2 = document.getElementById('list2').value.split(',').map(s => s.trim()).filter(s => s);
+        
+        const leftHalf = document.getElementById('left-half');
+        const rightHalf = document.getElementById('right-half');
+        
+        leftHalf.innerHTML = ''; rightHalf.innerHTML = '';
+        document.getElementById('match-log').innerHTML = '';
+        words = [];
+        matches = 0;
+        totalItems = Math.max(l1.length, l2.length);
+        updateProgress();
+
+        l1.forEach(text => createWord(text, 'neg', leftHalf));
+        l2.forEach(text => createWord(text, 'pos', rightHalf));
+        
+        requestAnimationFrame(animate);
     }
 
-    function drag(ev) {
-        ev.dataTransfer.setData("text", ev.target.id);
-        ev.dataTransfer.setData("type", ev.target.classList.contains('neg-item') ? 'neg' : 'pos');
+    function createWord(text, type, container) {
+        const el = document.createElement('div');
+        el.className = `word ${type}-word`;
+        el.innerText = text;
+        container.appendChild(el);
+
+        const data = {
+            el: el,
+            type: type,
+            x: Math.random() * (container.offsetWidth - 100),
+            y: Math.random() * (container.offsetHeight - 50),
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            isDragging: false
+        };
+
+        el.onmousedown = (e) => {
+            data.isDragging = true;
+            el.style.zIndex = 1000;
+        };
+
+        window.onmousemove = (e) => {
+            if (data.isDragging) {
+                data.x = e.clientX - (type === 'pos' ? window.innerWidth/2 : 0) - 50;
+                data.y = e.clientY - 80;
+                checkArena(data);
+            }
+        };
+
+        window.onmouseup = () => {
+            if (data.isDragging) {
+                data.isDragging = false;
+                el.style.zIndex = 10;
+            }
+        };
+
+        words.push(data);
     }
 
-    function dropMatch(ev) {
-        ev.preventDefault();
-        const id = ev.dataTransfer.getData("text");
-        const type = ev.dataTransfer.getData("type");
-        const el = document.getElementById(id);
+    function checkArena(data) {
+        const arena = document.getElementById('arena-circle').getBoundingClientRect();
+        const centerX = arena.left + arena.width/2;
+        const centerY = arena.top + arena.height/2;
+        
+        // Use Global coordinates for checking the "Drop"
+        const wordRect = data.el.getBoundingClientRect();
+        const dist = Math.hypot(wordRect.left - arena.left, wordRect.top - arena.top);
 
-        if (type === 'neg') activePair.neg = el;
-        if (type === 'pos') activePair.pos = el;
-
-        checkMatch();
-    }
-
-    function checkMatch() {
-        if (activePair.neg && activePair.pos) {
-            // Create Review Entry
-            const reviewList = document.getElementById('review-list');
-            const entry = document.createElement('div');
-            entry.className = 'pair-card';
-            entry.innerHTML = `<strong>${activePair.neg.innerText}</strong> ↔️ ${activePair.pos.innerText}`;
-            reviewList.prepend(entry);
-
-            // Remove from columns
-            activePair.neg.remove();
-            activePair.pos.remove();
-
-            // Reset Pair
-            activePair = { neg: null, pos: null };
+        if (dist < 100) {
+            if (data.type === 'neg') activeNeg = data;
+            if (data.type === 'pos') activePos = data;
             
-            // Update Progress
-            matchesMade++;
-            updateBrightness();
+            if (activeNeg && activePos) {
+                logMatch(activeNeg.el.innerText, activePos.el.innerText);
+                removeWord(activeNeg);
+                removeWord(activePos);
+                activeNeg = null; activePos = null;
+                matches++;
+                updateProgress();
+            }
         }
     }
 
-    function updateBrightness() {
-        const percentage = (matchesMade / totalInitialItems) * 100;
-        document.documentElement.style.setProperty('--progress', percentage + '%');
-        
-        const leftCol = document.getElementById('left-col');
-        if (percentage > 50) {
-            leftCol.classList.add('light-mode');
-        }
+    function removeWord(data) {
+        data.el.remove();
+        words = words.filter(w => w !== data);
     }
 
-    function initializeGame() {
-        const l1 = document.getElementById('list1').value.split(',').map(i => i.trim()).filter(i => i);
-        const l2 = document.getElementById('list2').value.split(',').map(i => i.trim()).filter(i => i);
+    function logMatch(n, p) {
+        const log = document.getElementById('match-log');
+        log.innerHTML = `<div>${n} + ${p}</div>` + log.innerHTML;
+    }
 
-        const negContainer = document.getElementById('neg-items-container');
-        const posContainer = document.getElementById('pos-items-container');
-        
-        negContainer.innerHTML = '';
-        posContainer.innerHTML = '';
-        document.getElementById('review-list').innerHTML = '';
-        matchesMade = 0;
-        updateBrightness();
+    function updateProgress() {
+        const p = (matches / totalItems) * 100;
+        document.documentElement.style.setProperty('--progress', p + '%');
+    }
 
-        totalInitialItems = Math.max(l1.length, l2.length);
+    function animate() {
+        const stageHeight = window.innerHeight - 60;
+        const halfWidth = window.innerWidth / 2;
 
-        l1.forEach((text, index) => {
-            const div = document.createElement('div');
-            div.className = 'item neg-item';
-            div.draggable = true;
-            div.id = 'neg-' + index;
-            div.innerText = text;
-            div.ondragstart = drag;
-            negContainer.appendChild(div);
+        words.forEach(w => {
+            if (!w.isDragging) {
+                w.x += w.vx;
+                w.y += w.vy;
+
+                // Bounce off edges
+                if (w.x < 0 || w.x > halfWidth - 100) w.vx *= -1;
+                if (w.y < 0 || w.y > stageHeight - 50) w.vy *= -1;
+
+                w.el.style.left = w.x + 'px';
+                w.el.style.top = w.y + 'px';
+            }
         });
-
-        l2.forEach((text, index) => {
-            const div = document.createElement('div');
-            div.className = 'item pos-item';
-            div.draggable = true;
-            div.id = 'pos-' + index;
-            div.innerText = text;
-            div.ondragstart = drag;
-            posContainer.appendChild(div);
-        });
-
-        alert("Game Ready! Drag one item from each side into the center zone.");
+        requestAnimationFrame(animate);
     }
 </script>
 
