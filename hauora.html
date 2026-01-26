@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Te Whare Tapa Whā Reflection Tool</title>
+    <title>Te Whare Tapa Whā: Pyramidal Projection</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f4f7f6; color: #333; padding: 20px; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f5f7f9; color: #2c3e50; padding: 20px; }
         .wrapper { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         
-        /* Small, side-aligned Unlock Feature */
-        .unlock-sidebar { position: absolute; top: 20px; right: 20px; text-align: right; }
-        .unlock-sidebar label { font-size: 11px; color: #7f8c8d; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-mini { background: #cfd8dc; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; transition: 0.2s; }
-        .btn-mini.active { background: #27ae60; color: white; }
+        /* Discreet Sidebar Unlock */
+        .unlock-sidebar { position: absolute; top: 25px; right: 25px; text-align: right; z-index: 10; }
+        .unlock-sidebar label { font-size: 10px; color: #95a5a6; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+        .btn-mini { background: #dfe6e9; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.3s; color: #636e72; }
+        .btn-mini.active { background: #27ae60; color: white; box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3); }
 
-        .main-layout { display: grid; grid-template-columns: 320px 1fr; gap: 30px; margin-top: 40px; }
-        .input-group { margin-bottom: 12px; padding: 10px; background: #fafafa; border-radius: 8px; border: 1px solid #eee; }
-        .input-group.whenua { border-color: #27ae60; background: #f1f9f3; display: none; }
-        label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 6px; }
+        .main-layout { display: grid; grid-template-columns: 300px 1fr; gap: 40px; margin-top: 20px; }
+        .input-group { margin-bottom: 12px; padding: 12px; background: #fafafa; border-radius: 8px; border: 1px solid #edf2f7; }
+        .input-group.whenua { border-color: #27ae60; background: #f0fff4; display: none; }
+        label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 8px; }
         input[type="range"] { width: 100%; cursor: pointer; accent-color: #3498db; }
         
-        .diagnostic-section { margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px; }
+        .diagnostic-section { margin-top: 40px; border-top: 1px solid #edf2f7; padding-top: 30px; }
         .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 15px; }
-        .mini-card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; font-size: 12px; text-align: center; }
+        .mini-card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center; }
         .mini-chart-container { height: 160px; }
-        textarea { width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 8px; font-size: 11px; padding: 5px; resize: none; }
-        h1 { font-size: 22px; color: #2c3e50; margin: 0; }
+        textarea { width: 100%; border: 1px solid #e2e8f0; border-radius: 4px; margin-top: 10px; font-size: 11px; padding: 8px; resize: none; background: #fcfcfc; }
+        h1 { font-size: 20px; letter-spacing: -0.5px; }
     </style>
 </head>
 <body>
@@ -35,23 +35,23 @@
     <h1>Te Whare Tapa Whā</h1>
     
     <div class="unlock-sidebar">
-        <label>Dimensions</label>
-        <button id="unlockBtn" class="btn-mini" onclick="toggle3D()">Unlock 3D</button>
+        <label>View Mode</label>
+        <button id="unlockBtn" class="btn-mini" onclick="toggle3D()">Unlock 3D View</button>
     </div>
 
     <div class="main-layout">
         <div class="controls">
-            <div class="input-group"><label>Taha Tinana (Physical)</label><input type="range" id="t1" min="1" max="10" value="5" oninput="update()"></div>
-            <div class="input-group"><label>Taha Hinengaro (Mental)</label><input type="range" id="t2" min="1" max="10" value="5" oninput="update()"></div>
-            <div class="input-group"><label>Taha Whānau (Social)</label><input type="range" id="t3" min="1" max="10" value="5" oninput="update()"></div>
+            <div class="input-group"><label>Taha Tinana (Physical)</label><input type="range" id="t1" min="1" max="10" value="7" oninput="update()"></div>
+            <div class="input-group"><label>Taha Hinengaro (Mental)</label><input type="range" id="t2" min="1" max="10" value="6" oninput="update()"></div>
+            <div class="input-group"><label>Taha Whānau (Social)</label><input type="range" id="t3" min="1" max="10" value="8" oninput="update()"></div>
             <div class="input-group"><label>Taha Wairua (Spiritual)</label><input type="range" id="t4" min="1" max="10" value="5" oninput="update()"></div>
-            <div class="input-group whenua" id="whenuaBox"><label style="color:#27ae60;">Whenua (Belonging)</label><input type="range" id="t5" min="1" max="10" value="1" oninput="update()"></div>
+            <div class="input-group whenua" id="whenuaBox"><label style="color:#27ae60;">Whenua (Belonging)</label><input type="range" id="t5" min="1" max="10" value="2" oninput="update()"></div>
         </div>
         <div class="chart-box"><canvas id="mainChart"></canvas></div>
     </div>
 
     <div class="diagnostic-section">
-        <label style="color: #7f8c8d; text-align:center;">DIAGNOSTIC CASE STUDIES</label>
+        <h2 style="font-size: 14px; text-align: center; color: #7f8c8d; text-transform: uppercase;">Diagnostic Case Studies</h2>
         <div class="mini-grid" id="miniGrid"></div>
     </div>
 </div>
@@ -67,19 +67,46 @@
             data: {
                 labels: [['Taha Tinana','Physical'], ['Taha Hinengaro','Mental'], ['Taha Whānau','Social'], ['Taha Wairua','Spiritual']],
                 datasets: [
-                    { label: 'Base', data: [5, 5, 5, 5], backgroundColor: 'rgba(52, 152, 219, 0.4)', borderColor: '#3498db', borderWidth: 2, fill: true },
-                    { label: 'Apex', data: [0, 0, 0, 0], backgroundColor: 'rgba(39, 174, 96, 0.3)', borderColor: '#27ae60', borderWidth: 1, pointRadius: 0, fill: true, hidden: true }
+                    { 
+                        label: 'Base (Floor)', 
+                        data: [7, 6, 8, 5], 
+                        backgroundColor: 'rgba(52, 152, 219, 0.4)', 
+                        borderColor: '#3498db', 
+                        borderWidth: 2, 
+                        fill: true 
+                    },
+                    { 
+                        label: 'Apex (Roof)', 
+                        data: [0, 0, 0, 0], 
+                        backgroundColor: 'rgba(39, 174, 96, 0.3)', 
+                        borderColor: '#27ae60', 
+                        borderWidth: 1, 
+                        pointRadius: 0, 
+                        fill: '-1', // CRITICAL: Fills to the dataset above (Base)
+                        hidden: true 
+                    }
                 ]
             },
-            options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+            options: { 
+                scales: { 
+                    r: { 
+                        min: 0, 
+                        max: 10, 
+                        ticks: { display: false },
+                        grid: { color: '#f1f2f6' },
+                        angleLines: { color: '#f1f2f6' }
+                    } 
+                }, 
+                plugins: { legend: { display: false } } 
+            }
         });
 
         const grid = document.getElementById('miniGrid');
         for (let i = 0; i < 3; i++) {
             const card = document.createElement('div');
             card.className = 'mini-card';
-            const randomData = Array.from({length: 4}, () => Math.floor(Math.random() * 8) + 2);
-            card.innerHTML = `<strong>Profile ${i+1}</strong><div class="mini-chart-container"><canvas id="mini${i}"></canvas></div><textarea placeholder="Diagnose..."></textarea>`;
+            const randomData = Array.from({length: 4}, () => Math.floor(Math.random() * 7) + 3);
+            card.innerHTML = `<strong>Profile ${i+1}</strong><div class="mini-chart-container"><canvas id="mini${i}"></canvas></div><textarea placeholder="Write diagnosis here..."></textarea>`;
             grid.appendChild(card);
             new Chart(document.getElementById(`mini${i}`).getContext('2d'), {
                 type: 'radar',
@@ -94,7 +121,7 @@
         const btn = document.getElementById('unlockBtn');
         const box = document.getElementById('whenuaBox');
         btn.classList.toggle('active');
-        btn.innerText = is3D ? "Lock 2D" : "Unlock 3D";
+        btn.innerText = is3D ? "Lock 2D View" : "Unlock 3D View";
         box.style.display = is3D ? "block" : "none";
         update();
     }
@@ -105,12 +132,17 @@
         
         if (is3D) {
             const whenua = v[4];
-            const scale = 1 - (whenua / 20); // Creates the "inward" pull for the apex
+            // Simulate the Z-axis by tapering the second layer inward
+            const scale = 1 - (whenua / 20); 
             mainChart.data.datasets[1].data = v.slice(0,4).map(val => val * scale);
             mainChart.data.datasets[1].hidden = false;
-            mainChart.data.datasets[1].backgroundColor = `rgba(39, 174, 96, ${0.1 + whenua/20})`;
+            
+            // Perspective depth cue
+            mainChart.data.datasets[0].backgroundColor = 'rgba(52, 152, 219, 0.15)';
+            mainChart.data.datasets[1].backgroundColor = `rgba(39, 174, 96, ${0.1 + whenua/15})`;
         } else {
             mainChart.data.datasets[1].hidden = true;
+            mainChart.data.datasets[0].backgroundColor = 'rgba(52, 152, 219, 0.4)';
         }
         mainChart.update();
     }
