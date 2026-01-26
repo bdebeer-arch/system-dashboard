@@ -13,7 +13,7 @@
 
         body, html {
             margin: 0; padding: 0; height: 100%; overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: #f0f2f5;
         }
 
@@ -24,8 +24,12 @@
             justify-content: center; gap: 20px; border-bottom: 3px solid #3498db;
         }
 
-        textarea { width: 280px; height: 70px; border-radius: 8px; border: 2px solid #ddd; padding: 8px; resize: none; }
-        button { padding: 15px 30px; cursor: pointer; background: #27ae60; color: white; border: none; border-radius: 50px; font-weight: bold; }
+        textarea { width: 250px; height: 70px; border-radius: 8px; border: 2px solid #ddd; padding: 8px; resize: none; font-size: 12px; }
+        .controls { display: flex; flex-direction: column; gap: 5px; }
+        
+        button { padding: 12px 24px; cursor: pointer; border: none; border-radius: 50px; font-weight: bold; transition: 0.2s; }
+        #btn-start { background: #27ae60; color: white; }
+        #btn-review { background: #3498db; color: white; }
 
         /* Stage */
         #stage {
@@ -37,7 +41,7 @@
         #left-half { background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress)); }
         #right-half { background-color: #ffffff; border-left: 1px solid #eee; }
 
-        /* The Arena Circle */
+        /* Arena Circle */
         #arena-circle {
             position: absolute; left: 50%; top: 50%;
             transform: translate(-50%, -50%);
@@ -48,15 +52,14 @@
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             z-index: 100; box-shadow: 0 10px 50px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Visual feedback colors */
-        .glow-neg { border-left-color: #e74c3c !important; transform: translate(-50%, -50%) scale(1.05); }
-        .glow-pos { border-right-color: #2ecc71 !important; transform: translate(-50%, -50%) scale(1.05); }
+        .glow-neg { border-left-color: #e74c3c !important; }
+        .glow-pos { border-right-color: #2ecc71 !important; }
 
-        .slot { font-size: 13px; color: #888; font-weight: bold; text-align: center; margin: 10px; height: 24px; }
-        .filled { color: #2c3e50; font-size: 16px; background: #eee; padding: 2px 8px; border-radius: 4px; }
+        .slot { font-size: 13px; color: #888; font-weight: bold; text-align: center; margin: 10px; min-height: 24px; max-width: 200px; overflow: hidden; }
+        .filled { color: #2c3e50; font-size: 16px; background: #eee; padding: 4px 10px; border-radius: 20px; display: inline-block; }
 
         /* Floating Words */
         .word {
@@ -68,20 +71,50 @@
         .neg-word { background: #2c3e50; color: white; }
         .pos-word { background: white; color: #186a3b; border: 2px solid #2ecc71; }
 
-        /* Sidebar */
-        #review {
-            position: absolute; right: 20px; bottom: 20px; width: 220px;
-            max-height: 200px; background: rgba(0,0,0,0.8);
-            color: white; padding: 15px; border-radius: 12px; overflow-y: auto; z-index: 1100;
+        /* EXPANDED OVERLAY */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 26, 46, 0.98);
+            z-index: 2000; display: none;
+            flex-direction: column; align-items: center; padding: 40px;
+            overflow-y: auto; color: white;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .overlay-grid {
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            gap: 20px; align-items: center; max-width: 900px; width: 100%;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px; border-radius: 15px; text-align: center;
+            font-size: 1.2em; font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .result-card.neg { border-left: 8px solid #e74c3c; }
+        .result-card.pos { border-left: 8px solid #2ecc71; }
+        .arrow { font-size: 24px; color: #3498db; }
+
+        .close-btn {
+            position: fixed; top: 20px; right: 20px;
+            padding: 10px 20px; background: #e74c3c; color: white;
+            border-radius: 5px; cursor: pointer; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
 <div id="setup">
-    <textarea id="list1" placeholder="Challenges (Enter or comma)"></textarea>
-    <button onclick="init()">START ARENA</button>
-    <textarea id="list2" placeholder="Strengths (Enter or comma)"></textarea>
+    <textarea id="list1" placeholder="Challenges... (Negative)"></textarea>
+    <div class="controls">
+        <button id="btn-start" onclick="init()">START ARENA</button>
+        <button id="btn-review" onclick="toggleOverlay(true)">REVIEW LOG</button>
+    </div>
+    <textarea id="list2" placeholder="Strengths... (Positive)"></textarea>
 </div>
 
 <div id="stage">
@@ -92,7 +125,13 @@
         <div id="s-pos" class="slot">DROP STRENGTH</div>
     </div>
     <div id="right-half" class="half"></div>
-    <div id="review"><strong>Matches:</strong><div id="log"></div></div>
+</div>
+
+<div id="overlay">
+    <div class="close-btn" onclick="toggleOverlay(false)">BACK TO GAME</div>
+    <h1>Hauora Matching Summary</h1>
+    <p>Transformation in progress: <span id="overlay-progress">0</span>% Complete</p>
+    <div id="overlay-grid" class="overlay-grid"></div>
 </div>
 
 <script>
@@ -100,8 +139,8 @@
     let dragObj = null;
     let activeNeg = null;
     let activePos = null;
+    let matches = [];
     let totalMatches = 0;
-    let matchCount = 0;
 
     function init() {
         const parse = (id) => document.getElementById(id).value.split(/[,\n]/).map(s => s.trim()).filter(s => s);
@@ -109,10 +148,11 @@
         
         document.getElementById('left-half').innerHTML = '';
         document.getElementById('right-half').innerHTML = '';
-        document.getElementById('log').innerHTML = '';
-        items = []; matchCount = 0; activeNeg = null; activePos = null;
+        document.getElementById('overlay-grid').innerHTML = '';
+        items = []; matches = []; activeNeg = null; activePos = null;
         totalMatches = Math.max(l1.length, l2.length);
-        updateProgress();
+        
+        updateSystem();
 
         l1.forEach(t => createWord(t, 'neg'));
         l2.forEach(t => createWord(t, 'pos'));
@@ -127,18 +167,14 @@
 
         const data = {
             el, type,
-            x: type === 'neg' ? Math.random() * (window.innerWidth/2 - 150) : (window.innerWidth/2) + Math.random() * (window.innerWidth/2 - 150),
+            x: type === 'neg' ? Math.random() * (window.innerWidth/2 - 200) : (window.innerWidth/2) + Math.random() * (window.innerWidth/2 - 200),
             y: Math.random() * (window.innerHeight - 300) + 50,
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
+            vx: (Math.random() - 0.5) * 1.8,
+            vy: (Math.random() - 0.5) * 1.8,
             dragging: false
         };
 
-        el.onmousedown = (e) => {
-            dragObj = data;
-            data.dragging = true;
-        };
-
+        el.onmousedown = (e) => { dragObj = data; data.dragging = true; };
         items.push(data);
     }
 
@@ -148,13 +184,12 @@
         dragObj.x = e.clientX - 60;
         dragObj.y = e.clientY - stage.top - 20;
 
-        // Visual Feedback
         const arena = document.getElementById('arena-circle').getBoundingClientRect();
         const dist = Math.hypot(e.clientX - (arena.left + arena.width/2), e.clientY - (arena.top + arena.height/2));
         const arenaEl = document.getElementById('arena-circle');
         
-        arenaEl.classList.toggle('glow-neg', dist < 150 && dragObj.type === 'neg');
-        arenaEl.classList.toggle('glow-pos', dist < 150 && dragObj.type === 'pos');
+        arenaEl.classList.toggle('glow-neg', dist < 160 && dragObj.type === 'neg');
+        arenaEl.classList.toggle('glow-pos', dist < 160 && dragObj.type === 'pos');
     };
 
     window.onmouseup = (e) => {
@@ -162,7 +197,7 @@
         const arena = document.getElementById('arena-circle').getBoundingClientRect();
         const dist = Math.hypot(e.clientX - (arena.left + arena.width/2), e.clientY - (arena.top + arena.height/2));
 
-        if (dist < 150) {
+        if (dist < 160) {
             if (dragObj.type === 'neg') {
                 if (activeNeg) activeNeg.el.style.display = 'block';
                 activeNeg = dragObj;
@@ -174,32 +209,39 @@
             }
             dragObj.el.style.display = 'none';
         }
-
         document.getElementById('arena-circle').classList.remove('glow-neg', 'glow-pos');
-        dragObj.dragging = false;
-        dragObj = null;
+        dragObj.dragging = false; dragObj = null;
 
         if (activeNeg && activePos) finalize();
     };
 
     function finalize() {
-        const entry = document.createElement('div');
-        entry.style.fontSize = '12px'; entry.style.borderBottom = '1px solid #444'; entry.style.padding = '5px 0';
-        entry.innerHTML = `🛡️ ${activeNeg.el.innerText}<br>✨ ${activePos.el.innerText}`;
-        document.getElementById('log').prepend(entry);
+        matches.push({ n: activeNeg.el.innerText, p: activePos.el.innerText });
+        
+        const row = `<div class="result-card neg">${activeNeg.el.innerText}</div><div class="arrow">➔</div><div class="result-card pos">${activePos.el.innerText}</div>`;
+        document.getElementById('overlay-grid').insertAdjacentHTML('afterbegin', row);
 
         items = items.filter(i => i !== activeNeg && i !== activePos);
         activeNeg = null; activePos = null;
         document.getElementById('s-neg').innerText = 'DROP CHALLENGE';
         document.getElementById('s-pos').innerText = 'DROP STRENGTH';
         
-        matchCount++;
-        updateProgress();
+        updateSystem();
+
+        // Auto-expand if finished
+        if (items.length === 0 && totalMatches > 0) {
+            setTimeout(() => toggleOverlay(true), 1000);
+        }
     }
 
-    function updateProgress() {
-        const p = (matchCount / totalMatches) * 100;
+    function updateSystem() {
+        const p = totalMatches > 0 ? (matches.length / totalMatches) * 100 : 0;
         document.documentElement.style.setProperty('--progress', p + '%');
+        document.getElementById('overlay-progress').innerText = Math.round(p);
+    }
+
+    function toggleOverlay(show) {
+        document.getElementById('overlay').style.display = show ? 'flex' : 'none';
     }
 
     function loop() {
