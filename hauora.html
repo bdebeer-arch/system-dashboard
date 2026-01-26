@@ -3,34 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hauora Reflection & Diagnostic Tool</title>
+    <title>Hauora Reflection Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Base Styling */
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; color: #2c3e50; padding: 20px; }
-        .wrapper { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
-        .main-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; margin-bottom: 20px; }
-        .input-group { margin-bottom: 12px; padding: 10px; background: #fafafa; border-radius: 8px; border-left: 4px solid #3498db; }
-        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; }
-        input[type="range"] { width: 100%; cursor: pointer; accent-color: #3498db; }
-        .section-divider { border-top: 1px solid #edf2f7; padding-top: 20px; margin-top: 20px; }
-        .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
-        .mini-card { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; }
-        .mini-chart-container { height: 140px; }
-        textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 13px; background: #fcfcfc; resize: none; box-sizing: border-box; }
-        .btn-print { background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; font-size: 14px; }
-        .commentary { font-style: italic; color: #7f8c8d; font-size: 0.85em; margin-bottom: 10px; text-align: center; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; color: #2c3e50; padding: 10px; }
+        .wrapper { max-width: 850px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-bottom: 15px; }
+        .main-layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; margin-bottom: 10px; }
+        .input-group { margin-bottom: 8px; padding: 8px; background: #fafafa; border-radius: 6px; border-left: 4px solid #3498db; }
+        label { display: block; font-weight: bold; font-size: 11px; margin-bottom: 4px; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #3498db; margin: 0; }
+        .section-divider { border-top: 1px solid #edf2f7; padding-top: 10px; margin-top: 10px; }
+        .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+        .mini-card { background: #fff; border: 1px solid #eee; padding: 8px; border-radius: 6px; text-align: center; }
+        .mini-chart-container { height: 120px; }
+        textarea { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; font-size: 11px; background: #fcfcfc; resize: none; box-sizing: border-box; }
+        .btn-print { background: #27ae60; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; font-size: 13px; }
+        .commentary { font-style: italic; color: #7f8c8d; font-size: 0.8em; margin-bottom: 5px; text-align: center; }
 
-        /* PRINT SPECIFIC RULES: Ensuring A4 Fit */
         @media print {
             body { background: white; padding: 0; }
             .wrapper { box-shadow: none; width: 100%; max-width: 100%; padding: 0; margin: 0; }
             .btn-print, .input-group, input[type="range"] { display: none !important; }
-            .main-layout { grid-template-columns: 1fr; } /* Stack for print if needed, or keep 2-col */
-            .header-flex h1 { font-size: 18px; }
-            textarea { border: 1px solid #eee; background: transparent; }
-            @page { size: A4; margin: 1cm; }
+            .header-flex h1 { font-size: 16px; margin: 0; }
+            @page { size: A4; margin: 0.8cm; }
+            .mini-chart-container { height: 110px; }
         }
     </style>
 </head>
@@ -39,7 +36,7 @@
 <div class="wrapper">
     <div class="header-flex">
         <h1>Te Whare Tapa Whā Reflection</h1>
-        <input type="text" id="studentName" placeholder="Student Name" style="border:none; border-bottom:1px solid #ccc; font-size: 16px; padding: 5px; width: 200px;">
+        <input type="text" id="studentName" placeholder="Student Name" style="border:none; border-bottom:1px solid #ccc; font-size: 14px; padding: 2px; width: 180px;">
     </div>
 
     <div class="main-layout">
@@ -48,7 +45,6 @@
             <div class="input-group"><label>Taha Hinengaro (Mental)</label><input type="range" id="t2" min="1" max="10" value="5" oninput="update()"></div>
             <div class="input-group"><label>Taha Whānau (Social)</label><input type="range" id="t3" min="1" max="10" value="5" oninput="update()"></div>
             <div class="input-group"><label>Taha Wairua (Spiritual)</label><input type="range" id="t4" min="1" max="10" value="5" oninput="update()"></div>
-            <textarea placeholder="Personal notes or goals..." style="margin-top:10px;"></textarea>
         </div>
         <div class="chart-box">
             <canvas id="mainChart"></canvas>
@@ -56,15 +52,12 @@
     </div>
 
     <div class="section-divider">
-        <h2 style="font-size: 16px; color: #7f8c8d; text-align: center; margin: 0;">Case Study Analysis</h2>
-        <p class="commentary">
-            It is often easier to identify needs in others than in ourselves. By practising on these anonymous profiles, 
-            we develop a sharp eye for wellbeing, helping us identify our own needs with greater clarity.
-        </p>
+        <h2 style="font-size: 14px; color: #7f8c8d; text-align: center; margin: 0;">Case Study Analysis</h2>
+        <p class="commentary">Practising on others helps us have distance to do a better job of identifying our own wellbeing.</p>
         <div class="mini-grid" id="miniGrid"></div>
     </div>
 
-    <button class="btn-print" onclick="window.print()">Print or Save as PDF Snapshot</button>
+    <button class="btn-print" onclick="window.print()">Print Snapshot (A4)</button>
 </div>
 
 <script>
@@ -87,7 +80,15 @@
             options: { 
                 responsive: true,
                 maintainAspectRatio: true,
-                scales: { r: { min: 0, max: 10, ticks: { display: false }, grid: { color: '#eee' } } },
+                scales: { 
+                    r: { 
+                        min: 0, 
+                        max: 10, 
+                        ticks: { display: true, stepSize: 2, font: { size: 9 } }, 
+                        grid: { color: '#eee' },
+                        pointLabels: { font: { size: 10, weight: 'bold' } }
+                    } 
+                }, 
                 plugins: { legend: { display: false } }
             }
         });
@@ -98,7 +99,7 @@
             card.className = 'mini-card';
             const randomData = Array.from({length: 4}, () => Math.floor(Math.random() * 6) + 3);
             card.innerHTML = `
-                <strong style="font-size: 12px;">Profile ${i+1}</strong>
+                <strong style="font-size: 11px;">Profile ${i+1}</strong>
                 <div class="mini-chart-container"><canvas id="mini${i}"></canvas></div>
                 <textarea rows="2" placeholder="Diagnosis..."></textarea>
             `;
