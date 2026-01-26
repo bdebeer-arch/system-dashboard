@@ -13,123 +13,125 @@
 
         body, html {
             margin: 0; padding: 0; height: 100%; overflow: hidden;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: #f0f2f5;
         }
 
         /* Input Bar */
         #setup {
-            position: absolute; top: 0; width: 100%; height: 130px;
+            position: absolute; top: 0; width: 100%; height: 120px;
             background: #ffffff; display: flex; align-items: center;
-            justify-content: center; gap: 20px; z-index: 100;
-            border-bottom: 2px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            justify-content: center; gap: 20px; z-index: 200;
+            border-bottom: 3px solid #3498db; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .input-group { display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        label { font-size: 11px; font-weight: bold; color: #555; text-transform: uppercase; margin-bottom: 4px; }
         
         textarea { 
-            padding: 8px; width: 280px; height: 70px; 
-            border-radius: 6px; border: 1px solid #aaa; 
-            font-size: 13px; resize: none;
+            padding: 10px; width: 300px; height: 60px; 
+            border-radius: 8px; border: 2px solid #ddd; 
+            font-size: 13px; resize: none; transition: border 0.3s;
         }
+        textarea:focus { border-color: #3498db; outline: none; }
 
         #start-btn { 
-            padding: 15px 30px; cursor: pointer; 
+            padding: 15px 35px; cursor: pointer; 
             background: #27ae60; color: white; 
-            border: none; border-radius: 8px; 
-            font-weight: bold; transition: 0.2s;
+            border: none; border-radius: 50px; 
+            font-weight: 900; box-shadow: 0 4px 0 #1e8449; transition: 0.1s;
         }
-        #start-btn:hover { background: #2ecc71; transform: translateY(-2px); }
+        #start-btn:active { transform: translateY(3px); box-shadow: none; }
 
-        /* The Arena */
+        /* The Stage */
         #stage {
-            position: relative; width: 100vw; height: calc(100vh - 130px);
-            margin-top: 130px; display: flex;
+            position: relative; width: 100vw; height: calc(100vh - 120px);
+            margin-top: 120px; display: flex;
         }
 
         .half { flex: 1; position: relative; overflow: hidden; transition: background 1.5s ease; }
-        
-        /* Left side transitions from dark to light */
-        #left-half { 
-            background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress)); 
-            border-right: 1px solid rgba(0,0,0,0.1);
-        }
+        #left-half { background-color: color-mix(in srgb, var(--dark-side), var(--bright-side) var(--progress)); }
         #right-half { background-color: #ffffff; }
 
-        /* Central Arena */
-        #arena-circle {
+        /* The Arena (Bigger & Better) */
+        #arena-container {
             position: absolute; left: 50%; top: 50%;
             transform: translate(-50%, -50%);
-            width: 200px; height: 200px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 5px solid #3498db;
+            width: 300px; height: 300px;
+            z-index: 100; display: flex; align-items: center; justify-content: center;
+        }
+
+        #arena-circle {
+            width: 240px; height: 240px;
+            background: white;
+            border: 8px solid #3498db;
             border-radius: 50%;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            z-index: 50; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            text-align: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; /* Let drag events pass through to detection logic */
         }
 
-        /* Match Cues */
-        #arena-circle.has-neg { border-left-width: 12px; border-left-color: #e74c3c; }
-        #arena-circle.has-pos { border-right-width: 12px; border-right-color: #2ecc71; }
-        #arena-circle.pulse { transform: translate(-50%, -50%) scale(1.15); }
+        /* Match States */
+        .arena-glow-neg { border-left-color: #e74c3c !important; box-shadow: -15px 0 30px rgba(231, 76, 60, 0.4) !important; }
+        .arena-glow-pos { border-right-color: #2ecc71 !important; box-shadow: 15px 0 30px rgba(46, 204, 113, 0.4) !important; }
+        .arena-pulse { transform: scale(1.1); }
 
-        .slot { font-size: 12px; color: #888; margin: 8px; font-style: italic; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .filled { color: #222; font-weight: bold; font-style: normal; font-size: 14px; }
+        .slot-text { font-size: 13px; color: #aaa; margin: 10px; font-weight: bold; text-align: center; }
+        .active-word { color: #2c3e50; font-size: 16px; border: 1px solid #eee; padding: 4px 10px; border-radius: 4px; background: #f9f9f9; }
 
         /* Floating Items */
         .word {
-            position: absolute; padding: 12px 20px; border-radius: 30px;
+            position: absolute; padding: 14px 22px; border-radius: 50px;
             cursor: grab; user-select: none; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10;
-            transition: transform 0.2s ease; border: 2px solid transparent;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15); z-index: 10;
+            background: white; border: 2px solid transparent;
+            font-size: 14px; transition: transform 0.2s;
         }
-        .word:active { cursor: grabbing; transform: scale(1.1); }
-        
-        .neg-word { background: #2c3e50; color: #ecf0f1; }
-        .pos-word { background: #e8f8f5; color: #186a3b; border-color: #27ae60; }
+        .word:active { cursor: grabbing; transform: scale(1.15); z-index: 500; }
+        .neg-word { background: #2c3e50; color: #fff; }
+        .pos-word { background: #fff; color: #186a3b; border-color: #2ecc71; }
 
         /* Review Sidebar */
         #review {
-            position: absolute; right: 20px; bottom: 20px; width: 240px;
-            max-height: 300px; background: rgba(0,0,0,0.85);
-            color: white; padding: 15px; overflow-y: auto; 
-            z-index: 110; border-radius: 12px; font-size: 0.9em;
-            border: 1px solid #444;
+            position: absolute; left: 20px; bottom: 20px; width: 260px;
+            max-height: 250px; background: rgba(255, 255, 255, 0.95);
+            padding: 15px; overflow-y: auto; border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #ddd;
         }
-        .match-entry { border-bottom: 1px solid #444; padding: 8px 0; color: #ddd; }
-        .match-entry b { color: #5dade2; }
+        .match-card { border-left: 5px solid #3498db; margin-bottom: 8px; padding: 8px; background: #f0f4f8; border-radius: 4px; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
 <div id="setup">
     <div class="input-group">
-        <label>CHALLENGES (Negatives)</label>
-        <textarea id="list1" placeholder="Stress, Lack of sleep&#10;Poor food&#10;Conflict"></textarea>
+        <label>List 1: Challenges</label>
+        <textarea id="list1" placeholder="Type or paste here..."></textarea>
     </div>
     <div class="input-group">
-        <label>STRENGTHS (Positives)</label>
-        <textarea id="list2" placeholder="Exercise, Deep breaths&#10;Whānau time&#10;Nature"></textarea>
+        <label>List 2: Strengths</label>
+        <textarea id="list2" placeholder="Type or paste here..."></textarea>
     </div>
-    <button id="start-btn" onclick="spawnWords()">INITIALIZE ARENA</button>
+    <button id="start-btn" onclick="spawnWords()">GO LIVE</button>
 </div>
 
 <div id="stage">
     <div id="left-half" class="half"></div>
     
-    <div id="arena-circle">
-        <div id="slot-neg" class="slot">Drop Challenge...</div>
-        <div style="font-weight: 900; color: #3498db; letter-spacing: 1px;">ARENA</div>
-        <div id="slot-pos" class="slot">Drop Strength...</div>
+    <div id="arena-container">
+        <div id="arena-circle">
+            <div id="slot-neg" class="slot-text">DRAG CHALLENGE</div>
+            <div style="font-weight: 900; color: #3498db; font-size: 20px;">ARENA</div>
+            <div id="slot-pos" class="slot-text">DRAG STRENGTH</div>
+        </div>
     </div>
 
     <div id="right-half" class="half"></div>
     
     <div id="review">
-        <div style="font-weight: bold; border-bottom: 1px solid #666; padding-bottom: 5px; margin-bottom: 5px;">Pairing Log</div>
+        <div style="font-weight: bold; margin-bottom: 10px; color: #34495e;">Completed Matches</div>
         <div id="match-log"></div>
     </div>
 </div>
@@ -141,28 +143,19 @@
     let matchesMade = 0;
     let totalItems = 0;
 
-    function parseInput(val) {
-        // Regex splits by comma OR new line
-        return val.split(/[,\n]/).map(s => s.trim()).filter(s => s.length > 0);
-    }
-
     function spawnWords() {
-        const l1 = parseInput(document.getElementById('list1').value);
-        const l2 = parseInput(document.getElementById('list2').value);
+        const parse = (id) => document.getElementById(id).value.split(/[,\n]/).map(s => s.trim()).filter(s => s);
+        const l1 = parse('list1'); const l2 = parse('list2');
         
-        const leftHalf = document.getElementById('left-half');
-        const rightHalf = document.getElementById('right-half');
-        
-        // Reset
-        leftHalf.innerHTML = ''; rightHalf.innerHTML = '';
+        document.getElementById('left-half').innerHTML = '';
+        document.getElementById('right-half').innerHTML = '';
         document.getElementById('match-log').innerHTML = '';
-        words = []; matchesMade = 0;
-        activeNeg = null; activePos = null;
+        words = []; matchesMade = 0; activeNeg = null; activePos = null;
         totalItems = Math.max(l1.length, l2.length);
-        updateArenaUI();
+        updateProgress();
 
-        l1.forEach(text => createWord(text, 'neg', leftHalf));
-        l2.forEach(text => createWord(text, 'pos', rightHalf));
+        l1.forEach(t => createWord(t, 'neg', document.getElementById('left-half')));
+        l2.forEach(t => createWord(t, 'pos', document.getElementById('right-half')));
         
         requestAnimationFrame(animate);
     }
@@ -177,115 +170,113 @@
             el: el,
             type: type,
             x: Math.random() * (container.offsetWidth - 150),
-            y: Math.random() * (container.offsetHeight - 60),
-            vx: (Math.random() - 0.5) * 1.2,
-            vy: (Math.random() - 0.5) * 1.2,
+            y: Math.random() * (container.offsetHeight - 80),
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
             isDragging: false
         };
 
         el.onmousedown = (e) => {
             data.isDragging = true;
-            el.style.zIndex = 1000;
+            data.vx = 0; data.vy = 0;
         };
 
         window.onmousemove = (e) => {
-            if (data.isDragging) {
-                const stageRect = document.getElementById('stage').getBoundingClientRect();
-                if (type === 'neg') {
-                    data.x = e.clientX - 50;
-                } else {
-                    data.x = e.clientX - (window.innerWidth / 2) - 50;
-                }
-                data.y = e.clientY - stageRect.top - 20;
+            if (!data.isDragging) return;
+            const stageRect = document.getElementById('stage').getBoundingClientRect();
+            
+            // Mouse tracking
+            if (type === 'neg') {
+                data.x = e.clientX - 60;
+            } else {
+                data.x = e.clientX - (window.innerWidth / 2) - 60;
+            }
+            data.y = e.clientY - stageRect.top - 25;
+
+            // Visual Cue: Highlight arena if word is hovering near center
+            const dist = Math.hypot(e.clientX - window.innerWidth/2, e.clientY - (stageRect.top + stageRect.height/2));
+            const arena = document.getElementById('arena-circle');
+            if (dist < 180) {
+                arena.classList.add(type === 'neg' ? 'arena-glow-neg' : 'arena-glow-pos');
+            } else {
+                arena.classList.remove('arena-glow-neg', 'arena-glow-pos');
             }
         };
 
-        window.onmouseup = () => {
-            if (data.isDragging) {
-                data.isDragging = false;
-                el.style.zIndex = 10;
-                handleDrop(data);
+        window.onmouseup = (e) => {
+            if (!data.isDragging) return;
+            data.isDragging = false;
+            
+            const stageRect = document.getElementById('stage').getBoundingClientRect();
+            const dist = Math.hypot(e.clientX - window.innerWidth/2, e.clientY - (stageRect.top + stageRect.height/2));
+
+            // Magnet Snapping: If within 200px of center, it matches
+            if (dist < 200) {
+                snapToArena(data);
+            } else {
+                // Return to floating with new velocity
+                data.vx = (Math.random() - 0.5) * 1.5;
+                data.vy = (Math.random() - 0.5) * 1.5;
+                document.getElementById('arena-circle').classList.remove('arena-glow-neg', 'arena-glow-pos');
             }
         };
 
         words.push(data);
     }
 
-    function handleDrop(data) {
+    function snapToArena(data) {
         const arena = document.getElementById('arena-circle');
-        const rect = arena.getBoundingClientRect();
-        const wordRect = data.el.getBoundingClientRect();
+        if (data.type === 'neg') {
+            if(activeNeg) activeNeg.el.style.display = 'block';
+            activeNeg = data;
+            document.getElementById('slot-neg').innerHTML = `<div class="active-word">${data.el.innerText}</div>`;
+        } else {
+            if(activePos) activePos.el.style.display = 'block';
+            activePos = data;
+            document.getElementById('slot-pos').innerHTML = `<div class="active-word">${data.el.innerText}</div>`;
+        }
+        data.el.style.display = 'none';
+        arena.classList.add('arena-pulse');
+        setTimeout(() => arena.classList.remove('arena-pulse'), 300);
 
-        const inArena = (
-            wordRect.left < rect.right && wordRect.right > rect.left &&
-            wordRect.top < rect.bottom && wordRect.bottom > rect.top
-        );
-
-        if (inArena) {
-            if (data.type === 'neg') {
-                if(activeNeg) activeNeg.el.style.display = 'block'; 
-                activeNeg = data;
-                data.el.style.display = 'none';
-                document.getElementById('slot-neg').innerHTML = `<span class="filled">${data.el.innerText}</span>`;
-                arena.classList.add('has-neg');
-            } else {
-                if(activePos) activePos.el.style.display = 'block';
-                activePos = data;
-                data.el.style.display = 'none';
-                document.getElementById('slot-pos').innerHTML = `<span class="filled">${data.el.innerText}</span>`;
-                arena.classList.add('has-pos');
-            }
-
-            // Pulse effect
-            arena.classList.add('pulse');
-            setTimeout(() => arena.classList.remove('pulse'), 400);
-
-            if (activeNeg && activePos) {
-                setTimeout(finalizeMatch, 500); // Small delay to enjoy the match
-            }
+        if (activeNeg && activePos) {
+            setTimeout(finalizeMatch, 600);
         }
     }
 
     function finalizeMatch() {
         const log = document.getElementById('match-log');
-        const div = document.createElement('div');
-        div.className = 'match-entry';
-        div.innerHTML = `<b>Challenge:</b> ${activeNeg.el.innerText}<br><b>Strength:</b> ${activePos.el.innerText}`;
-        log.prepend(div);
+        const card = document.createElement('div');
+        card.className = 'match-card';
+        card.innerHTML = `<strong>Challenge:</strong> ${activeNeg.el.innerText}<br><strong>Strength:</strong> ${activePos.el.innerText}`;
+        log.prepend(card);
 
-        // Remove from simulation
         words = words.filter(w => w !== activeNeg && w !== activePos);
-        
-        // Reset Arena UI
         activeNeg = null; activePos = null;
-        document.getElementById('slot-neg').innerText = 'Drop Challenge...';
-        document.getElementById('slot-pos').innerText = 'Drop Strength...';
-        document.getElementById('arena-circle').classList.remove('has-neg', 'has-pos');
+        
+        document.getElementById('slot-neg').innerText = 'DRAG CHALLENGE';
+        document.getElementById('slot-pos').innerText = 'DRAG STRENGTH';
+        document.getElementById('arena-circle').className = '';
         
         matchesMade++;
-        updateArenaUI();
+        updateProgress();
     }
 
-    function updateArenaUI() {
+    function updateProgress() {
         const ratio = totalItems > 0 ? (matchesMade / totalItems) * 100 : 0;
         document.documentElement.style.setProperty('--progress', ratio + '%');
     }
 
     function animate() {
-        const stageH = window.innerHeight - 130;
+        const stageH = window.innerHeight - 120;
         const halfW = window.innerWidth / 2;
 
         words.forEach(w => {
             if (!w.isDragging) {
-                w.x += w.vx;
-                w.y += w.vy;
-
-                // Bounce
+                w.x += w.vx; w.y += w.vy;
                 if (w.x < 10 || w.x > halfW - 140) w.vx *= -1;
-                if (w.y < 10 || w.y > stageH - 50) w.vy *= -1;
-
-                w.el.style.left = w.x + 'px';
-                w.el.style.top = w.y + 'px';
+                if (w.y < 10 || w.y > stageH - 60) w.vy *= -1;
+                w.el.style.transform = `translate(${w.x}px, ${w.y}px)`;
             }
         });
         requestAnimationFrame(animate);
