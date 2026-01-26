@@ -5,32 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hauora Reflection & Diagnostic Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* Base Styling */
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; color: #2c3e50; padding: 20px; }
-        #export-content { max-width: 950px; margin: auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 30px; }
-        .main-layout { display: grid; grid-template-columns: 300px 1fr; gap: 40px; margin-bottom: 40px; }
-        .input-group { margin-bottom: 15px; padding: 12px; background: #fafafa; border-radius: 8px; border-left: 4px solid #3498db; }
-        label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 8px; }
+        .wrapper { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
+        .main-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 12px; padding: 10px; background: #fafafa; border-radius: 8px; border-left: 4px solid #3498db; }
+        label { display: block; font-weight: bold; font-size: 12px; margin-bottom: 5px; }
         input[type="range"] { width: 100%; cursor: pointer; accent-color: #3498db; }
-        .section-divider { border-top: 1px solid #edf2f7; padding-top: 30px; margin-bottom: 30px; margin-top: 40px; }
-        .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 15px; }
-        .mini-card { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center; }
-        .mini-chart-container { height: 160px; }
-        textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 13px; background: #fcfcfc; resize: none; }
-        .btn-export { background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; margin-top: 20px; }
-        .btn-export:hover { background: #219150; }
-        .commentary { font-style: italic; color: #7f8c8d; font-size: 0.9em; margin-bottom: 15px; text-align: center; max-width: 800px; margin-left: auto; margin-right: auto; }
-        @media print { .btn-export { display: none; } }
+        .section-divider { border-top: 1px solid #edf2f7; padding-top: 20px; margin-top: 20px; }
+        .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
+        .mini-card { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 8px; text-align: center; }
+        .mini-chart-container { height: 140px; }
+        textarea { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 13px; background: #fcfcfc; resize: none; box-sizing: border-box; }
+        .btn-print { background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; font-size: 14px; }
+        .commentary { font-style: italic; color: #7f8c8d; font-size: 0.85em; margin-bottom: 10px; text-align: center; }
+
+        /* PRINT SPECIFIC RULES: Ensuring A4 Fit */
+        @media print {
+            body { background: white; padding: 0; }
+            .wrapper { box-shadow: none; width: 100%; max-width: 100%; padding: 0; margin: 0; }
+            .btn-print, .input-group, input[type="range"] { display: none !important; }
+            .main-layout { grid-template-columns: 1fr; } /* Stack for print if needed, or keep 2-col */
+            .header-flex h1 { font-size: 18px; }
+            textarea { border: 1px solid #eee; background: transparent; }
+            @page { size: A4; margin: 1cm; }
+        }
     </style>
 </head>
 <body>
 
-<div id="export-content">
+<div class="wrapper">
     <div class="header-flex">
         <h1>Te Whare Tapa Whā Reflection</h1>
-        <input type="text" id="studentName" placeholder="Student Name" style="border:none; border-bottom:1px solid #ccc; font-size: 16px; padding: 5px; width: 250px;">
+        <input type="text" id="studentName" placeholder="Student Name" style="border:none; border-bottom:1px solid #ccc; font-size: 16px; padding: 5px; width: 200px;">
     </div>
 
     <div class="main-layout">
@@ -39,6 +48,7 @@
             <div class="input-group"><label>Taha Hinengaro (Mental)</label><input type="range" id="t2" min="1" max="10" value="5" oninput="update()"></div>
             <div class="input-group"><label>Taha Whānau (Social)</label><input type="range" id="t3" min="1" max="10" value="5" oninput="update()"></div>
             <div class="input-group"><label>Taha Wairua (Spiritual)</label><input type="range" id="t4" min="1" max="10" value="5" oninput="update()"></div>
+            <textarea placeholder="Personal notes or goals..." style="margin-top:10px;"></textarea>
         </div>
         <div class="chart-box">
             <canvas id="mainChart"></canvas>
@@ -46,15 +56,15 @@
     </div>
 
     <div class="section-divider">
-        <h2 style="font-size: 18px; color: #7f8c8d; text-align: center; margin-bottom: 5px;">Case Study Analysis</h2>
+        <h2 style="font-size: 16px; color: #7f8c8d; text-align: center; margin: 0;">Case Study Analysis</h2>
         <p class="commentary">
             It is often easier to identify needs in others than in ourselves. By practising on these anonymous profiles, 
-            we create the distance needed to develop a sharp eye for wellbeing, which helps us do a better job of identifying our own needs.
+            we develop a sharp eye for wellbeing, helping us identify our own needs with greater clarity.
         </p>
         <div class="mini-grid" id="miniGrid"></div>
     </div>
 
-    <button class="btn-export" onclick="exportPDF()">Export Full Reflection as PDF</button>
+    <button class="btn-print" onclick="window.print()">Print or Save as PDF Snapshot</button>
 </div>
 
 <script>
@@ -67,16 +77,16 @@
             data: {
                 labels: ['Physical', 'Mental', 'Social', 'Spiritual'],
                 datasets: [{ 
-                    label: 'Personal Profile', 
                     data: [5, 5, 5, 5], 
                     backgroundColor: 'rgba(52, 152, 219, 0.4)', 
                     borderColor: '#3498db', 
-                    borderWidth: 3,
+                    borderWidth: 2,
                     fill: true 
                 }]
             },
             options: { 
                 responsive: true,
+                maintainAspectRatio: true,
                 scales: { r: { min: 0, max: 10, ticks: { display: false }, grid: { color: '#eee' } } },
                 plugins: { legend: { display: false } }
             }
@@ -86,11 +96,11 @@
         for (let i = 0; i < 3; i++) {
             const card = document.createElement('div');
             card.className = 'mini-card';
-            const randomData = Array.from({length: 4}, () => Math.floor(Math.random() * 7) + 3);
+            const randomData = Array.from({length: 4}, () => Math.floor(Math.random() * 6) + 3);
             card.innerHTML = `
-                <strong style="font-size: 14px;">Profile ${i+1}</strong>
+                <strong style="font-size: 12px;">Profile ${i+1}</strong>
                 <div class="mini-chart-container"><canvas id="mini${i}"></canvas></div>
-                <textarea rows="3" placeholder="Diagnose this state..."></textarea>
+                <textarea rows="2" placeholder="Diagnosis..."></textarea>
             `;
             grid.appendChild(card);
             new Chart(document.getElementById(`mini${i}`).getContext('2d'), {
@@ -105,19 +115,6 @@
         const v = [1,2,3,4].map(i => document.getElementById('t'+i).value);
         mainChart.data.datasets[0].data = v;
         mainChart.update();
-    }
-
-    function exportPDF() {
-        const element = document.getElementById('export-content');
-        const name = document.getElementById('studentName').value || 'Student';
-        const opt = {
-            margin: 0.3,
-            filename: `Hauora_Reflection_${name}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
     }
 
     window.onload = init;
