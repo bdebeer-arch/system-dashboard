@@ -2,9 +2,10 @@
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery Labeler | Byron</title>
+
     <style>
         :root {
             --primary-blue: #0047ab;
@@ -17,7 +18,8 @@
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background-color: var(--bg-gray);
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
         }
 
         /* NAVIGATION */
@@ -110,10 +112,17 @@
             border-top: 1px solid #f0f0f0;
         }
 
-        .label-tag:focus { background: var(--edit-highlight); }
-        .dragging { opacity: 0.3; transform: scale(0.95); }
+        .label-tag:focus {
+            background: var(--edit-highlight);
+        }
+
+        .dragging {
+            opacity: 0.3;
+            transform: scale(0.95);
+        }
     </style>
 </head>
+
 <body>
 
 <nav>
@@ -124,7 +133,7 @@
     <textarea id="urlInput" placeholder="Paste Google Drive or Image URLs here..."></textarea>
 </div>
 
-<header style="text-align:center; padding: 20px 0 0 0;">
+<header style="text-align:center; padding-top: 20px;">
     <h1 style="color: var(--primary-blue); font-weight: 300;">Gallery Labeler</h1>
 </header>
 
@@ -142,51 +151,45 @@
         "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
     ];
 
-function cleanLink(url) {
-    if (url.includes('drive.google.com')) {
-        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) {
-            const id = match[1];
-
-            // Prefer direct content delivery
-            return `https://drive.google.com/uc?export=view&id=${id}`;
+    function cleanLink(url) {
+        if (url.includes('drive.google.com')) {
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+            }
         }
-    }
 
-    if (url.includes('github.com') && url.includes('/blob/')) {
-        return url
-            .replace('github.com', 'raw.githubusercontent.com')
-            .replace('/blob/', '/');
-    }
+        if (url.includes('wikia.nocookie.net')) {
+            return url.split('/revision/')[0];
+        }
 
-    if (url.includes('wikia.nocookie.net')) {
-        return url.split('/revision/')[0];
+        return url;
     }
-
-    return url;
-}
 
     function renderGallery() {
         const rawText = urlInput.value.trim();
-        const sourceList = rawText ? rawText.split('\n').map(u => u.trim()).filter(u => u) : demoUrls;
-        
+        const sourceList = rawText
+            ? rawText.split('\n').map(u => u.trim()).filter(Boolean)
+            : demoUrls;
+
         gallery.innerHTML = '';
 
-        sourceList.forEach((url) => {
+        sourceList.forEach(url => {
             const finalUrl = cleanLink(url);
+
             const card = document.createElement('div');
             card.className = 'image-card';
             card.draggable = true;
 
-            // Fix 3: Added 'onerror' to hide failed cards for cleaner UX
-       card.innerHTML = `
-    <img src="${finalUrl}" loading="lazy"
-         onerror="this.onerror=null; this.src='fallback.png';">
-    <div class="label-tag" contenteditable="true" spellcheck="false">Name</div>
-`;
+            card.innerHTML = `
+                <img src="${finalUrl}" loading="lazy"
+                     onerror="this.parentElement.style.display='none'">
+                <div class="label-tag" contenteditable="true" spellcheck="false">Name</div>
+            `;
 
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
             card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
             gallery.appendChild(card);
         });
     }
@@ -196,14 +199,18 @@ function cleanLink(url) {
         e.preventDefault();
         const draggable = document.querySelector('.dragging');
         if (!draggable) return;
-        
-        const afterElement = [...gallery.querySelectorAll('.image-card:not(.dragging)')].find(child => {
-            const box = child.getBoundingClientRect();
-            return e.clientY < box.top + box.height / 2;
-        });
-        
-        if (afterElement == null) gallery.appendChild(draggable);
-        else gallery.insertBefore(draggable, afterElement);
+
+        const afterElement = [...gallery.querySelectorAll('.image-card:not(.dragging)')]
+            .find(child => {
+                const box = child.getBoundingClientRect();
+                return e.clientY < box.top + box.height / 2;
+            });
+
+        if (afterElement == null) {
+            gallery.appendChild(draggable);
+        } else {
+            gallery.insertBefore(draggable, afterElement);
+        }
     });
 
     urlInput.addEventListener('input', renderGallery);
