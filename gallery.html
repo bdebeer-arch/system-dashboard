@@ -179,10 +179,11 @@ function cleanLink(url) {
             card.draggable = true;
 
             // Fix 3: Added 'onerror' to hide failed cards for cleaner UX
-            card.innerHTML = `
-                <img src="${finalUrl}" loading="lazy" onerror="this.parentElement.style.display='none'">
-                <div class="label-tag" contenteditable="true" spellcheck="false">Name</div>
-            `;
+       card.innerHTML = `
+    <img src="${finalUrl}" loading="lazy"
+         onerror="this.onerror=null; this.src='fallback.png';">
+    <div class="label-tag" contenteditable="true" spellcheck="false">Name</div>
+`;
 
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
             card.addEventListener('dragend', () => card.classList.remove('dragging'));
