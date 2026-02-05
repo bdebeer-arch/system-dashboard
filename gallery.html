@@ -152,19 +152,23 @@
     ];
 
 function cleanLink(url) {
-    if (url.includes('drive.google.com/file/d/')) {
+    // Only rewrite Drive file URLs that contain /file/d/
+    if (url.startsWith('https://drive.google.com/file/d/')) {
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
         if (match && match[1]) {
             return `https://drive.google.com/uc?export=view&id=${match[1]}`;
         }
     }
 
+    // Wikia images: remove /revision/... part
     if (url.includes('wikia.nocookie.net')) {
         return url.split('/revision/')[0];
     }
 
+    // Otherwise, leave the URL as-is
     return url;
 }
+
 
 
     function renderGallery() {
