@@ -151,20 +151,22 @@
         "https://drive.google.com/file/d/1X0M-Hc4uSEtuJC0tyNTLP3-fKIjx-gNx"
     ];
 
-    function cleanLink(url) {
-        if (url.includes('drive.google.com')) {
-            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) {
-                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-            }
+function cleanLink(url) {
+    if (url.includes('drive.google.com')) {
+        // Regex to extract the File ID from various Drive link formats
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+            // Using the uc (user content) export link for better compatibility
+            return `https://lh3.googleusercontent.com/u/0/d/${match[1]}=w1000`;
         }
-
-        if (url.includes('wikia.nocookie.net')) {
-            return url.split('/revision/')[0];
-        }
-
-        return url;
     }
+
+    if (url.includes('wikia.nocookie.net')) {
+        return url.split('/revision/')[0];
+    }
+
+    return url;
+}
 
 
     function renderGallery() {
