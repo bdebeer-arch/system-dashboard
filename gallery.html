@@ -183,7 +183,9 @@
 
             card.innerHTML = `
                 <img src="${finalUrl}" loading="lazy"
-                     onerror="this.parentElement.style.display='none'">
+                     onerror="this.onerror=null;
+                       this.src='fallback.png';
+                       this.style.opacity='0.6';">
                 <div class="label-tag" contenteditable="true" spellcheck="false">Name</div>
             `;
 
