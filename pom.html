@@ -6,74 +6,66 @@
     <title>POM | Study Systems</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.85);
+            --glass: rgba(255, 255, 255, 0.9);
             --accent: #2c3e50;
-            --warmup: rgba(227, 242, 253, 0.7);
-            --study: rgba(255, 255, 255, 0.7);
-            --wrapup: rgba(255, 243, 224, 0.7);
-            --break: rgba(241, 248, 233, 0.7);
+            --warmup: rgba(227, 242, 253, 0.8);
+            --study: rgba(255, 255, 255, 0.8);
+            --wrapup: rgba(255, 243, 224, 0.8);
+            --break: rgba(241, 248, 233, 0.8);
         }
         
         body { 
             font-family: 'Segoe UI', system-ui, sans-serif; 
-            margin: 0; 
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            /* Inspiring Nature Wallpaper */
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
             background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
                         url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            transition: background 1s ease;
+            background-size: cover; background-position: center; background-attachment: fixed;
         }
 
         nav { width: 100%; padding: 15px 25px; box-sizing: border-box; }
         .nav-link { 
             color: white; text-decoration: none; font-weight: 600; 
-            background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 20px;
-            backdrop-filter: blur(5px); transition: 0.3s;
+            background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 20px;
+            backdrop-filter: blur(5px);
         }
-        .nav-link:hover { background: rgba(0,0,0,0.6); }
 
         #app { 
-            max-width: 550px; width: 90%; margin: 2rem 0; padding: 2.5rem; 
+            max-width: 550px; width: 95%; margin: 1rem 0; padding: 2rem; 
             background: var(--glass); backdrop-filter: blur(15px);
-            border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
 
-        .timer-display { font-size: 5rem; font-weight: 800; text-align: center; margin: 1rem 0; color: var(--accent); letter-spacing: -2px; }
-        .status-bar { padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .timer-display { font-size: 5rem; font-weight: 800; text-align: center; margin: 0.5rem 0; color: var(--accent); }
+        .status-bar { padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 1rem; font-weight: 700; text-transform: uppercase; }
 
         input, select, textarea, button { 
-            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid rgba(0,0,0,0.1); 
-            border-radius: 12px; font-size: 1rem; background: rgba(255,255,255,0.9);
+            width: 100%; padding: 12px; margin: 8px 0; border: 1px solid rgba(0,0,0,0.1); 
+            border-radius: 12px; font-size: 1rem;
         }
 
-        button.primary-btn { 
-            background: var(--accent); color: white; border: none; font-weight: bold; 
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.2s;
-        }
-        button.primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
-
+        .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        
         #rush-btn {
             position: fixed; bottom: 20px; right: 20px; width: auto;
             background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(5px); padding: 8px 15px; font-size: 0.7rem; text-transform: uppercase;
+            backdrop-filter: blur(5px); padding: 5px 10px; font-size: 0.7rem;
         }
 
-        .distraction-log { background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; margin-top: 20px; }
+        /* Summary Styling */
+        .summary-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .checklist-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        .checklist-item input { width: auto; margin: 0; }
+
+        .dev-todo { 
+            margin-top: 2rem; padding: 1.5rem; background: rgba(0,0,0,0.05); 
+            border-radius: 15px; font-size: 0.85rem; line-height: 1.4;
+        }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<nav>
-    <a href="https://bdebeer-arch.github.io/system-dashboard/" class="nav-link">← Dashboard</a>
-</nav>
+<nav><a href="https://bdebeer-arch.github.io/system-dashboard/" class="nav-link">← Home Dashboard</a></nav>
 
 <div id="app">
     <h1 style="text-align:center; margin-top:0; color: var(--accent);">POM</h1>
@@ -83,13 +75,24 @@
         <input type="number" id="cycle-count" min="1" max="5" value="1">
         <label><b>Goal:</b> What do you want?</label>
         <input type="text" id="goal-input" placeholder="e.g. Master Calculus integration">
-        <label><b>Steps:</b> How will you get there?</label>
-        <textarea id="steps-input" rows="3" placeholder="Step 1... Step 2..."></textarea>
+        <label><b>Steps:</b> (One per line)</label>
+        <textarea id="steps-input" rows="4" placeholder="Step 1&#10;Step 2&#10;Step 3"></textarea>
         <button class="primary-btn" onclick="initSession()">Start Session</button>
+
+        <div class="dev-todo">
+            <strong>Developer To-Do:</strong>
+            <ul style="padding-left: 20px;">
+                <li>YouTube background soundscapes</li>
+                <li>Mātauranga Māori whakataukī integration</li>
+                <li>Full-screen focus mode</li>
+                <li>Inactivity timeout (30m)</li>
+            </ul>
+            <p><small>Have an idea? <a href="mailto:byron@example.com?subject=POM Idea">Message the Dev</a></small></p>
+        </div>
     </div>
 
     <div id="timer-area" class="hidden">
-        <div id="header-display" style="border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 1rem; padding-bottom: 1rem;"></div>
+        <div id="header-display" style="border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 1rem; padding-bottom: 0.5rem;"></div>
         <div id="status-msg" class="status-bar">Focus</div>
         <div class="timer-display" id="time-left">00:00</div>
         
@@ -101,21 +104,21 @@
                 <option value="💬">Talking (Social)</option>
                 <option value="🧹">Broom (Tidy)</option>
             </select>
-            <div id="break-icon" style="font-size: 4rem; text-align: center; margin: 15px;">🚶</div>
+            <div id="break-icon" style="font-size: 4rem; text-align: center; margin: 10px;">🚶</div>
         </div>
 
         <button id="next-btn" class="primary-btn hidden" onclick="advanceStep()">Next Stage →</button>
 
-        <div class="distraction-log">
-            <input type="text" id="distraction-input" placeholder="Release a distracting thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
-            <ul id="distraction-list" style="font-size: 0.85rem; padding-left: 20px;"></ul>
+        <div style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 12px; margin-top: 15px;">
+            <input type="text" id="distraction-input" placeholder="Release a thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
+            <ul id="distraction-list" style="font-size: 0.8rem; padding-left: 20px; max-height: 80px; overflow-y: auto;"></ul>
         </div>
     </div>
 
     <div id="summary-area" class="hidden">
-        <h2>Session Summary</h2>
+        <h2 style="color:var(--accent)">Session Complete</h2>
         <div id="final-stats"></div>
-        <button class="primary-btn" onclick="location.reload()">New Session</button>
+        <button class="primary-btn" onclick="location.reload()" style="margin-top:20px;">Restart System</button>
     </div>
 </div>
 
@@ -124,23 +127,18 @@
 <script>
     let state = {
         cycles: 1, currentCycle: 1, phase: 'warmup', 
-        timeLeft: 0, goal: '', steps: '', distractions: [], timerId: null
+        timeLeft: 0, goal: '', steps: [], distractions: [], 
+        timerId: null, startTime: null, history: []
     };
 
     let audioCtx;
-
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    }
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
 
     function playSound(type) {
         initAudio();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-        
         if(type === 'gong') {
             osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
@@ -155,12 +153,13 @@
     function initSession() {
         initAudio();
         state.goal = document.getElementById('goal-input').value || "Deep Study";
-        state.steps = document.getElementById('steps-input').value;
+        state.steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
         state.cycles = parseInt(document.getElementById('cycle-count').value);
+        state.startTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
         document.getElementById('setup-area').classList.add('hidden');
         document.getElementById('timer-area').classList.remove('hidden');
-        document.getElementById('header-display').innerHTML = `<b>Target:</b> ${state.goal}`;
+        document.getElementById('header-display').innerHTML = `<b>Target:</b> ${state.goal} <span style="float:right; opacity:0.6;">Started: ${state.startTime}</span>`;
         
         runPhase('warmup');
     }
@@ -171,26 +170,10 @@
         document.getElementById('break-controls').classList.add('hidden');
         const app = document.getElementById('app');
 
-        if(phase === 'warmup') {
-            state.timeLeft = 60;
-            app.style.background = 'var(--warmup)';
-            document.getElementById('status-msg').innerText = "Warm Up";
-            playSound('gong');
-        } else if(phase === 'study') {
-            state.timeLeft = 23 * 60;
-            app.style.background = 'var(--study)';
-            document.getElementById('status-msg').innerText = "Study Focus";
-        } else if(phase === 'wrapup') {
-            state.timeLeft = 60;
-            app.style.background = 'var(--wrapup)';
-            document.getElementById('status-msg').innerText = "The Comma (Wrap Up)";
-        } else if(phase === 'break') {
-            state.timeLeft = 5 * 60;
-            app.style.background = 'var(--break)';
-            document.getElementById('status-msg').innerText = "Active Break";
-            document.getElementById('break-controls').classList.remove('hidden');
-            playSound('gong');
-        }
+        if(phase === 'warmup') { state.timeLeft = 60; app.style.background = 'var(--warmup)'; document.getElementById('status-msg').innerText = "Warm Up"; playSound('gong'); }
+        else if(phase === 'study') { state.timeLeft = 23 * 60; app.style.background = 'var(--study)'; document.getElementById('status-msg').innerText = `Cycle ${state.currentCycle} Focus`; }
+        else if(phase === 'wrapup') { state.timeLeft = 60; app.style.background = 'var(--wrapup)'; document.getElementById('status-msg').innerText = "Wrap Up (Comma)"; }
+        else if(phase === 'break') { state.timeLeft = 5 * 60; app.style.background = 'var(--break)'; document.getElementById('status-msg').innerText = "Active Break"; document.getElementById('break-controls').classList.remove('hidden'); playSound('gong'); }
 
         if(state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(tick, 1000);
@@ -201,12 +184,8 @@
         state.timeLeft--;
         if(state.timeLeft <= 0) {
             clearInterval(state.timerId);
-            if(state.phase === 'break') {
-                document.getElementById('next-btn').classList.remove('hidden');
-                playSound('beep');
-            } else {
-                autoAdvance();
-            }
+            if(state.phase === 'break') { document.getElementById('next-btn').classList.remove('hidden'); playSound('beep'); }
+            else autoAdvance();
         }
         updateDisplay();
     }
@@ -218,17 +197,11 @@
     }
 
     function advanceStep() {
-        if(state.currentCycle < state.cycles) {
-            state.currentCycle++;
-            runPhase('warmup');
-        } else {
-            showSummary();
-        }
+        if(state.currentCycle < state.cycles) { state.currentCycle++; runPhase('warmup'); }
+        else showSummary();
     }
 
-    function rush() {
-        state.timeLeft = 2;
-    }
+    function rush() { state.timeLeft = 2; }
 
     function updateDisplay() {
         const mins = Math.floor(state.timeLeft / 60);
@@ -236,9 +209,7 @@
         document.getElementById('time-left').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
 
-    function updateBreakIcon() {
-        document.getElementById('break-icon').innerText = document.getElementById('break-type').value;
-    }
+    function updateBreakIcon() { document.getElementById('break-icon').innerText = document.getElementById('break-type').value; }
 
     function saveDistraction() {
         const input = document.getElementById('distraction-input');
@@ -253,7 +224,16 @@
     function showSummary() {
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
-        document.getElementById('final-stats').innerHTML = `<p>Completed ${state.currentCycle} cycles for: <b>${state.goal}</b></p>`;
+        
+        let stepList = state.steps.map((s, i) => `<div class="checklist-item"><input type="checkbox" id="s${i}"> <label for="s${i}">${s}</label></div>`).join('');
+        let distractionHTML = state.distractions.map(d => `<li>${d}</li>`).join('');
+
+        document.getElementById('final-stats').innerHTML = `
+            <div class="summary-item"><strong>Goal:</strong> ${state.goal} (Started ${state.startTime})</div>
+            <div class="summary-item"><strong>Cycles Completed:</strong> ${state.currentCycle}</div>
+            <div class="summary-item"><strong>Check your steps:</strong><br>${stepList || 'No steps listed.'}</div>
+            <div class="summary-item"><strong>Recalled Distractions:</strong><br><ul>${distractionHTML || 'None!'}</ul></div>
+        `;
     }
 </script>
 </body>
