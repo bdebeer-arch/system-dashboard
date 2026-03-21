@@ -29,9 +29,10 @@
         .brick-row { display: flex; justify-content: center; width: 100%; }
         @keyframes dropIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        #app { flex: 2; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 10; position: relative; }
+        #app { flex: 2; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 10; position: relative; transition: opacity 0.3s ease; }
+        #app.paused { opacity: 0.6; pointer-events: none; }
         
-        /* Sidebar & Post-It Logic (Fixed Layering) */
+        /* Sidebar & Post-It Logic */
         #sidebar { 
             width: 40px; position: sticky; top: 2rem; 
             display: flex; flex-direction: column; gap: 12px; 
@@ -44,35 +45,27 @@
             transition: transform 0.2s ease;
         }
         .post-it:hover { transform: scale(1.1); }
-        
         .post-it.expanded {
-            position: fixed;
-            right: 80px; 
-            top: 25%;
-            width: 280px;
-            height: auto;
-            min-height: 100px;
-            padding: 20px;
-            font-size: 1rem;
-            color: #333;
-            background: var(--note-yellow);
-            z-index: 9999;
-            box-shadow: 20px 20px 60px rgba(0,0,0,0.5);
-            border-radius: 4px;
-            white-space: normal;
+            position: fixed; right: 80px; top: 25%; width: 280px; height: auto;
+            min-height: 100px; padding: 20px; font-size: 1rem; color: #333;
+            background: var(--note-yellow); z-index: 9999; box-shadow: 20px 20px 60px rgba(0,0,0,0.5);
+            border-radius: 4px; white-space: normal;
         }
-        .post-it.expanded::after {
-            content: " (Click to close)";
-            display: block; margin-top: 10px; font-size: 0.7rem; opacity: 0.5; font-style: italic;
-        }
+        .post-it.expanded::after { content: " (Click to close)"; display: block; margin-top: 10px; font-size: 0.7rem; opacity: 0.5; font-style: italic; }
 
         .hidden { display: none; }
         input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
         .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
         .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1s infinite; }
+        
+        /* Fixed Controls (Bottom Left) */
+        #control-cluster { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px; z-index: 1000; }
+        .control-btn { background: rgba(255,255,255,0.8); border: 1px solid #ccc; border-radius: 50%; width: 45px; height: 45px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s; }
+        .control-btn:hover { background: #fff; transform: translateY(-2px); }
+        .control-btn:active { transform: translateY(0); }
+        
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; }
-        #rush-btn { position: fixed; bottom: 20px; left: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; z-index: 100; }
     </style>
 </head>
 <body>
@@ -131,12 +124,16 @@
     <div id="sidebar"></div>
 </div>
 
-<button id="rush-btn" onclick="rush()">⏩</button>
+<div id="control-cluster">
+    <button class="control-btn" id="pause-btn" onclick="togglePause()" title="Pause/Resume">⏸</button>
+    <button class="control-btn" id="rush-btn" onclick="rush()" title="Rush Phase">⏩</button>
+</div>
 
 <script>
     let state = {
         goal: '', cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0,
-        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, rawSteps: [], bricks: 0,
+        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, 
+        isPaused: false, rawSteps: [], bricks: 0,
         fib: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55], currentFibRow: 0, bricksInRow: 0, alertId: null
     };
 
@@ -214,6 +211,9 @@
 
     function runPhase(phase) {
         state.phase = phase;
+        state.isPaused = false;
+        document.getElementById('pause-btn').innerText = "⏸";
+        document.getElementById('app').classList.remove('paused');
         document.getElementById('activation-zone').classList.add('hidden');
         document.getElementById('break-display').classList.add('hidden');
         document.getElementById('warmup-controls').classList.add('hidden');
@@ -241,6 +241,7 @@
     }
 
     function tick() {
+        if (state.isPaused) return;
         state.timeLeft--;
         if (state.timeLeft % 60 === 0 && (state.phase === 'study' || state.phase === 'wrapup')) {
             addFibBrick();
@@ -255,10 +256,24 @@
             } else if (state.phase === 'break') { 
                 document.getElementById('activation-zone').classList.remove('hidden'); 
                 state.breakEnd = new Date(); 
-                state.alertId = setInterval(() => { playSound('alert'); setTimeout(() => playSound('alert'), 300); }, 15000);
+                state.alertId = setInterval(() => { if(!state.isPaused) playSound('alert'); }, 15000);
             }
         }
         updateDisplay();
+    }
+
+    function togglePause() {
+        if (state.phase === 'idle') return;
+        state.isPaused = !state.isPaused;
+        const btn = document.getElementById('pause-btn');
+        const app = document.getElementById('app');
+        if (state.isPaused) {
+            btn.innerText = "▶";
+            app.classList.add('paused');
+        } else {
+            btn.innerText = "⏸";
+            app.classList.remove('paused');
+        }
     }
 
     function handleActivation() {
@@ -279,22 +294,16 @@
     function saveDistraction() {
         const el = document.getElementById('distraction-input');
         if(!el.value) return;
-        
         const capturedText = `[Cycle ${state.currentCycle}] ${el.value}`;
         state.distractions.push({ text: el.value, cycle: state.currentCycle });
-        
         const note = document.createElement('div');
         note.className = 'post-it';
         note.dataset.fulltext = capturedText;
-        
         note.onclick = function() {
-            document.querySelectorAll('.post-it').forEach(p => {
-                if(p !== note) { p.classList.remove('expanded'); p.innerText = ""; }
-            });
+            document.querySelectorAll('.post-it').forEach(p => { if(p !== note) { p.classList.remove('expanded'); p.innerText = ""; } });
             this.classList.toggle('expanded');
             this.innerText = this.classList.contains('expanded') ? this.dataset.fulltext : "";
         };
-        
         document.getElementById('sidebar').prepend(note);
         el.value = '';
     }
@@ -303,9 +312,7 @@
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
         let report = `SESSION REPORT: ${state.goal}\nTOWER HEIGHT: ${state.bricks} layers built.\n------------------------------\n`;
-        state.plan.forEach((p, i) => {
-            report += `CYCLE ${i+1}: ${p.step} | Energy: ${state.energyHistory[i] || 5}/10 | Drift: ${state.driftHistory[i] || 0}m\n`;
-        });
+        state.plan.forEach((p, i) => { report += `CYCLE ${i+1}: ${p.step} | Energy: ${state.energyHistory[i] || 5}/10 | Drift: ${state.driftHistory[i] || 0}m\n`; });
         report += `\nRELEASED THOUGHTS:\n`;
         state.distractions.forEach(d => report += `[Cycle ${d.cycle}] ${d.text}\n`);
         document.getElementById('copy-area').innerText = report;
@@ -316,7 +323,7 @@
         navigator.clipboard.writeText(text).then(() => alert("All data copied to clipboard!"));
     }
 
-    function rush() { state.timeLeft = 1; }
+    function rush() { if(!state.isPaused) state.timeLeft = 1; }
     function updateCurrentEnergy(v) { state.energyHistory[state.currentCycle-1] = v; }
     function pivotPlan(k, v) { state.plan[state.currentCycle-1][k] = v; }
     function updateCycleBreadcrumb() { document.getElementById('cycle-breadcrumb').innerText = `Cycle ${state.currentCycle} of ${state.cycles}`; }
