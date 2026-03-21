@@ -3,61 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POM | Study Systems</title>
+    <title>POM | The Builder</title>
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.96);
             --accent: #2c3e50;
             --warmup: #e3f2fd; --study: #ffffff; --wrapup: #fff3e0; --break: #f1f8e9;
-            --alert-red: #e74c3c; --note-yellow: #fff382;
+            --alert-red: #e74c3c; --note-yellow: #fff382; --brick: #34495e;
         }
         body { 
             font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; min-height: 100vh;
             background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
             background-size: cover; background-position: center; background-attachment: fixed;
-            display: flex; justify-content: center;
+            display: flex; justify-content: center; overflow-x: hidden;
         }
-        #main-container { display: flex; width: 95%; max-width: 1150px; gap: 20px; margin: 2rem 0; align-items: flex-start; }
-        #app { flex: 1; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        #sidebar { width: 280px; position: sticky; top: 2rem; display: flex; flex-direction: column; gap: 15px; }
+        #main-container { display: flex; width: 95%; max-width: 1200px; gap: 20px; margin: 2rem 0; align-items: flex-start; position: relative; }
+        
+        /* The Tower Builder */
+        #tower-container { position: fixed; bottom: 0; left: 20px; width: 150px; display: flex; flex-direction: column-reverse; align-items: center; pointer-events: none; z-index: 10; }
+        .brick { width: 40px; height: 20px; background: var(--brick); border: 1px solid rgba(255,255,255,0.2); margin: 1px; border-radius: 2px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); animation: dropIn 0.5s ease-out; }
+        .brick-row { display: flex; justify-content: center; }
+        @keyframes dropIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        #app { flex: 1; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 5; }
+        
+        /* Post-It Sidebar Miniaturised */
+        #sidebar { width: 120px; position: sticky; top: 2rem; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
         .post-it { 
-            background: var(--note-yellow); padding: 15px; box-shadow: 5px 5px 15px rgba(0,0,0,0.2); 
-            border-radius: 2px; transform: rotate(-1deg); font-size: 0.9rem; color: #333; border-left: 5px solid rgba(0,0,0,0.05);
-            animation: slideIn 0.3s ease-out; word-wrap: break-word; position: relative;
+            background: var(--note-yellow); width: 40px; height: 40px; padding: 5px; 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2); border-radius: 4px; overflow: hidden;
+            font-size: 0; color: transparent; transition: all 0.3s ease; cursor: help; border: 1px solid #ddd;
         }
-        .post-it small { position: absolute; bottom: 5px; right: 8px; font-size: 0.65rem; opacity: 0.5; }
+        .post-it:hover { 
+            width: 200px; height: auto; padding: 15px; font-size: 0.9rem; color: #333; 
+            transform: scale(1.1) rotate(0deg); z-index: 100;
+        }
         .hidden { display: none; }
         input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
         .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
         .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 300px; overflow-y: auto; }
+        #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; }
         #rush-btn { position: fixed; bottom: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; }
-        .dev-todo { margin-top: 2rem; padding: 1.2rem; background: rgba(0,0,0,0.05); border-radius: 15px; font-size: 0.85rem; border: 1px dashed #999; }
     </style>
 </head>
 <body>
 
+<div id="tower-container"></div>
+
 <div id="main-container">
     <div id="app">
-        <h1 style="text-align:center; margin-top:0;">POM</h1>
-        <div id="cycle-breadcrumb" style="text-align:center; font-weight:bold; color:var(--accent); font-size:0.9rem; margin-bottom:10px;"></div>
+        <h1 style="text-align:center; margin:0;">POM</h1>
+        <div id="cycle-breadcrumb" style="text-align:center; font-weight:bold; color:var(--accent); font-size:0.8rem; margin-bottom:10px;"></div>
         
         <div id="setup-area">
-            <input type="text" id="goal-input" placeholder="Main Goal...">
-            <textarea id="steps-input" rows="3" placeholder="Steps (One per line)..."></textarea>
+            <input type="text" id="goal-input" placeholder="What is the mission?">
+            <textarea id="steps-input" rows="3" placeholder="Steps (one per line)..."></textarea>
             <input type="number" id="cycle-count" min="1" max="5" value="3">
             <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
-
-            <div class="dev-todo">
-                <strong>Developer To-Do:</strong>
-                <ul style="padding-left:18px; margin-top:8px;">
-                    <li>Whakataukī integration</li>
-                    <li>Full-screen focus mode</li>
-                    <li style="color:green">✔ No break after final cycle</li>
-                    <li style="color:green">✔ Persistent Double-Alert (15s interval)</li>
-                </ul>
-            </div>
         </div>
 
         <div id="timeline-area" class="hidden">
@@ -67,13 +70,13 @@
         </div>
 
         <div id="timer-area" class="hidden">
-            <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; background:rgba(0,0,0,0.05); padding:5px; border-radius:8px;"></div>
+            <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; background:rgba(0,0,0,0.05); padding:5px; border-radius:8px; font-size:0.8rem;"></div>
             <div id="time-left" style="font-size: 6rem; font-weight: 800; text-align: center; margin: 10px 0;">00:00</div>
             
             <div id="warmup-controls" class="hidden" style="background:rgba(255,255,255,0.6); padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #ccc;">
-                <label>Energy (1-10):</label>
+                <label style="font-size:0.8rem;"><b>Energy Level (1-10):</b></label>
                 <input type="range" id="energy-live" min="1" max="10" value="5" onchange="updateCurrentEnergy(this.value)">
-                <div style="display:flex; gap:10px; margin-top:10px;">
+                <div style="display:flex; gap:10px; margin-top:5px;">
                     <select id="pivot-step" onchange="pivotPlan('step', this.value)"></select>
                     <select id="pivot-break" onchange="pivotPlan('icon', this.value)">
                         <option value="🚶">🚶 Moving</option><option value="🍎">🍎 Food</option>
@@ -84,7 +87,6 @@
 
             <div id="activation-zone" class="hidden" style="text-align:center;">
                 <button class="activate-btn" onclick="handleActivation()">BACK TO WORK</button>
-                <p style="color:var(--alert-red); font-weight:bold;">Break Over! System Alert Active.</p>
             </div>
             
             <div id="break-display" class="hidden" style="text-align:center; font-size:5rem; margin:10px 0;"></div>
@@ -94,16 +96,13 @@
         <div id="summary-area" class="hidden">
             <h2>Session Reflection</h2>
             <div id="final-stats"></div>
-            <label>Copy Report:</label>
             <div id="copy-area"></div>
-            <button class="primary-btn" style="margin-top:10px;" onclick="copyToClipboard()">Click to Copy All</button>
-            <button style="background:none; border:none; color:#999; cursor:pointer; margin-top:10px;" onclick="location.reload()">New Session</button>
+            <button class="primary-btn" style="margin-top:10px;" onclick="copyToClipboard()">Copy Report</button>
+            <button style="background:none; border:none; color:#999; cursor:pointer; margin-top:10px;" onclick="location.reload()">Reset Session</button>
         </div>
     </div>
 
-    <div id="sidebar">
-        <h3 style="color:white; text-align:center; margin-top:0; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);">Mental Space</h3>
-    </div>
+    <div id="sidebar"></div>
 </div>
 
 <button id="rush-btn" onclick="rush()">⏩</button>
@@ -111,7 +110,7 @@
 <script>
     let state = {
         goal: '', cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0,
-        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, rawSteps: [], alertId: null
+        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, rawSteps: [], alertId: null, bricks: 0
     };
 
     let audioCtx;
@@ -123,8 +122,8 @@
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         if (type === 'whistle') {
-            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1300, audioCtx.currentTime + 0.1);
             gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
             osc.start(); osc.stop(audioCtx.currentTime + 0.5);
@@ -136,19 +135,33 @@
         } else if (type === 'alert') {
             osc.type = 'square';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
             osc.start(); osc.stop(audioCtx.currentTime + 0.2);
         }
     }
 
-    function triggerDoubleAlert() {
-        playSound('alert');
-        setTimeout(() => playSound('alert'), 300); // 300ms gap for machine-like double beep
+    function addBrick() {
+        state.bricks++;
+        const container = document.getElementById('tower-container');
+        let rows = container.getElementsByClassName('brick-row');
+        
+        // Logic for pyramidal expansion: Row 1 = 5 bricks, Row 2 = 4 bricks, etc.
+        let currentRowIndex = Math.floor(Math.sqrt(state.bricks - 1)); 
+        // Simple stacking for now, we can refine the math to perfect pyramid if needed
+        let rowNum = Math.floor(state.bricks / 5); 
+        if (state.bricks % 5 === 1) {
+            let newRow = document.createElement('div');
+            newRow.className = 'brick-row';
+            container.prepend(newRow);
+        }
+        let brick = document.createElement('div');
+        brick.className = 'brick';
+        container.firstChild.appendChild(brick);
     }
 
     function goToTimeline() {
-        state.goal = document.getElementById('goal-input').value || "Deep Study";
+        state.goal = document.getElementById('goal-input').value || "Deep Work";
         state.rawSteps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
         state.cycles = parseInt(document.getElementById('cycle-count').value);
         let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:15px;">`;
@@ -173,10 +186,6 @@
         runPhase('warmup');
     }
 
-    function updateCycleBreadcrumb() {
-        document.getElementById('cycle-breadcrumb').innerText = `Cycle ${state.currentCycle} of ${state.cycles}`;
-    }
-
     function runPhase(phase) {
         state.phase = phase;
         document.getElementById('activation-zone').classList.add('hidden');
@@ -187,29 +196,32 @@
             state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; 
             playSound('whistle');
             document.getElementById('warmup-controls').classList.remove('hidden');
-        }
-        else if (phase === 'study') { 
+        } else if (phase === 'study') { 
             state.timeLeft = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; 
             playSound('gong');
-        }
-        else if (phase === 'wrapup') { 
+        } else if (phase === 'wrapup') { 
             state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; 
             playSound('gong');
-        }
-        else if (phase === 'break') { 
+        } else if (phase === 'break') { 
             state.timeLeft = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)';
             document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon;
             document.getElementById('break-display').classList.remove('hidden');
             playSound('whistle');
         }
 
-        document.getElementById('status-msg').innerText = `${phase} | ${state.plan[state.currentCycle-1].step}`;
+        document.getElementById('status-msg').innerText = `${phase} | Cycle ${state.currentCycle}`;
         if(state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(tick, 1000);
     }
 
     function tick() {
         state.timeLeft--;
+        
+        // Build the tower during Study or Wrap-up every 60 seconds
+        if (state.timeLeft % 60 === 0 && (state.phase === 'study' || state.phase === 'wrapup')) {
+            addBrick();
+        }
+
         if (state.timeLeft <= 0) {
             clearInterval(state.timerId);
             if (state.phase === 'warmup') runPhase('study');
@@ -217,12 +229,10 @@
             else if (state.phase === 'wrapup') {
                 if (state.currentCycle === state.cycles) showSummary();
                 else runPhase('break');
-            }
-            else if (state.phase === 'break') { 
+            } else if (state.phase === 'break') { 
                 document.getElementById('activation-zone').classList.remove('hidden'); 
                 state.breakEnd = new Date(); 
-                triggerDoubleAlert();
-                state.alertId = setInterval(triggerDoubleAlert, 15000); // 15-second persistent nudge
+                state.alertId = setInterval(() => { playSound('alert'); setTimeout(() => playSound('alert'), 300); }, 15000);
             }
         }
         updateDisplay();
@@ -249,16 +259,16 @@
         state.distractions.push({ text: el.value, cycle: state.currentCycle });
         const note = document.createElement('div');
         note.className = 'post-it';
-        note.innerHTML = `${el.value} <small>Cycle ${state.currentCycle}</small>`;
+        note.title = "Hover to reveal thought";
+        note.innerHTML = el.value;
         document.getElementById('sidebar').prepend(note);
         el.value = '';
     }
 
     function showSummary() {
-        clearInterval(state.timerId);
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
-        let report = `SESSION REPORT: ${state.goal}\n------------------------------\n`;
+        let report = `SESSION REPORT: ${state.goal}\nBUILDING PROGRESS: ${state.bricks} blocks placed.\n------------------------------\n`;
         state.plan.forEach((p, i) => {
             report += `CYCLE ${i+1}: ${p.step} | Energy: ${state.energyHistory[i] || 5}/10 | Drift: ${state.driftHistory[i] || 0}m\n`;
         });
@@ -275,6 +285,7 @@
     function rush() { state.timeLeft = 1; }
     function updateCurrentEnergy(v) { state.energyHistory[state.currentCycle-1] = v; }
     function pivotPlan(k, v) { state.plan[state.currentCycle-1][k] = v; }
+    function updateCycleBreadcrumb() { document.getElementById('cycle-breadcrumb').innerText = `Cycle ${state.currentCycle} of ${state.cycles}`; }
 </script>
 </body>
 </html>
