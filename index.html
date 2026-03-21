@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POM | Strategic Focus</title>
+    <title>POM | Study Systems</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.92);
+            --glass: rgba(255, 255, 255, 0.94);
             --accent: #2c3e50;
             --warmup: #e3f2fd; --study: #ffffff; --wrapup: #fff3e0; --break: #f1f8e9;
             --alert-red: #e74c3c;
@@ -18,19 +18,17 @@
             background-size: cover; background-position: center; background-attachment: fixed;
         }
 
-        #app { max-width: 600px; width: 95%; margin: 2rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); box-sizing: border-box; }
+        #app { max-width: 600px; width: 95%; margin: 2rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .hidden { display: none; }
         
-        /* Typography & Inputs */
         h1, h2 { color: var(--accent); text-align: center; margin-top: 0; }
+        label { font-weight: bold; font-size: 0.9rem; display: block; margin-top: 10px; }
         input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
         .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
         
-        /* Timeline Table */
         .timeline-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85rem; }
-        .timeline-table th, .timeline-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+        .timeline-table th, .timeline-table td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
 
-        /* The Big Red Button */
         .activate-btn { 
             background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; 
             border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer;
@@ -38,11 +36,12 @@
         }
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(231, 76, 60, 0); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(231, 76, 60, 0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
         }
 
         #rush-btn { position: fixed; bottom: 20px; right: 20px; width: auto; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; font-size: 0.7rem; cursor: pointer; border-radius: 5px; }
+        .energy-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
     </style>
 </head>
 <body>
@@ -51,56 +50,65 @@
     <h1>POM</h1>
     
     <div id="setup-area">
-        <label><b>Goal:</b></label>
-        <input type="text" id="goal-input" placeholder="Main objective...">
-        <label><b>Steps (One per line):</b></label>
-        <textarea id="steps-input" rows="3" placeholder="Step 1...&#10;Step 2..."></textarea>
-        <label><b>Cycles:</b></label>
+        <label>Goal:</label>
+        <input type="text" id="goal-input" placeholder="What is the mission?">
+        
+        <label>Engagement / Energy Level (1-10):</label>
+        <input type="range" id="energy-start" min="1" max="10" value="5">
+        <div class="energy-label"><span>Low Energy</span><span>High Focus</span></div>
+
+        <label>Steps (One per line):</label>
+        <textarea id="steps-input" rows="3" placeholder="Break it down..."></textarea>
+        
+        <label>Cycles:</label>
         <input type="number" id="cycle-count" min="1" max="5" value="3">
-        <label><b>Optional YouTube Soundscape (URL):</b></label>
-        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=...">
+        
         <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
     </div>
 
     <div id="timeline-area" class="hidden">
         <h2>Strategic Review</h2>
-        <p style="font-size: 0.8rem; text-align:center;">Front-load your choices. Assign steps to cycles and set your break style.</p>
         <div id="timeline-list"></div>
         <button class="primary-btn" onclick="startLiveSession()">Initialise System</button>
     </div>
 
     <div id="timer-area" class="hidden">
-        <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; letter-spacing:1px;"></div>
-        <div id="cycle-info" style="text-align:center; font-size:0.8rem; margin-bottom:10px;"></div>
-        <div id="time-left" style="font-size: 5rem; font-weight: 800; text-align: center; margin: 10px 0;">00:00</div>
+        <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; background:#eee; padding:5px; border-radius:5px;">Focus</div>
+        <div id="time-left" style="font-size: 5.5rem; font-weight: 800; text-align: center; margin: 10px 0;">00:00</div>
         
-        <div id="yt-container" class="hidden"></div> <div id="break-display" class="hidden" style="text-align:center;">
-            <div id="break-icon-live" style="font-size:4rem;"></div>
-            <p id="break-desc-live"></p>
+        <div id="break-display" class="hidden" style="text-align:center;">
+            <div id="break-icon-live" style="font-size:5rem;"></div>
+            <p id="cycle-step-info" style="font-style:italic;"></p>
         </div>
 
-        <div id="activation-zone" class="hidden">
+        <div id="activation-zone" class="hidden" style="text-align:center;">
             <button class="activate-btn" onclick="handleActivation()">BACK TO WORK</button>
+            <p style="color:var(--alert-red); font-weight:bold; margin-top:10px;">Click to Restore Focus</p>
         </div>
 
         <input type="text" id="distraction-input" placeholder="Release thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
+        <ul id="distraction-list-live" style="font-size:0.8rem; color:#555; height:40px; overflow:hidden;"></ul>
     </div>
 
     <div id="summary-area" class="hidden">
-        <h2>Session Summary</h2>
+        <h2>Session Reflection</h2>
         <div id="final-stats"></div>
-        <button class="primary-btn" onclick="exportCSV()">Export Data</button>
-        <button style="background:none; border:none; color:#666; cursor:pointer;" onclick="location.reload()">Reset</button>
+        
+        <label style="margin-top:20px;">Final Engagement / Energy Level (1-10):</label>
+        <input type="range" id="energy-end" min="1" max="10" value="5">
+        
+        <button class="primary-btn" style="margin-top:20px;" onclick="exportCSV()">Export Final Report</button>
+        <button style="background:none; border:none; color:#999; cursor:pointer; font-size:0.8rem;" onclick="location.reload()">Start New Session</button>
     </div>
 </div>
 
-<button id="rush-btn" onclick="rush()">Rush ⏩</button>
+<button id="rush-btn" onclick="rush()">⏩</button>
 
 <script>
     let state = {
         goal: '', steps: [], cycles: 1, currentCycle: 1, phase: 'warmup',
-        timeLeft: 0, timerId: null, startTime: null,
-        plan: [], distractions: [], driftMinutes: 0
+        timeLeft: 0, timerId: null, energyStart: 5,
+        plan: [], distractions: [], driftHistory: []
     };
 
     let audioCtx;
@@ -116,8 +124,7 @@
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
             osc.start(); osc.stop(audioCtx.currentTime + 3);
         } else if(type === 'whistle') {
-            osc.frequency.setValueAtTime(900, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
             osc.start(); osc.stop(audioCtx.currentTime + 0.6);
@@ -125,24 +132,20 @@
     }
 
     function goToTimeline() {
-        state.goal = document.getElementById('goal-input').value;
+        state.goal = document.getElementById('goal-input').value || "Deep Study";
+        state.energyStart = document.getElementById('energy-start').value;
         state.steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
         state.cycles = parseInt(document.getElementById('cycle-count').value);
         
-        let html = `<table class="timeline-table"><tr><th>Phase</th><th>Start Time</th><th>Step Assignment</th></tr>`;
-        let now = new Date();
-        
+        let html = `<table class="timeline-table"><tr><th>Phase</th><th>Activity / Step</th></tr>`;
         for(let i = 1; i <= state.cycles; i++) {
-            let timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            html += `<tr><td>Cycle ${i}</td><td>${timeStr}</td>
-                     <td><select id="step-map-${i}"><option value="General">General Focus</option>
-                     ${state.steps.map(s => `<option value="${s}">${s}</option>`).join('')}</select></td></tr>`;
-            html += `<tr><td>Break ${i}</td><td>-</td>
+            html += `<tr><td><b>Cycle ${i} Focus</b></td>
+                     <td><select id="step-map-${i}">${state.steps.map(s => `<option value="${s}">${s}</option>`).join('')}<option value="Review">Review</option></select></td></tr>`;
+            html += `<tr><td><i>Break ${i} Style</i></td>
                      <td><select id="break-map-${i}">
                         <option value="🚶">Moving</option><option value="🍎">Food</option>
-                        <option value="🏋️">Exercise</option><option value="💬">Social</option>
+                        <option value="🏋️">Exercise</option><option value="💬">Social</option><option value="🧹">Broom</option>
                      </select></td></tr>`;
-            now.setMinutes(now.getMinutes() + 30); // Approx block
         }
         html += `</table>`;
         document.getElementById('timeline-list').innerHTML = html;
@@ -151,8 +154,6 @@
     }
 
     function startLiveSession() {
-        state.startTime = new Date();
-        // Capture choices
         for(let i = 1; i <= state.cycles; i++) {
             state.plan.push({
                 step: document.getElementById(`step-map-${i}`).value,
@@ -168,24 +169,21 @@
         state.phase = phase;
         document.getElementById('activation-zone').classList.add('hidden');
         document.getElementById('break-display').classList.add('hidden');
-
-        if(phase === 'warmup') { state.timeLeft = 60; playSound('gong'); }
-        else if(phase === 'study') { state.timeLeft = 23 * 60; playSound('whistle'); }
-        else if(phase === 'wrapup') { state.timeLeft = 60; }
+        
+        const app = document.getElementById('app');
+        if(phase === 'warmup') { state.timeLeft = 60; app.style.backgroundColor = 'var(--warmup)'; playSound('gong'); }
+        else if(phase === 'study') { state.timeLeft = 23 * 60; app.style.backgroundColor = 'var(--study)'; playSound('whistle'); }
+        else if(phase === 'wrapup') { state.timeLeft = 60; app.style.backgroundColor = 'var(--wrapup)'; playSound('whistle'); }
         else if(phase === 'break') { 
-            state.timeLeft = 5 * 60; 
-            playSound('whistle');
-            const currentPlan = state.plan[state.currentCycle - 1];
+            state.timeLeft = 5 * 60; app.style.backgroundColor = 'var(--break)'; 
             document.getElementById('break-display').classList.remove('hidden');
-            document.getElementById('break-icon-live').innerText = currentPlan.breakIcon;
+            document.getElementById('break-icon-live').innerText = state.plan[state.currentCycle-1].breakIcon;
+            playSound('whistle');
         }
 
-        document.getElementById('status-msg').innerText = phase;
-        document.getElementById('cycle-info').innerText = `Cycle ${state.currentCycle} of ${state.cycles} | Current Task: ${state.plan[state.currentCycle-1].step}`;
-        
+        document.getElementById('status-msg').innerText = `${phase} | Cycle ${state.currentCycle}`;
         if(state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(tick, 1000);
-        updateDisplay();
     }
 
     function tick() {
@@ -210,7 +208,7 @@
 
     function handleActivation() {
         let drift = Math.floor((new Date() - state.breakEndTime) / 60000);
-        state.driftMinutes += Math.max(0, drift);
+        state.driftHistory.push(drift);
         if(state.currentCycle < state.cycles) {
             state.currentCycle++;
             runPhase('warmup');
@@ -219,7 +217,6 @@
         }
     }
 
-    function rush() { state.timeLeft = 2; }
     function updateDisplay() {
         const mins = Math.floor(state.timeLeft / 60);
         const secs = state.timeLeft % 60;
@@ -231,29 +228,32 @@
         if(!input.value) return;
         state.distractions.push(input.value);
         input.value = '';
+        document.getElementById('distraction-list-live').innerHTML = state.distractions.slice(-1).map(d => `<li>${d}</li>`);
     }
 
     function showSummary() {
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
-        document.getElementById('final-stats').innerHTML = `
-            <p><b>Goal:</b> ${state.goal}</p>
-            <p><b>Schedule Drift:</b> ${state.driftMinutes} minutes total late return.</p>
-            <p><b>Thoughts Captured:</b> ${state.distractions.length}</p>
-        `;
+        
+        let html = `<h3>System Breakdown</h3><table class="timeline-table"><tr><th>Cycle</th><th>Planned Step</th><th>Drift (min)</th></tr>`;
+        state.plan.forEach((p, i) => {
+            html += `<tr><td>${i+1}</td><td>${p.step}</td><td>${state.driftHistory[i] || 0}</td></tr>`;
+        });
+        html += `</table><p><b>Initial Energy:</b> ${state.energyStart}/10</p><p><b>Distractions Release:</b> ${state.distractions.length}</p>`;
+        document.getElementById('final-stats').innerHTML = html;
     }
 
     function exportCSV() {
-        let csv = "data:text/csv;charset=utf-8,Goal,Cycles,Drift(min)\n";
-        csv += `${state.goal},${state.currentCycle},${state.driftMinutes}\n\nDistractions\n`;
-        state.distractions.forEach(d => { csv += `"${d}"\n`; });
-        const encodedUri = encodeURI(csv);
+        let energyEnd = document.getElementById('energy-end').value;
+        let csv = `Goal,${state.goal}\nEnergy Start,${state.energyStart}\nEnergy End,${energyEnd}\n\nCycle,Step,Drift(min)\n`;
+        state.plan.forEach((p, i) => { csv += `${i+1},${p.step},${state.driftHistory[i] || 0}\n`; });
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "pom_summary.csv");
-        document.body.appendChild(link);
+        link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
+        link.setAttribute("download", "POM_Reflective_Summary.csv");
         link.click();
     }
+
+    function rush() { state.timeLeft = 2; }
 </script>
 </body>
 </html>
