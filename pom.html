@@ -6,129 +6,75 @@
     <title>POM | Study Systems</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.9);
+            --glass: rgba(255, 255, 255, 0.95);
             --accent: #2c3e50;
-            --warmup: rgba(227, 242, 253, 0.8);
-            --study: rgba(255, 255, 255, 0.8);
-            --wrapup: rgba(255, 243, 224, 0.8);
-            --break: rgba(241, 248, 233, 0.8);
+            --warmup: #e3f2fd; --study: #ffffff; --wrapup: #fff3e0; --break: #f1f8e9;
+            --alert-red: #e74c3c;
         }
-        
         body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
-                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
+            font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
             background-size: cover; background-position: center; background-attachment: fixed;
         }
-
-        nav { width: 100%; padding: 15px 25px; box-sizing: border-box; }
-        .nav-link { 
-            color: white; text-decoration: none; font-weight: 600; 
-            background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 20px;
-            backdrop-filter: blur(5px);
-        }
-
-        #app { 
-            max-width: 550px; width: 95%; margin: 1rem 0; padding: 2rem; 
-            background: var(--glass); backdrop-filter: blur(15px);
-            border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        }
-
-        .timer-display { font-size: 5rem; font-weight: 800; text-align: center; margin: 0.5rem 0; color: var(--accent); }
-        .status-bar { padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 1rem; font-weight: 700; text-transform: uppercase; }
-
-        input, select, textarea, button { 
-            width: 100%; padding: 12px; margin: 8px 0; border: 1px solid rgba(0,0,0,0.1); 
-            border-radius: 12px; font-size: 1rem;
-        }
-
-        .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
-        #rush-btn {
-            position: fixed; bottom: 20px; right: 20px; width: auto;
-            background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(5px); padding: 5px 10px; font-size: 0.7rem;
-        }
-
-        /* Summary Styling */
-        .summary-item { border-bottom: 1px solid #eee; padding: 10px 0; }
-        .checklist-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
-        .checklist-item input { width: auto; margin: 0; }
-
-        .dev-todo { 
-            margin-top: 2rem; padding: 1.5rem; background: rgba(0,0,0,0.05); 
-            border-radius: 15px; font-size: 0.85rem; line-height: 1.4;
-        }
+        #app { max-width: 600px; width: 95%; margin: 2rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
         .hidden { display: none; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
+        .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        #rush-btn { position: fixed; bottom: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; }
+        #rush-btn:hover { opacity: 1; }
+        .energy-box { background: #eee; padding: 15px; border-radius: 12px; text-align: center; }
     </style>
 </head>
 <body>
 
-<nav><a href="https://bdebeer-arch.github.io/system-dashboard/" class="nav-link">← Home Dashboard</a></nav>
-
 <div id="app">
-    <h1 style="text-align:center; margin-top:0; color: var(--accent);">POM</h1>
+    <h1 style="text-align:center">POM</h1>
     
     <div id="setup-area">
-        <label><b>Cycles</b> (Max 5)</label>
-        <input type="number" id="cycle-count" min="1" max="5" value="1">
-        <label><b>Goal:</b> What do you want?</label>
-        <input type="text" id="goal-input" placeholder="e.g. Master Calculus integration">
-        <label><b>Steps:</b> (One per line)</label>
-        <textarea id="steps-input" rows="4" placeholder="Step 1&#10;Step 2&#10;Step 3"></textarea>
-        <button class="primary-btn" onclick="initSession()">Start Session</button>
+        <input type="text" id="goal-input" placeholder="Main Goal...">
+        <textarea id="steps-input" rows="3" placeholder="Steps (one per line)..."></textarea>
+        <input type="number" id="cycle-count" min="1" max="5" value="3">
+        <input type="text" id="yt-url" placeholder="YouTube URL (Optional)">
+        <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
+    </div>
 
-        <div class="dev-todo">
-            <strong>Developer To-Do:</strong>
-            <ul style="padding-left: 20px;">
-                <li>YouTube background soundscapes</li>
-                <li>Mātauranga Māori whakataukī integration</li>
-                <li>Full-screen focus mode</li>
-                <li>Inactivity timeout (30m)</li>
-            </ul>
-            <p><small>Have an idea? <a href="mailto:byron@example.com?subject=POM Idea">Message the Dev</a></small></p>
-        </div>
+    <div id="timeline-area" class="hidden">
+        <div id="timeline-list"></div>
+        <button class="primary-btn" onclick="startLiveSession()">Initialise</button>
     </div>
 
     <div id="timer-area" class="hidden">
-        <div id="header-display" style="border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 1rem; padding-bottom: 0.5rem;"></div>
-        <div id="status-msg" class="status-bar">Focus</div>
-        <div class="timer-display" id="time-left">00:00</div>
+        <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase;"></div>
+        <div id="time-left" style="font-size: 5rem; font-weight: 800; text-align: center;">00:00</div>
         
-        <div id="break-controls" class="hidden">
-            <select id="break-type" onchange="updateBreakIcon()">
-                <option value="🚶">Moving (Movement)</option>
-                <option value="🍎">Food (Refuel)</option>
-                <option value="🏋️">Exercise (Exercise)</option>
-                <option value="💬">Talking (Social)</option>
-                <option value="🧹">Broom (Tidy)</option>
-            </select>
-            <div id="break-icon" style="font-size: 4rem; text-align: center; margin: 10px;">🚶</div>
+        <div id="energy-check" class="hidden energy-box">
+            <p><b>Current Energy / Engagement (1-10):</b></p>
+            <input type="range" id="energy-slider" min="1" max="10" value="5">
+            <button class="primary-btn" onclick="confirmEnergy()">Enter Focus Block</button>
         </div>
 
-        <button id="next-btn" class="primary-btn hidden" onclick="advanceStep()">Next Stage →</button>
-
-        <div style="background: rgba(255,255,255,0.5); padding: 12px; border-radius: 12px; margin-top: 15px;">
-            <input type="text" id="distraction-input" placeholder="Release a thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
-            <ul id="distraction-list" style="font-size: 0.8rem; padding-left: 20px; max-height: 80px; overflow-y: auto;"></ul>
+        <div id="activation-zone" class="hidden" style="text-align:center;">
+            <button class="activate-btn" onclick="handleActivation()">BACK TO WORK</button>
         </div>
+        
+        <div id="break-display" class="hidden" style="text-align:center; font-size:4rem;"></div>
+        <input type="text" id="distraction-input" placeholder="Release thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
     </div>
 
     <div id="summary-area" class="hidden">
-        <h2 style="color:var(--accent)">Session Complete</h2>
         <div id="final-stats"></div>
-        <button class="primary-btn" onclick="location.reload()" style="margin-top:20px;">Restart System</button>
+        <button class="primary-btn" onclick="exportCSV()">Export CSV</button>
     </div>
 </div>
 
-<button id="rush-btn" onclick="rush()">Rush ⏩</button>
+<button id="rush-btn" onclick="rush()">⏩</button>
 
 <script>
     let state = {
-        cycles: 1, currentCycle: 1, phase: 'warmup', 
-        timeLeft: 0, goal: '', steps: [], distractions: [], 
-        timerId: null, startTime: null, history: []
+        goal: '', cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0,
+        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null
     };
 
     let audioCtx;
@@ -139,101 +85,130 @@
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-        if(type === 'gong') {
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
-            osc.start(); osc.stop(audioCtx.currentTime + 3);
-        } else {
-            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+        
+        if (type === 'whistle') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1600, audioCtx.currentTime + 0.1);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
             osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        } else if (type === 'gong') {
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2);
+            osc.start(); osc.stop(audioCtx.currentTime + 2);
         }
     }
 
-    function initSession() {
-        initAudio();
-        state.goal = document.getElementById('goal-input').value || "Deep Study";
-        state.steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
+    function goToTimeline() {
+        state.goal = document.getElementById('goal-input').value || "Study";
+        let steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
         state.cycles = parseInt(document.getElementById('cycle-count').value);
-        state.startTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
+        let html = `<table style="width:100%; border-collapse:collapse;">`;
+        for(let i=1; i<=state.cycles; i++) {
+            html += `<tr><td>C${i} Step:</td><td><select id="step-${i}">${steps.map(s=>`<option>${s}</option>`).join('')}<option>Review</option></select></td></tr>`;
+            html += `<tr><td>C${i} Break:</td><td><select id="break-${i}"><option value="🚶">Moving</option><option value="🍎">Food</option><option value="🏋️">Exercise</option><option value="🧹">Broom</option></select></td></tr>`;
+        }
+        html += `</table>`;
+        document.getElementById('timeline-list').innerHTML = html;
         document.getElementById('setup-area').classList.add('hidden');
+        document.getElementById('timeline-area').classList.remove('hidden');
+    }
+
+    function startLiveSession() {
+        for(let i=1; i<=state.cycles; i++) {
+            state.plan.push({ step: document.getElementById(`step-${i}`).value, icon: document.getElementById(`break-${i}`).value });
+        }
+        document.getElementById('timeline-area').classList.add('hidden');
         document.getElementById('timer-area').classList.remove('hidden');
-        document.getElementById('header-display').innerHTML = `<b>Target:</b> ${state.goal} <span style="float:right; opacity:0.6;">Started: ${state.startTime}</span>`;
-        
         runPhase('warmup');
     }
 
     function runPhase(phase) {
         state.phase = phase;
-        document.getElementById('next-btn').classList.add('hidden');
-        document.getElementById('break-controls').classList.add('hidden');
-        const app = document.getElementById('app');
+        document.getElementById('energy-check').classList.add('hidden');
+        document.getElementById('activation-zone').classList.add('hidden');
+        document.getElementById('break-display').classList.add('hidden');
+        
+        if (phase === 'warmup') { state.timeLeft = 60; playSound('gong'); }
+        else if (phase === 'study') { state.timeLeft = 23 * 60; }
+        else if (phase === 'wrapup') { state.timeLeft = 60; }
+        else if (phase === 'break') { 
+            state.timeLeft = 5 * 60; 
+            document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon;
+            document.getElementById('break-display').classList.remove('hidden');
+        }
 
-        if(phase === 'warmup') { state.timeLeft = 60; app.style.background = 'var(--warmup)'; document.getElementById('status-msg').innerText = "Warm Up"; playSound('gong'); }
-        else if(phase === 'study') { state.timeLeft = 23 * 60; app.style.background = 'var(--study)'; document.getElementById('status-msg').innerText = `Cycle ${state.currentCycle} Focus`; }
-        else if(phase === 'wrapup') { state.timeLeft = 60; app.style.background = 'var(--wrapup)'; document.getElementById('status-msg').innerText = "Wrap Up (Comma)"; }
-        else if(phase === 'break') { state.timeLeft = 5 * 60; app.style.background = 'var(--break)'; document.getElementById('status-msg').innerText = "Active Break"; document.getElementById('break-controls').classList.remove('hidden'); playSound('gong'); }
-
+        document.getElementById('status-msg').innerText = phase;
         if(state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(tick, 1000);
-        updateDisplay();
     }
 
     function tick() {
         state.timeLeft--;
-        if(state.timeLeft <= 0) {
+        if (state.timeLeft <= 0) {
             clearInterval(state.timerId);
-            if(state.phase === 'break') { document.getElementById('next-btn').classList.remove('hidden'); playSound('beep'); }
-            else autoAdvance();
+            if (state.phase === 'warmup') {
+                playSound('whistle');
+                document.getElementById('energy-check').classList.remove('hidden');
+            } else if (state.phase === 'study') {
+                runPhase('wrapup');
+            } else if (state.phase === 'wrapup') {
+                playSound('whistle');
+                runPhase('break');
+            } else if (state.phase === 'break') {
+                document.getElementById('activation-zone').classList.remove('hidden');
+                state.breakEnd = new Date();
+            }
         }
         updateDisplay();
     }
 
-    function autoAdvance() {
-        if(state.phase === 'warmup') runPhase('study');
-        else if(state.phase === 'study') runPhase('wrapup');
-        else if(state.phase === 'wrapup') runPhase('break');
+    function confirmEnergy() {
+        state.energyHistory.push(document.getElementById('energy-slider').value);
+        runPhase('study');
     }
 
-    function advanceStep() {
-        if(state.currentCycle < state.cycles) { state.currentCycle++; runPhase('warmup'); }
+    function handleActivation() {
+        let drift = Math.floor((new Date() - state.breakEnd) / 60000);
+        state.driftHistory.push(drift);
+        if (state.currentCycle < state.cycles) { state.currentCycle++; runPhase('warmup'); }
         else showSummary();
     }
 
-    function rush() { state.timeLeft = 2; }
-
     function updateDisplay() {
-        const mins = Math.floor(state.timeLeft / 60);
-        const secs = state.timeLeft % 60;
-        document.getElementById('time-left').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    }
-
-    function updateBreakIcon() { document.getElementById('break-icon').innerText = document.getElementById('break-type').value; }
-
-    function saveDistraction() {
-        const input = document.getElementById('distraction-input');
-        if(!input.value) return;
-        state.distractions.push(input.value);
-        const li = document.createElement('li');
-        li.innerText = input.value;
-        document.getElementById('distraction-list').prepend(li);
-        input.value = '';
+        const m = Math.floor(state.timeLeft / 60);
+        const s = state.timeLeft % 60;
+        document.getElementById('time-left').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
     function showSummary() {
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
-        
-        let stepList = state.steps.map((s, i) => `<div class="checklist-item"><input type="checkbox" id="s${i}"> <label for="s${i}">${s}</label></div>`).join('');
-        let distractionHTML = state.distractions.map(d => `<li>${d}</li>`).join('');
+        let html = `<h3>Session Log</h3><table style="width:100%"><tr><th>Cycle</th><th>Step</th><th>Energy</th><th>Drift</th></tr>`;
+        state.plan.forEach((p, i) => {
+            html += `<tr><td>${i+1}</td><td>${p.step}</td><td>${state.energyHistory[i] || '-'}</td><td>${state.driftHistory[i] || 0}m</td></tr>`;
+        });
+        document.getElementById('final-stats').innerHTML = html + `</table>`;
+    }
 
-        document.getElementById('final-stats').innerHTML = `
-            <div class="summary-item"><strong>Goal:</strong> ${state.goal} (Started ${state.startTime})</div>
-            <div class="summary-item"><strong>Cycles Completed:</strong> ${state.currentCycle}</div>
-            <div class="summary-item"><strong>Check your steps:</strong><br>${stepList || 'No steps listed.'}</div>
-            <div class="summary-item"><strong>Recalled Distractions:</strong><br><ul>${distractionHTML || 'None!'}</ul></div>
-        `;
+    function exportCSV() {
+        let csv = "Cycle,Step,Energy,Drift\n";
+        state.plan.forEach((p, i) => { csv += `${i+1},${p.step},${state.energyHistory[i]},${state.driftHistory[i]}\n`; });
+        const link = document.createElement("a");
+        link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+        link.download = "pom_log.csv";
+        link.click();
+    }
+
+    function rush() { state.timeLeft = 1; }
+
+    function saveDistraction() {
+        state.distractions.push(document.getElementById('distraction-input').value);
+        document.getElementById('distraction-input').value = '';
     }
 </script>
 </body>
