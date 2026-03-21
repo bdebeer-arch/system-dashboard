@@ -1,259 +1,209 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POM | Study Systems</title>
-    <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.94);
-            --accent: #2c3e50;
-            --warmup: #e3f2fd; --study: #ffffff; --wrapup: #fff3e0; --break: #f1f8e9;
-            --alert-red: #e74c3c;
-        }
-        
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover; background-position: center; background-attachment: fixed;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RE Web Portfolio</title>
+<style>
+:root {
+--primary: #2c3e50;
+--bg: #f0f2f5;
+--card-bg: #ffffff;
+--text-sub: #7f8c8d;
+}
 
-        #app { max-width: 600px; width: 95%; margin: 2rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
-        .hidden { display: none; }
-        
-        h1, h2 { color: var(--accent); text-align: center; margin-top: 0; }
-        label { font-weight: bold; font-size: 0.9rem; display: block; margin-top: 10px; }
-        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
-        .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        
-        .timeline-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85rem; }
-        .timeline-table th, .timeline-table td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+background-color: var(--bg);
+color: var(--primary);
+margin: 0;
+padding: 0;
+display: flex;
+flex-direction: column;
+align-items: center;
+min-height: 100vh;
+}
 
-        .activate-btn { 
-            background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; 
-            border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer;
-            animation: pulse 1.5s infinite; margin-top: 20px;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 20px rgba(231, 76, 60, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-        }
+header {
+background: var(--primary);
+color: white;
+width: 100%;
+padding: 50px 20px;
+text-align: center;
+box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
 
-        #rush-btn { position: fixed; bottom: 20px; right: 20px; width: auto; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; font-size: 0.7rem; cursor: pointer; border-radius: 5px; }
-        .energy-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
-    </style>
+h1 { margin: 0; font-size: 2.8rem; letter-spacing: -1px; }
+p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; font-size: 1.1rem; letter-spacing: 1px; }
+
+.container {
+max-width: 1100px;
+width: 100%;
+padding: 60px 20px;
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 40px;
+justify-content: center;
+}
+
+.tool-card {
+background: var(--card-bg);
+border-radius: 16px;
+overflow: hidden;
+box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+transition: transform 0.2s ease, box-shadow 0.2s ease;
+text-decoration: none;
+color: inherit;
+display: flex;
+flex-direction: column;
+border: 1px solid rgba(0,0,0,0.05);
+}
+
+.tool-card:hover {
+transform: translateY(-8px);
+box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.card-hero {
+height: 120px;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.icon-hero {
+font-size: 3rem; color: white; font-weight: bold;
+text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.card-body { padding: 35px; flex-grow: 1; display: flex; flex-direction: column; }
+
+h2 { margin: 0 0 15px 0; font-size: 1.8rem; color: var(--primary); }
+p.desc { color: var(--text-sub); line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
+
+.btn-launch {
+display: block;
+width: 100%;
+padding: 12px;
+text-align: center;
+background: #ecf0f1;
+color: var(--primary);
+border-radius: 8px;
+font-weight: bold;
+transition: background 0.2s;
+}
+
+.tool-card:hover .btn-launch { background: var(--primary); color: white; }
+
+footer {
+margin-top: auto;
+padding: 30px;
+color: var(--text-sub);
+font-size: 0.9rem;
+text-align: center;
+}
+
+</style>
 </head>
 <body>
 
-<div id="app">
-    <h1>POM</h1>
+<header>
+<h1>RE Web Portfolio</h1>
+<p class="role">JUST HAVING FUN</p>
+</header>
+
+<div class="container">
+
+<a href="pom.html" class="tool-card">
+    <div class="card-hero" style="background: linear-gradient(135deg, #e67e22, #d35400, #fbcf33);">
+        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(230, 126, 34, 0.6); color: #fff;">&#x1F345;</div> 
+    </div>
+    <div class="card-body">
+        <h2>POM Focus Engine</h2>
+        <p class="desc">Systems-based productivity timer. Manage cognitive load with warm-ups, 'comma' wrap-ups, and active recovery.</p>
+        <span class="btn-launch">Launch Engine &rarr;</span>
+    </div>
+</a>
     
-    <div id="setup-area">
-        <label>Goal:</label>
-        <input type="text" id="goal-input" placeholder="What is the mission?">
-        
-        <label>Engagement / Energy Level (1-10):</label>
-        <input type="range" id="energy-start" min="1" max="10" value="5">
-        <div class="energy-label"><span>Low Energy</span><span>High Focus</span></div>
+<a href="diamond-match.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #1a1a2e, #ffffff);">
+<div class="icon-hero" style="text-shadow: 0 0 10px rgba(52, 152, 219, 0.5); color: #3498db;">&#x25C7;</div> 
+</div>
+<div class="card-body">
+<h2>Diamond Match</h2>
+<p class="desc">Interactive arena to pair stressors with strengths. Watch the darkness lift as Hauora balance is restored.</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
 
-        <label>Steps (One per line):</label>
-        <textarea id="steps-input" rows="3" placeholder="Break it down..."></textarea>
-        
-        <label>Cycles:</label>
-        <input type="number" id="cycle-count" min="1" max="5" value="3">
-        
-        <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
-    </div>
+<a href="hauora.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2980b9);">
+<div class="icon-hero">&#x25B2;</div> 
+</div>
+<div class="card-body">
+<h2>Te Whare Tapa Whā</h2>
+<p class="desc">Interactive wellbeing projection. Map the four walls of Hauora.</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
 
-    <div id="timeline-area" class="hidden">
-        <h2>Strategic Review</h2>
-        <div id="timeline-list"></div>
-        <button class="primary-btn" onclick="startLiveSession()">Initialise System</button>
-    </div>
+<a href="gallery.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #f1c40f, #e67e22);">
+<div class="icon-hero">&#x1F4F7;</div> </div>
+<div class="card-body">
+<h2>Gallery Labeler</h2>
+<p class="desc">Interactive masonry grid for images. Curate, reorder, and identify resources with inline naming.</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
 
-    <div id="timer-area" class="hidden">
-        <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; background:#eee; padding:5px; border-radius:5px;">Focus</div>
-        <div id="time-left" style="font-size: 5.5rem; font-weight: 800; text-align: center; margin: 10px 0;">00:00</div>
-        
-        <div id="break-display" class="hidden" style="text-align:center;">
-            <div id="break-icon-live" style="font-size:5rem;"></div>
-            <p id="cycle-step-info" style="font-style:italic;"></p>
-        </div>
+<a href="game.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
+<div class="icon-hero">Aa</div>
+</div>
+<div class="card-body">
+<h2>Knowledge Cipher</h2>
+<p class="desc">A team-based vocabulary engine using seeded cryptography. Features 'Spymaster' mode for synchronous classroom play.</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
 
-        <div id="activation-zone" class="hidden" style="text-align:center;">
-            <button class="activate-btn" onclick="handleActivation()">BACK TO WORK</button>
-            <p style="color:var(--alert-red); font-weight:bold; margin-top:10px;">Click to Restore Focus</p>
-        </div>
+<a href="hex.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #d35400, #e67e22);">
+<div class="icon-hero">&#x2B22;</div> </div>
+<div class="card-body">
+<h2>Systemic Pathfinder</h2>
+<p class="desc">Hexagonal competitive recall engine. Strategic territory capture via definition retrieval (Blockbusters logic).</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
 
-        <input type="text" id="distraction-input" placeholder="Release thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
-        <ul id="distraction-list-live" style="font-size:0.8rem; color:#555; height:40px; overflow:hidden;"></ul>
-    </div>
+<a href="tracker.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+<div class="icon-hero">+</div> </div>
+<div class="card-body">
+<h2>Point Tracker</h2>
+<p class="desc">Individual scoring system. Keep track of student points, house merits, or participation metrics.</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
 
-    <div id="summary-area" class="hidden">
-        <h2>Session Reflection</h2>
-        <div id="final-stats"></div>
-        
-        <label style="margin-top:20px;">Final Engagement / Energy Level (1-10):</label>
-        <input type="range" id="energy-end" min="1" max="10" value="5">
-        
-        <button class="primary-btn" style="margin-top:20px;" onclick="exportCSV()">Export Final Report</button>
-        <button style="background:none; border:none; color:#999; cursor:pointer; font-size:0.8rem;" onclick="location.reload()">Start New Session</button>
-    </div>
+<a href="higmal.html" class="tool-card">
+<div class="card-hero" style="background: linear-gradient(135deg, #2980b9, #f39c12);">
+<div class="icon-hero">&#x25A6;</div> </div>
+<div class="card-body">
+<h2>HiGMaL</h2>
+<p class="desc">Strategic Cost-Benefit Analysis and Prioritisation Tool.</p>
+<span class="btn-launch">Launch Engine &rarr;</span>
+</div>
+</a>
+
 </div>
 
-<button id="rush-btn" onclick="rush()">⏩</button>
+<footer>
+System State: LIVE | Focus: Student Engagement
+</footer>
 
-<script>
-    let state = {
-        goal: '', steps: [], cycles: 1, currentCycle: 1, phase: 'warmup',
-        timeLeft: 0, timerId: null, energyStart: 5,
-        plan: [], distractions: [], driftHistory: []
-    };
-
-    let audioCtx;
-    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-
-    function playSound(type) {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if(type === 'gong') {
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
-            osc.start(); osc.stop(audioCtx.currentTime + 3);
-        } else if(type === 'whistle') {
-            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.6);
-        }
-    }
-
-    function goToTimeline() {
-        state.goal = document.getElementById('goal-input').value || "Deep Study";
-        state.energyStart = document.getElementById('energy-start').value;
-        state.steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
-        state.cycles = parseInt(document.getElementById('cycle-count').value);
-        
-        let html = `<table class="timeline-table"><tr><th>Phase</th><th>Activity / Step</th></tr>`;
-        for(let i = 1; i <= state.cycles; i++) {
-            html += `<tr><td><b>Cycle ${i} Focus</b></td>
-                     <td><select id="step-map-${i}">${state.steps.map(s => `<option value="${s}">${s}</option>`).join('')}<option value="Review">Review</option></select></td></tr>`;
-            html += `<tr><td><i>Break ${i} Style</i></td>
-                     <td><select id="break-map-${i}">
-                        <option value="🚶">Moving</option><option value="🍎">Food</option>
-                        <option value="🏋️">Exercise</option><option value="💬">Social</option><option value="🧹">Broom</option>
-                     </select></td></tr>`;
-        }
-        html += `</table>`;
-        document.getElementById('timeline-list').innerHTML = html;
-        document.getElementById('setup-area').classList.add('hidden');
-        document.getElementById('timeline-area').classList.remove('hidden');
-    }
-
-    function startLiveSession() {
-        for(let i = 1; i <= state.cycles; i++) {
-            state.plan.push({
-                step: document.getElementById(`step-map-${i}`).value,
-                breakIcon: document.getElementById(`break-map-${i}`).value
-            });
-        }
-        document.getElementById('timeline-area').classList.add('hidden');
-        document.getElementById('timer-area').classList.remove('hidden');
-        runPhase('warmup');
-    }
-
-    function runPhase(phase) {
-        state.phase = phase;
-        document.getElementById('activation-zone').classList.add('hidden');
-        document.getElementById('break-display').classList.add('hidden');
-        
-        const app = document.getElementById('app');
-        if(phase === 'warmup') { state.timeLeft = 60; app.style.backgroundColor = 'var(--warmup)'; playSound('gong'); }
-        else if(phase === 'study') { state.timeLeft = 23 * 60; app.style.backgroundColor = 'var(--study)'; playSound('whistle'); }
-        else if(phase === 'wrapup') { state.timeLeft = 60; app.style.backgroundColor = 'var(--wrapup)'; playSound('whistle'); }
-        else if(phase === 'break') { 
-            state.timeLeft = 5 * 60; app.style.backgroundColor = 'var(--break)'; 
-            document.getElementById('break-display').classList.remove('hidden');
-            document.getElementById('break-icon-live').innerText = state.plan[state.currentCycle-1].breakIcon;
-            playSound('whistle');
-        }
-
-        document.getElementById('status-msg').innerText = `${phase} | Cycle ${state.currentCycle}`;
-        if(state.timerId) clearInterval(state.timerId);
-        state.timerId = setInterval(tick, 1000);
-    }
-
-    function tick() {
-        state.timeLeft--;
-        if(state.timeLeft <= 0) {
-            clearInterval(state.timerId);
-            if(state.phase === 'break') {
-                document.getElementById('activation-zone').classList.remove('hidden');
-                state.breakEndTime = new Date();
-            } else {
-                autoAdvance();
-            }
-        }
-        updateDisplay();
-    }
-
-    function autoAdvance() {
-        if(state.phase === 'warmup') runPhase('study');
-        else if(state.phase === 'study') runPhase('wrapup');
-        else if(state.phase === 'wrapup') runPhase('break');
-    }
-
-    function handleActivation() {
-        let drift = Math.floor((new Date() - state.breakEndTime) / 60000);
-        state.driftHistory.push(drift);
-        if(state.currentCycle < state.cycles) {
-            state.currentCycle++;
-            runPhase('warmup');
-        } else {
-            showSummary();
-        }
-    }
-
-    function updateDisplay() {
-        const mins = Math.floor(state.timeLeft / 60);
-        const secs = state.timeLeft % 60;
-        document.getElementById('time-left').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    }
-
-    function saveDistraction() {
-        const input = document.getElementById('distraction-input');
-        if(!input.value) return;
-        state.distractions.push(input.value);
-        input.value = '';
-        document.getElementById('distraction-list-live').innerHTML = state.distractions.slice(-1).map(d => `<li>${d}</li>`);
-    }
-
-    function showSummary() {
-        document.getElementById('timer-area').classList.add('hidden');
-        document.getElementById('summary-area').classList.remove('hidden');
-        
-        let html = `<h3>System Breakdown</h3><table class="timeline-table"><tr><th>Cycle</th><th>Planned Step</th><th>Drift (min)</th></tr>`;
-        state.plan.forEach((p, i) => {
-            html += `<tr><td>${i+1}</td><td>${p.step}</td><td>${state.driftHistory[i] || 0}</td></tr>`;
-        });
-        html += `</table><p><b>Initial Energy:</b> ${state.energyStart}/10</p><p><b>Distractions Release:</b> ${state.distractions.length}</p>`;
-        document.getElementById('final-stats').innerHTML = html;
-    }
-
-    function exportCSV() {
-        let energyEnd = document.getElementById('energy-end').value;
-        let csv = `Goal,${state.goal}\nEnergy Start,${state.energyStart}\nEnergy End,${energyEnd}\n\nCycle,Step,Drift(min)\n`;
-        state.plan.forEach((p, i) => { csv += `${i+1},${p.step},${state.driftHistory[i] || 0}\n`; });
-        const link = document.createElement("a");
-        link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8," + csv));
-        link.setAttribute("download", "POM_Reflective_Summary.csv");
-        link.click();
-    }
-
-    function rush() { state.timeLeft = 2; }
-</script>
 </body>
 </html>
