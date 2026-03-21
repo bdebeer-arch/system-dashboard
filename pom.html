@@ -6,184 +6,255 @@
     <title>POM | Study Systems</title>
     <style>
         :root {
-            --bg: #f8f9fa; --text: #212529; --accent: #0056b3;
-            --warmup: #e3f2fd; --study: #ffffff; --wrapup: #fff3e0; --break: #f1f8e9;
+            --glass: rgba(255, 255, 255, 0.85);
+            --accent: #2c3e50;
+            --warmup: rgba(227, 242, 253, 0.7);
+            --study: rgba(255, 255, 255, 0.7);
+            --wrapup: rgba(255, 243, 224, 0.7);
+            --break: rgba(241, 248, 233, 0.7);
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); transition: background 0.5s; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        /* Navigation Bar */
-        nav { width: 100%; background: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: flex-start; position: sticky; top: 0; z-index: 100; }
-        .nav-link { text-decoration: none; color: var(--accent); font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; }
-        .nav-link:hover { text-decoration: underline; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Inspiring Nature Wallpaper */
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            transition: background 1s ease;
+        }
 
-        #app { max-width: 600px; width: 90%; margin: 2rem 0; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); position: relative; }
+        nav { width: 100%; padding: 15px 25px; box-sizing: border-box; }
+        .nav-link { 
+            color: white; text-decoration: none; font-weight: 600; 
+            background: rgba(0,0,0,0.4); padding: 8px 15px; border-radius: 20px;
+            backdrop-filter: blur(5px); transition: 0.3s;
+        }
+        .nav-link:hover { background: rgba(0,0,0,0.6); }
+
+        #app { 
+            max-width: 550px; width: 90%; margin: 2rem 0; padding: 2.5rem; 
+            background: var(--glass); backdrop-filter: blur(15px);
+            border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .timer-display { font-size: 5rem; font-weight: 800; text-align: center; margin: 1rem 0; color: var(--accent); letter-spacing: -2px; }
+        .status-bar { padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        input, select, textarea, button { 
+            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid rgba(0,0,0,0.1); 
+            border-radius: 12px; font-size: 1rem; background: rgba(255,255,255,0.9);
+        }
+
+        button.primary-btn { 
+            background: var(--accent); color: white; border: none; font-weight: bold; 
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.2s;
+        }
+        button.primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+        #rush-btn {
+            position: fixed; bottom: 20px; right: 20px; width: auto;
+            background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(5px); padding: 8px 15px; font-size: 0.7rem; text-transform: uppercase;
+        }
+
+        .distraction-log { background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; margin-top: 20px; }
         .hidden { display: none; }
-        .timer-display { font-size: 4rem; font-weight: bold; text-align: center; margin: 1rem 0; font-variant-numeric: tabular-nums; }
-        .status-bar { padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 1rem; font-weight: bold; border: 1px solid rgba(0,0,0,0.05); }
-        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        button { background: var(--accent); color: white; cursor: pointer; border: none; font-weight: bold; transition: transform 0.1s; }
-        button:active { transform: scale(0.98); }
-        .distraction-log { background: #fff5f5; border-left: 4px solid #ff8787; padding: 15px; margin-top: 20px; border-radius: 4px; }
-        #distraction-list { font-size: 0.85rem; color: #666; }
-        .todo-prototype { background: #f1f3f5; padding: 15px; margin-top: 30px; border-radius: 8px; font-size: 0.8rem; border: 1px dashed #ced4da; }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="https://bdebeer-arch.github.io/system-dashboard/" class="nav-link">← Back to Dashboard</a>
+    <a href="https://bdebeer-arch.github.io/system-dashboard/" class="nav-link">← Dashboard</a>
 </nav>
 
 <div id="app">
-    <h1 style="text-align:center; margin-top:0;">POM</h1>
+    <h1 style="text-align:center; margin-top:0; color: var(--accent);">POM</h1>
     
     <div id="setup-area">
-        <label>Cycles (Max 5)</label>
+        <label><b>Cycles</b> (Max 5)</label>
         <input type="number" id="cycle-count" min="1" max="5" value="1">
-        <label>Goal: What do you want?</label>
+        <label><b>Goal:</b> What do you want?</label>
         <input type="text" id="goal-input" placeholder="e.g. Master Calculus integration">
-        <label>Steps: How will you get there?</label>
-        <textarea id="steps-input" rows="3" placeholder="Step 1, Step 2..."></textarea>
-        <button onclick="startPom()">Start Session</button>
+        <label><b>Steps:</b> How will you get there?</label>
+        <textarea id="steps-input" rows="3" placeholder="Step 1... Step 2..."></textarea>
+        <button class="primary-btn" onclick="initSession()">Start Session</button>
     </div>
 
     <div id="timer-area" class="hidden">
-        <div id="header-display" style="border-bottom: 1px solid #eee; margin-bottom: 1rem; padding-bottom: 0.5rem;"></div>
-        <div id="status-msg" class="status-bar">Ready</div>
+        <div id="header-display" style="border-bottom: 1px solid rgba(0,0,0,0.1); margin-bottom: 1rem; padding-bottom: 1rem;"></div>
+        <div id="status-msg" class="status-bar">Focus</div>
         <div class="timer-display" id="time-left">00:00</div>
         
         <div id="break-controls" class="hidden">
-            <label>Choose Break Activity:</label>
             <select id="break-type" onchange="updateBreakIcon()">
-                <option value="🚶">Walking (Movement)</option>
+                <option value="🚶">Moving (Movement)</option>
                 <option value="🍎">Food (Refuel)</option>
-                <option value="🏋️">Barbell (Strength)</option>
+                <option value="🏋️">Exercise (Exercise)</option>
                 <option value="💬">Talking (Social)</option>
-                <option value="🧹">Broom (Tidy space)</option>
+                <option value="🧹">Broom (Tidy)</option>
             </select>
-            <div id="break-icon" style="font-size: 4rem; text-align: center; margin: 10px 0;">🚶</div>
+            <div id="break-icon" style="font-size: 4rem; text-align: center; margin: 15px;">🚶</div>
         </div>
 
-        <button id="next-btn" class="hidden" onclick="advanceStep()">Next Study Session</button>
+        <button id="next-btn" class="primary-btn hidden" onclick="advanceStep()">Next Stage →</button>
 
         <div class="distraction-log">
-            <label><strong>Distraction Dump</strong> (Write it, release it):</label>
-            <input type="text" id="distraction-input" placeholder="Type thought and press Enter..." onkeydown="if(event.key==='Enter') saveDistraction()">
-            <ul id="distraction-list"></ul>
-        </div>
-
-        <div style="margin-top: 20px;">
-            <label>Energy / Motivation Slider:</label>
-            <input type="range" id="energy-slider" min="1" max="10" value="5" onchange="saveToStorage()">
+            <input type="text" id="distraction-input" placeholder="Release a distracting thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
+            <ul id="distraction-list" style="font-size: 0.85rem; padding-left: 20px;"></ul>
         </div>
     </div>
 
     <div id="summary-area" class="hidden">
-        <h2>Session Complete</h2>
-        <div id="final-stats" style="line-height: 1.6;"></div>
-        <button onclick="clearAndReset()">Start New Session</button>
-    </div>
-
-    <div class="todo-prototype">
-        <strong>V2 Roadmap:</strong> 
-        <ul>
-            <li>YouTube Background Audio Layer</li>
-            <li>Whakataukī of the Day</li>
-            <li>Inactivity Auto-Summary (30min timeout)</li>
-            <li>Full-screen focus toggle</li>
-        </ul>
+        <h2>Session Summary</h2>
+        <div id="final-stats"></div>
+        <button class="primary-btn" onclick="location.reload()">New Session</button>
     </div>
 </div>
 
+<button id="rush-btn" onclick="rush()">Rush ⏩</button>
+
 <script>
     let state = {
-        cycles: 1, currentCycle: 1, phase: 'idle', 
-        timeLeft: 0, goal: '', steps: '', distractions: [], energy: 5
+        cycles: 1, currentCycle: 1, phase: 'warmup', 
+        timeLeft: 0, goal: '', steps: '', distractions: [], timerId: null
     };
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let audioCtx;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
 
     function playSound(type) {
+        initAudio();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         
         if(type === 'gong') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
             osc.start(); osc.stop(audioCtx.currentTime + 3);
         } else {
-            osc.type = 'triangle'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
             osc.start(); osc.stop(audioCtx.currentTime + 0.5);
         }
     }
 
-    function saveToStorage() {
-        state.energy = document.getElementById('energy-slider').value;
-        localStorage.setItem('pom_session', JSON.stringify(state));
-    }
-
-    function startPom() {
-        state.goal = document.getElementById('goal-input').value || "General Study";
+    function initSession() {
+        initAudio();
+        state.goal = document.getElementById('goal-input').value || "Deep Study";
         state.steps = document.getElementById('steps-input').value;
         state.cycles = parseInt(document.getElementById('cycle-count').value);
         
         document.getElementById('setup-area').classList.add('hidden');
         document.getElementById('timer-area').classList.remove('hidden');
-        document.getElementById('header-display').innerHTML = `<strong>Target:</strong> ${state.goal}<br><small>Steps: ${state.steps}</small>`;
+        document.getElementById('header-display').innerHTML = `<b>Target:</b> ${state.goal}`;
         
         runPhase('warmup');
     }
 
     function runPhase(phase) {
         state.phase = phase;
-        saveToStorage();
         document.getElementById('next-btn').classList.add('hidden');
         document.getElementById('break-controls').classList.add('hidden');
+        const app = document.getElementById('app');
 
         if(phase === 'warmup') {
             state.timeLeft = 60;
-            document.body.style.backgroundColor = 'var(--warmup)';
-            document.getElementById('status-msg').innerText = "WARM UP: Set your mental stage";
+            app.style.background = 'var(--warmup)';
+            document.getElementById('status-msg').innerText = "Warm Up";
             playSound('gong');
         } else if(phase === 'study') {
             state.timeLeft = 23 * 60;
-            document.body.style.backgroundColor = 'var(--study)';
-            document.getElementById('status-msg').innerText = "DEEP WORK: Engaging the system";
+            app.style.background = 'var(--study)';
+            document.getElementById('status-msg').innerText = "Study Focus";
         } else if(phase === 'wrapup') {
             state.timeLeft = 60;
-            document.body.style.backgroundColor = 'var(--wrapup)';
-            document.getElementById('status-msg').innerText = "WRAP UP: The Comma (Leave a thread to follow)";
+            app.style.background = 'var(--wrapup)';
+            document.getElementById('status-msg').innerText = "The Comma (Wrap Up)";
         } else if(phase === 'break') {
             state.timeLeft = 5 * 60;
-            document.body.style.backgroundColor = 'var(--break)';
-            document.getElementById('status-msg').innerText = "RECOVERY: Move your body";
+            app.style.background = 'var(--break)';
+            document.getElementById('status-msg').innerText = "Active Break";
             document.getElementById('break-controls').classList.remove('hidden');
             playSound('gong');
         }
 
-        clearInterval(state.timerId);
+        if(state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(tick, 1000);
+        updateDisplay();
     }
 
     function tick() {
         state.timeLeft--;
         if(state.timeLeft <= 0) {
             clearInterval(state.timerId);
-            handlePhaseEnd();
+            if(state.phase === 'break') {
+                document.getElementById('next-btn').classList.remove('hidden');
+                playSound('beep');
+            } else {
+                autoAdvance();
+            }
         }
         updateDisplay();
     }
 
-    function handlePhaseEnd() {
+    function autoAdvance() {
         if(state.phase === 'warmup') runPhase('study');
         else if(state.phase === 'study') runPhase('wrapup');
         else if(state.phase === 'wrapup') runPhase('break');
-        else if(state.phase === 'break') {
-            document.getElementById('next-btn').classList.remove('hidden');
-            document.getElementById('status-msg').innerText = "Break Over. Ready for the next cycle?";
-            playSound('beep');
+    }
+
+    function advanceStep() {
+        if(state.currentCycle < state.cycles) {
+            state.currentCycle++;
+            runPhase('warmup');
+        } else {
+            showSummary();
         }
+    }
+
+    function rush() {
+        state.timeLeft = 2;
+    }
+
+    function updateDisplay() {
+        const mins = Math.floor(state.timeLeft / 60);
+        const secs = state.timeLeft % 60;
+        document.getElementById('time-left').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function updateBreakIcon() {
+        document.getElementById('break-icon').innerText = document.getElementById('break-type').value;
+    }
+
+    function saveDistraction() {
+        const input = document.getElementById('distraction-input');
+        if(!input.value) return;
+        state.distractions.push(input.value);
+        const li = document.createElement('li');
+        li.innerText = input.value;
+        document.getElementById('distraction-list').prepend(li);
+        input.value = '';
+    }
+
+    function showSummary() {
+        document.getElementById('timer-area').classList.add('hidden');
+        document.getElementById('summary-area').classList.remove('hidden');
+        document.getElementById('final-stats').innerHTML = `<p>Completed ${state.currentCycle} cycles for: <b>${state.goal}</b></p>`;
+    }
+</script>
+</body>
+</html>
