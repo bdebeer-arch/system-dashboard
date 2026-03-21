@@ -33,6 +33,7 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 300px; overflow-y: auto; }
         #rush-btn { position: fixed; bottom: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; }
+        .dev-todo { margin-top: 2rem; padding: 1.2rem; background: rgba(0,0,0,0.05); border-radius: 15px; font-size: 0.85rem; border: 1px dashed #999; }
     </style>
 </head>
 <body>
@@ -47,6 +48,16 @@
             <textarea id="steps-input" rows="3" placeholder="Steps (One per line)..."></textarea>
             <input type="number" id="cycle-count" min="1" max="5" value="3">
             <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
+
+            <div class="dev-todo">
+                <strong>Developer To-Do:</strong>
+                <ul style="padding-left:18px; margin-top:8px;">
+                    <li>Whakataukī integration</li>
+                    <li>Full-screen focus mode</li>
+                    <li style="color:green">✔ No break after final cycle</li>
+                    <li style="color:green">✔ Persistent Double-Alert (15s interval)</li>
+                </ul>
+            </div>
         </div>
 
         <div id="timeline-area" class="hidden">
@@ -125,10 +136,15 @@
         } else if (type === 'alert') {
             osc.type = 'square';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
             osc.start(); osc.stop(audioCtx.currentTime + 0.2);
         }
+    }
+
+    function triggerDoubleAlert() {
+        playSound('alert');
+        setTimeout(() => playSound('alert'), 300); // 300ms gap for machine-like double beep
     }
 
     function goToTimeline() {
@@ -205,7 +221,8 @@
             else if (state.phase === 'break') { 
                 document.getElementById('activation-zone').classList.remove('hidden'); 
                 state.breakEnd = new Date(); 
-                state.alertId = setInterval(() => { playSound('alert'); setTimeout(() => playSound('alert'), 300); }, 15000); // Persistent rapid alert
+                triggerDoubleAlert();
+                state.alertId = setInterval(triggerDoubleAlert, 15000); // 15-second persistent nudge
             }
         }
         updateDisplay();
