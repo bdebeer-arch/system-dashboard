@@ -15,24 +15,28 @@
         }
         
         body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
-                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
+            font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
             background-size: cover; background-position: center; background-attachment: fixed;
         }
 
         nav { width: 100%; padding: 15px 25px; box-sizing: border-box; }
         .nav-link { color: white; text-decoration: none; font-weight: 600; background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 20px; backdrop-filter: blur(5px); }
 
-        #app { max-width: 550px; width: 95%; margin: 1rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        #app { max-width: 550px; width: 95%; margin: 1rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); box-sizing: border-box; }
         .timer-display { font-size: 5rem; font-weight: 800; text-align: center; margin: 0.5rem 0; color: var(--accent); }
-        .status-bar { padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 1rem; font-weight: 700; text-transform: uppercase; }
-        .primary-btn { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; }
+        .status-bar { padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 1rem; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(0,0,0,0.05); }
         
-        #rush-btn { position: fixed; bottom: 20px; right: 20px; width: auto; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; font-size: 0.7rem; cursor: pointer; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
+        .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .primary-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .secondary-btn { background: #7f8c8d; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+
+        #rush-btn { position: fixed; bottom: 20px; right: 20px; width: auto; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; font-size: 0.7rem; cursor: pointer; border-radius: 5px; }
         .dev-todo { margin-top: 2rem; padding: 1.5rem; background: rgba(0,0,0,0.05); border-radius: 15px; font-size: 0.85rem; line-height: 1.4; }
         .hidden { display: none; }
+        .checklist-item { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 0.9rem; }
+        .checklist-item input { width: auto; margin: 0; }
     </style>
 </head>
 <body>
@@ -44,31 +48,32 @@
     
     <div id="setup-area">
         <label><b>Cycles</b> (Max 5)</label>
-        <input type="number" id="cycle-count" min="1" max="5" value="1" style="width:100%; padding:10px; margin:10px 0;">
+        <input type="number" id="cycle-count" min="1" max="5" value="1">
         <label><b>Goal:</b> What do you want?</label>
-        <input type="text" id="goal-input" placeholder="What are we achieving?" style="width:100%; padding:10px; margin:10px 0;">
+        <input type="text" id="goal-input" placeholder="What are we achieving?">
         <label><b>Steps:</b> (One per line)</label>
-        <textarea id="steps-input" rows="4" placeholder="Step 1&#10;Step 2" style="width:100%; padding:10px; margin:10px 0;"></textarea>
+        <textarea id="steps-input" rows="4" placeholder="Step 1&#10;Step 2"></textarea>
         <button class="primary-btn" onclick="initSession()">Start Session</button>
 
         <div class="dev-todo">
             <strong>Developer To-Do:</strong>
-            <ul>
+            <ul style="padding-left:15px;">
                 <li>YouTube background soundscapes</li>
                 <li>Whakataukī integration (Proverbs)</li>
                 <li>Full-screen focus mode</li>
-                <li style="color: green; font-weight:bold;">✔ Inactivity timeout (30m) - ACTIVE</li>
+                <li style="color:green">✔ Inactivity timeout (30m)</li>
+                <li style="color:green">✔ Whistle transitions</li>
             </ul>
         </div>
     </div>
 
     <div id="timer-area" class="hidden">
-        <div id="header-display" style="border-bottom: 1px solid #ccc; padding-bottom: 5px;"></div>
+        <div id="header-display" style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 0.9rem;"></div>
         <div id="status-msg" class="status-bar">Focus</div>
         <div class="timer-display" id="time-left">00:00</div>
         
         <div id="break-controls" class="hidden">
-            <select id="break-type" onchange="updateBreakIcon()" style="width:100%; padding:10px;">
+            <select id="break-type" onchange="updateBreakIcon()">
                 <option value="🚶">Moving (Movement)</option>
                 <option value="🍎">Food (Refuel)</option>
                 <option value="🏋️">Exercise (Exercise)</option>
@@ -79,51 +84,80 @@
         </div>
 
         <button id="next-btn" class="primary-btn hidden" onclick="advanceStep()">Next Stage →</button>
-        <p id="timeout-warning" class="hidden" style="color:red; text-align:center; font-size:0.8rem;">Session will auto-close in 30m if no action taken.</p>
-
-        <input type="text" id="distraction-input" placeholder="Release a thought..." onkeydown="if(event.key==='Enter') saveDistraction()" style="width:100%; padding:10px;">
-        <ul id="distraction-list" style="font-size: 0.8rem; height: 60px; overflow-y:auto;"></ul>
+        <input type="text" id="distraction-input" placeholder="Release a thought..." onkeydown="if(event.key==='Enter') saveDistraction()">
+        <ul id="distraction-list" style="font-size: 0.8rem; height: 50px; overflow-y:auto; padding-left:20px;"></ul>
     </div>
 
     <div id="summary-area" class="hidden">
         <h2 style="color:var(--accent)">Session Summary</h2>
         <div id="final-stats"></div>
-        <button class="primary-btn" onclick="location.reload()">Restart</button>
+        <button class="primary-btn" onclick="exportCSV()">Export to CSV</button>
+        <button class="secondary-btn" onclick="location.reload()">New Session</button>
     </div>
 </div>
 
 <button id="rush-btn" onclick="rush()">Rush ⏩</button>
 
 <script>
-    let state = { cycles: 1, currentCycle: 1, phase: 'warmup', timeLeft: 0, goal: '', steps: [], distractions: [], timerId: null, inactivityTimer: null };
+    let state = { cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0, goal: '', steps: [], distractions: [], timerId: null, inactivityTimer: null };
     let audioCtx;
+
     function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+    function playSound(type) {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        
+        if(type === 'gong') {
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
+            osc.start(); osc.stop(audioCtx.currentTime + 3);
+        } else if(type === 'whistle') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        } else {
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+    }
 
     function initSession() {
         initAudio();
-        state.goal = document.getElementById('goal-input').value || "Deep Study";
+        state.goal = document.getElementById('goal-input').value || "General Study";
         state.steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
         state.cycles = parseInt(document.getElementById('cycle-count').value);
         document.getElementById('setup-area').classList.add('hidden');
         document.getElementById('timer-area').classList.remove('hidden');
+        document.getElementById('header-display').innerHTML = `<b>Target:</b> ${state.goal}`;
         runPhase('warmup');
     }
 
     function runPhase(phase) {
         state.phase = phase;
-        clearTimeout(state.inactivityTimer); // Reset inactivity on phase change
+        clearTimeout(state.inactivityTimer);
         document.getElementById('next-btn').classList.add('hidden');
-        document.getElementById('timeout-warning').classList.add('hidden');
         document.getElementById('break-controls').classList.add('hidden');
+        const app = document.getElementById('app');
 
-        if(phase === 'warmup') state.timeLeft = 60;
-        else if(phase === 'study') state.timeLeft = 23 * 60;
-        else if(phase === 'wrapup') state.timeLeft = 60;
-        else if(phase === 'break') {
-            state.timeLeft = 5 * 60;
+        if(phase === 'warmup') { state.timeLeft = 60; app.style.background = 'var(--warmup)'; playSound('gong'); }
+        else if(phase === 'study') { state.timeLeft = 23 * 60; app.style.background = 'var(--study)'; }
+        else if(phase === 'wrapup') { state.timeLeft = 60; app.style.background = 'var(--wrapup)'; }
+        else if(phase === 'break') { 
+            state.timeLeft = 5 * 60; 
+            app.style.background = 'var(--break)'; 
             document.getElementById('break-controls').classList.remove('hidden');
+            playSound('whistle');
         }
-
+        
+        document.getElementById('status-msg').innerText = phase.toUpperCase();
         if(state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(tick, 1000);
         updateDisplay();
@@ -133,20 +167,16 @@
         state.timeLeft--;
         if(state.timeLeft <= 0) {
             clearInterval(state.timerId);
-            if(state.phase === 'break') {
+            if(state.phase === 'warmup') { playSound('whistle'); runPhase('study'); }
+            else if(state.phase === 'study') runPhase('wrapup');
+            else if(state.phase === 'wrapup') { playSound('whistle'); runPhase('break'); }
+            else if(state.phase === 'break') {
                 document.getElementById('next-btn').classList.remove('hidden');
-                document.getElementById('timeout-warning').classList.remove('hidden');
-                // START 30 MINUTE INACTIVITY TIMEOUT
+                playSound('beep');
                 state.inactivityTimer = setTimeout(() => { showSummary(); }, 30 * 60 * 1000);
-            } else { autoAdvance(); }
+            }
         }
         updateDisplay();
-    }
-
-    function autoAdvance() {
-        if(state.phase === 'warmup') runPhase('study');
-        else if(state.phase === 'study') runPhase('wrapup');
-        else if(state.phase === 'wrapup') runPhase('break');
     }
 
     function advanceStep() {
@@ -174,11 +204,34 @@
     function showSummary() {
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
+        let stepList = state.steps.map((s, i) => `<div class="checklist-item"><input type="checkbox" id="step-${i}"> <label>${s}</label></div>`).join('');
         document.getElementById('final-stats').innerHTML = `
             <p><b>Goal:</b> ${state.goal}</p>
-            <p><b>Cycles:</b> ${state.currentCycle}</p>
-            <p><b>Thoughts:</b> ${state.distractions.length}</p>
+            <p><b>Cycles Completed:</b> ${state.currentCycle}</p>
+            <p><b>Review your steps:</b></p> ${stepList}
+            <p><b>Distractions Captured:</b> ${state.distractions.length}</p>
         `;
+    }
+
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Session Summary\n";
+        csvContent += `Goal,${state.goal}\n`;
+        csvContent += `Cycles Completed,${state.currentCycle}\n\n`;
+        csvContent += "Steps Taken\n";
+        state.steps.forEach((s, i) => {
+            const isDone = document.getElementById(`step-${i}`).checked ? "Done" : "Pending";
+            csvContent += `${s},${isDone}\n`;
+        });
+        csvContent += "\nDistractions Released\n";
+        state.distractions.forEach(d => { csvContent += `${d}\n`; });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `POM_Summary_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(link);
+        link.click();
     }
 </script>
 </body>
