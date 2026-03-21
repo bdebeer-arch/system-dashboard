@@ -3,207 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RE Web Portfolio</title>
+    <title>POM | Study Systems</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --bg: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-sub: #7f8c8d;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--primary);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        header {
-            background: var(--primary);
-            color: white;
-            width: 100%;
-            padding: 50px 20px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        h1 { margin: 0; font-size: 2.8rem; letter-spacing: -1px; }
-        p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; font-size: 1.1rem; letter-spacing: 1px; }
-
-        .container {
-            max-width: 1100px;
-            width: 100%;
-            padding: 60px 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            justify-content: center;
-        }
-
-        .tool-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .tool-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-        }
-
-        .card-hero {
-            height: 120px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icon-hero {
-            font-size: 3rem; color: white; font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            --glass: rgba(255, 255, 255, 0.9);
+            --accent: #2c3e50;
+            --warmup: rgba(227, 242, 253, 0.8);
+            --study: rgba(255, 255, 255, 0.8);
+            --wrapup: rgba(255, 243, 224, 0.8);
+            --break: rgba(241, 248, 233, 0.8);
         }
         
-        .card-body { padding: 35px; flex-grow: 1; display: flex; flex-direction: column; }
-
-        h2 { margin: 0 0 15px 0; font-size: 1.8rem; color: var(--primary); }
-        p.desc { color: var(--text-sub); line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
-
-        .btn-launch {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            text-align: center;
-            background: #ecf0f1;
-            color: var(--primary);
-            border-radius: 8px;
-            font-weight: bold;
-            transition: background 0.2s;
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center; background-attachment: fixed;
         }
+
+        nav { width: 100%; padding: 15px 25px; box-sizing: border-box; }
+        .nav-link { color: white; text-decoration: none; font-weight: 600; background: rgba(0,0,0,0.4); padding: 8px 18px; border-radius: 20px; backdrop-filter: blur(5px); }
+
+        #app { max-width: 550px; width: 95%; margin: 1rem 0; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .timer-display { font-size: 5rem; font-weight: 800; text-align: center; margin: 0.5rem 0; color: var(--accent); }
+        .status-bar { padding: 10px; border-radius: 12px; text-align: center; margin-bottom: 1rem; font-weight: 700; text-transform: uppercase; }
+        .primary-btn { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; }
         
-        .tool-card:hover .btn-launch { background: var(--primary); color: white; }
-
-        footer {
-            margin-top: auto;
-            padding: 30px;
-            color: var(--text-sub);
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
+        #rush-btn { position: fixed; bottom: 20px; right: 20px; width: auto; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 5px 10px; font-size: 0.7rem; cursor: pointer; }
+        .dev-todo { margin-top: 2rem; padding: 1.5rem; background: rgba(0,0,0,0.05); border-radius: 15px; font-size: 0.85rem; line-height: 1.4; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>RE Web Portfolio</h1>
-        <p class="role">JUST HAVING FUN</p>
-    </header>
+<nav><a href="https://bdebeer-arch.github.io/system-dashboard/" class="nav-link">← Home Dashboard</a></nav>
 
-    <div class="container">
-
-<a href="pom.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #e67e22, #d35400, #fbcf33);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(230, 126, 34, 0.6); color: #fff;">&#x1F345;</div> 
-    </div>
-    <div class="card-body">
-        <h2>POM Focus Engine</h2>
-        <p class="desc">Systems-based productivity timer. Manage cognitive load with warm-ups, 'comma' wrap-ups, and active recovery.</p>
-        <span class="btn-launch">Launch Engine &rarr;</span>
-    </div>
-</a>
+<div id="app">
+    <h1 style="text-align:center; margin-top:0; color: var(--accent);">POM</h1>
     
-<a href="diamond-match.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #1a1a2e, #ffffff);">
-        <div class="icon-hero" style="text-shadow: 0 0 10px rgba(52, 152, 219, 0.5); color: #3498db;">&#x25C7;</div> 
+    <div id="setup-area">
+        <label><b>Cycles</b> (Max 5)</label>
+        <input type="number" id="cycle-count" min="1" max="5" value="1" style="width:100%; padding:10px; margin:10px 0;">
+        <label><b>Goal:</b> What do you want?</label>
+        <input type="text" id="goal-input" placeholder="What are we achieving?" style="width:100%; padding:10px; margin:10px 0;">
+        <label><b>Steps:</b> (One per line)</label>
+        <textarea id="steps-input" rows="4" placeholder="Step 1&#10;Step 2" style="width:100%; padding:10px; margin:10px 0;"></textarea>
+        <button class="primary-btn" onclick="initSession()">Start Session</button>
+
+        <div class="dev-todo">
+            <strong>Developer To-Do:</strong>
+            <ul>
+                <li>YouTube background soundscapes</li>
+                <li>Whakataukī integration (Proverbs)</li>
+                <li>Full-screen focus mode</li>
+                <li style="color: green; font-weight:bold;">✔ Inactivity timeout (30m) - ACTIVE</li>
+            </ul>
+        </div>
     </div>
-    <div class="card-body">
-        <h2>Diamond Match</h2>
-        <p class="desc">Interactive arena to pair stressors with strengths. Watch the darkness lift as Hauora balance is restored.</p>
-        <span class="btn-launch">Launch Engine &rarr;</span>
-    </div>
-</a>
+
+    <div id="timer-area" class="hidden">
+        <div id="header-display" style="border-bottom: 1px solid #ccc; padding-bottom: 5px;"></div>
+        <div id="status-msg" class="status-bar">Focus</div>
+        <div class="timer-display" id="time-left">00:00</div>
         
-<a href="hauora.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2980b9);">
-        <div class="icon-hero">&#x25B2;</div> 
-    </div>
-    <div class="card-body">
-        <h2>Te Whare Tapa Whā</h2>
-        <p class="desc">Interactive wellbeing projection. Map the four walls of Hauora.</p>
-        <span class="btn-launch">Launch Engine &rarr;</span>
-    </div>
-</a>
-        
-        <a href="gallery.html" class="tool-card">
-            <div class="card-hero" style="background: linear-gradient(135deg, #f1c40f, #e67e22);">
-                <div class="icon-hero">&#x1F4F7;</div> </div>
-            <div class="card-body">
-                <h2>Gallery Labeler</h2>
-                <p class="desc">Interactive masonry grid for images. Curate, reorder, and identify resources with inline naming.</p>
-                <span class="btn-launch">Launch Engine &rarr;</span>
-            </div>
-        </a>
+        <div id="break-controls" class="hidden">
+            <select id="break-type" onchange="updateBreakIcon()" style="width:100%; padding:10px;">
+                <option value="🚶">Moving (Movement)</option>
+                <option value="🍎">Food (Refuel)</option>
+                <option value="🏋️">Exercise (Exercise)</option>
+                <option value="💬">Talking (Social)</option>
+                <option value="🧹">Broom (Tidy)</option>
+            </select>
+            <div id="break-icon" style="font-size: 4rem; text-align: center; margin: 10px;">🚶</div>
+        </div>
 
-        <a href="game.html" class="tool-card">
-            <div class="card-hero" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
-                <div class="icon-hero">Aa</div>
-            </div>
-            <div class="card-body">
-                <h2>Knowledge Cipher</h2>
-                <p class="desc">A team-based vocabulary engine using seeded cryptography. Features 'Spymaster' mode for synchronous classroom play.</p>
-                <span class="btn-launch">Launch Engine &rarr;</span>
-            </div>
-        </a>
+        <button id="next-btn" class="primary-btn hidden" onclick="advanceStep()">Next Stage →</button>
+        <p id="timeout-warning" class="hidden" style="color:red; text-align:center; font-size:0.8rem;">Session will auto-close in 30m if no action taken.</p>
 
-        <a href="hex.html" class="tool-card">
-            <div class="card-hero" style="background: linear-gradient(135deg, #d35400, #e67e22);">
-                <div class="icon-hero">&#x2B22;</div> </div>
-            <div class="card-body">
-                <h2>Systemic Pathfinder</h2>
-                <p class="desc">Hexagonal competitive recall engine. Strategic territory capture via definition retrieval (Blockbusters logic).</p>
-                <span class="btn-launch">Launch Engine &rarr;</span>
-            </div>
-        </a>
-
-        <a href="tracker.html" class="tool-card">
-            <div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
-                <div class="icon-hero">+</div> </div>
-            <div class="card-body">
-                <h2>Point Tracker</h2>
-                <p class="desc">Individual scoring system. Keep track of student points, house merits, or participation metrics.</p>
-                <span class="btn-launch">Launch Engine &rarr;</span>
-            </div>
-        </a>
-
-        <a href="higmal.html" class="tool-card">
-            <div class="card-hero" style="background: linear-gradient(135deg, #2980b9, #f39c12);">
-                <div class="icon-hero">&#x25A6;</div> </div>
-            <div class="card-body">
-                <h2>HiGMaL</h2>
-                <p class="desc">Strategic Cost-Benefit Analysis and Prioritisation Tool.</p>
-                <span class="btn-launch">Launch Engine &rarr;</span>
-            </div>
-        </a>
-
+        <input type="text" id="distraction-input" placeholder="Release a thought..." onkeydown="if(event.key==='Enter') saveDistraction()" style="width:100%; padding:10px;">
+        <ul id="distraction-list" style="font-size: 0.8rem; height: 60px; overflow-y:auto;"></ul>
     </div>
 
-    <footer>
-        System State: LIVE | Focus: Student Engagement
-    </footer>
+    <div id="summary-area" class="hidden">
+        <h2 style="color:var(--accent)">Session Summary</h2>
+        <div id="final-stats"></div>
+        <button class="primary-btn" onclick="location.reload()">Restart</button>
+    </div>
+</div>
 
+<button id="rush-btn" onclick="rush()">Rush ⏩</button>
+
+<script>
+    let state = { cycles: 1, currentCycle: 1, phase: 'warmup', timeLeft: 0, goal: '', steps: [], distractions: [], timerId: null, inactivityTimer: null };
+    let audioCtx;
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+    function initSession() {
+        initAudio();
+        state.goal = document.getElementById('goal-input').value || "Deep Study";
+        state.steps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
+        state.cycles = parseInt(document.getElementById('cycle-count').value);
+        document.getElementById('setup-area').classList.add('hidden');
+        document.getElementById('timer-area').classList.remove('hidden');
+        runPhase('warmup');
+    }
+
+    function runPhase(phase) {
+        state.phase = phase;
+        clearTimeout(state.inactivityTimer); // Reset inactivity on phase change
+        document.getElementById('next-btn').classList.add('hidden');
+        document.getElementById('timeout-warning').classList.add('hidden');
+        document.getElementById('break-controls').classList.add('hidden');
+
+        if(phase === 'warmup') state.timeLeft = 60;
+        else if(phase === 'study') state.timeLeft = 23 * 60;
+        else if(phase === 'wrapup') state.timeLeft = 60;
+        else if(phase === 'break') {
+            state.timeLeft = 5 * 60;
+            document.getElementById('break-controls').classList.remove('hidden');
+        }
+
+        if(state.timerId) clearInterval(state.timerId);
+        state.timerId = setInterval(tick, 1000);
+        updateDisplay();
+    }
+
+    function tick() {
+        state.timeLeft--;
+        if(state.timeLeft <= 0) {
+            clearInterval(state.timerId);
+            if(state.phase === 'break') {
+                document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('timeout-warning').classList.remove('hidden');
+                // START 30 MINUTE INACTIVITY TIMEOUT
+                state.inactivityTimer = setTimeout(() => { showSummary(); }, 30 * 60 * 1000);
+            } else { autoAdvance(); }
+        }
+        updateDisplay();
+    }
+
+    function autoAdvance() {
+        if(state.phase === 'warmup') runPhase('study');
+        else if(state.phase === 'study') runPhase('wrapup');
+        else if(state.phase === 'wrapup') runPhase('break');
+    }
+
+    function advanceStep() {
+        clearTimeout(state.inactivityTimer);
+        if(state.currentCycle < state.cycles) { state.currentCycle++; runPhase('warmup'); }
+        else showSummary();
+    }
+
+    function rush() { state.timeLeft = 2; }
+    function updateDisplay() {
+        const mins = Math.floor(state.timeLeft / 60);
+        const secs = state.timeLeft % 60;
+        document.getElementById('time-left').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function saveDistraction() {
+        const val = document.getElementById('distraction-input').value;
+        if(!val) return;
+        state.distractions.push(val);
+        const li = document.createElement('li'); li.innerText = val;
+        document.getElementById('distraction-list').prepend(li);
+        document.getElementById('distraction-input').value = '';
+    }
+
+    function showSummary() {
+        document.getElementById('timer-area').classList.add('hidden');
+        document.getElementById('summary-area').classList.remove('hidden');
+        document.getElementById('final-stats').innerHTML = `
+            <p><b>Goal:</b> ${state.goal}</p>
+            <p><b>Cycles:</b> ${state.currentCycle}</p>
+            <p><b>Thoughts:</b> ${state.distractions.length}</p>
+        `;
+    }
+</script>
 </body>
 </html>
