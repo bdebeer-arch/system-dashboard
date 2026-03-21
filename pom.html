@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POM | Auditory Systems</title>
+    <title>POM | Integrated Systems</title>
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.96);
@@ -26,37 +26,27 @@
             animation: slideIn 0.3s ease-out; word-wrap: break-word; position: relative;
         }
         .post-it small { position: absolute; bottom: 5px; right: 8px; font-size: 0.65rem; opacity: 0.5; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
         .hidden { display: none; }
         input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
         .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
         .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 300px; overflow-y: auto; }
         #rush-btn { position: fixed; bottom: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; }
-        .dev-todo { margin-top: 2rem; padding: 1.2rem; background: rgba(0,0,0,0.05); border-radius: 15px; font-size: 0.85rem; border: 1px dashed #999; }
     </style>
 </head>
 <body>
 
 <div id="main-container">
     <div id="app">
-        <h1 style="text-align:center; margin-top:0;">POM</h1>
+        <h1 id="main-title" style="text-align:center; margin-top:0;">POM</h1>
+        <div id="cycle-breadcrumb" style="text-align:center; font-weight:bold; color:var(--accent); font-size:0.9rem; margin-bottom:10px;"></div>
         
         <div id="setup-area">
             <input type="text" id="goal-input" placeholder="Main Goal...">
             <textarea id="steps-input" rows="3" placeholder="Steps (One per line)..."></textarea>
             <input type="number" id="cycle-count" min="1" max="5" value="3">
             <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
-
-            <div class="dev-todo">
-                <strong>Developer To-Do:</strong>
-                <ul style="padding-left:18px; margin-top:8px;">
-                    <li>Whakataukī integration</li>
-                    <li>Full-screen focus mode</li>
-                    <li style="color:green">✔ Full cycle auditory anchors (Gong/Whistle)</li>
-                    <li style="color:green">✔ CSV includes cycle-stamped thoughts</li>
-                </ul>
-            </div>
         </div>
 
         <div id="timeline-area" class="hidden">
@@ -83,6 +73,7 @@
 
             <div id="activation-zone" class="hidden" style="text-align:center;">
                 <button class="activate-btn" onclick="handleActivation()">BACK TO WORK</button>
+                <p style="color:var(--alert-red); font-weight:bold;">Break Over! Return to System.</p>
             </div>
             
             <div id="break-display" class="hidden" style="text-align:center; font-size:5rem; margin:10px 0;"></div>
@@ -92,8 +83,10 @@
         <div id="summary-area" class="hidden">
             <h2>Session Reflection</h2>
             <div id="final-stats"></div>
-            <button class="primary-btn" onclick="exportCSV()">Export Final Report</button>
-            <button style="background:none; border:none; color:#999; cursor:pointer; margin-top:10px;" onclick="location.reload()">Reset Session</button>
+            <label>Copy Report:</label>
+            <div id="copy-area"></div>
+            <button class="primary-btn" style="margin-top:10px;" onclick="copyToClipboard()">Click to Copy All</button>
+            <button style="background:none; border:none; color:#999; cursor:pointer; margin-top:10px;" onclick="location.reload()">New Session</button>
         </div>
     </div>
 
@@ -129,6 +122,11 @@
             gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
             osc.start(); osc.stop(audioCtx.currentTime + 3);
+        } else if (type === 'alert') {
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
         }
     }
 
@@ -154,7 +152,12 @@
         document.getElementById('timer-area').classList.remove('hidden');
         const pivotS = document.getElementById('pivot-step');
         pivotS.innerHTML = state.rawSteps.map(s => `<option value="${s}">${s}</option>`).join('') + '<option>Review</option>';
+        updateCycleBreadcrumb();
         runPhase('warmup');
+    }
+
+    function updateCycleBreadcrumb() {
+        document.getElementById('cycle-breadcrumb').innerText = `Cycle ${state.currentCycle} of ${state.cycles}`;
     }
 
     function runPhase(phase) {
@@ -165,24 +168,24 @@
         
         if (phase === 'warmup') { 
             state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; 
-            playSound('whistle'); // WHISTLE ON START/WARMUP
+            playSound('whistle');
             document.getElementById('warmup-controls').classList.remove('hidden');
             document.getElementById('pivot-step').value = state.plan[state.currentCycle-1].step;
             document.getElementById('pivot-break').value = state.plan[state.currentCycle-1].icon;
         }
         else if (phase === 'study') { 
             state.timeLeft = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; 
-            playSound('gong'); // GONG ON STUDY START
+            playSound('gong');
         }
         else if (phase === 'wrapup') { 
             state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; 
-            playSound('gong'); // GONG ON WRAPUP START
+            playSound('gong');
         }
         else if (phase === 'break') { 
             state.timeLeft = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)';
             document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon;
             document.getElementById('break-display').classList.remove('hidden');
-            playSound('whistle'); // WHISTLE ON BREAK START
+            playSound('whistle');
         }
 
         document.getElementById('status-msg').innerText = `${phase} | ${state.plan[state.currentCycle-1].step}`;
@@ -200,6 +203,8 @@
             else if (state.phase === 'break') { 
                 document.getElementById('activation-zone').classList.remove('hidden'); 
                 state.breakEnd = new Date(); 
+                state.alertId = setInterval(() => playSound('alert'), 60000);
+                playSound('alert');
             }
         }
         updateDisplay();
@@ -209,9 +214,14 @@
     function pivotPlan(key, val) { state.plan[state.currentCycle-1][key] = val; }
 
     function handleActivation() {
+        clearInterval(state.alertId);
         let drift = Math.floor((new Date() - state.breakEnd) / 60000);
         state.driftHistory.push(drift);
-        if (state.currentCycle < state.cycles) { state.currentCycle++; runPhase('warmup'); }
+        if (state.currentCycle < state.cycles) { 
+            state.currentCycle++; 
+            updateCycleBreadcrumb();
+            runPhase('warmup'); 
+        }
         else showSummary();
     }
 
@@ -235,22 +245,19 @@
     function showSummary() {
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
-        let html = `<h3>Reflective Log</h3><table style="width:100%; border-collapse:collapse;"><tr><th>Cycle</th><th>Final Step</th><th>Energy</th><th>Drift</th></tr>`;
+        let report = `SESSION REPORT: ${state.goal}\n------------------------------\n`;
         state.plan.forEach((p, i) => {
-            html += `<tr style="border-bottom:1px solid #eee"><td style="padding:8px">${i+1}</td><td>${p.step}</td><td>${state.energyHistory[i]}/10</td><td>${state.driftHistory[i] || 0}m</td></tr>`;
+            report += `CYCLE ${i+1}: ${p.step} | Energy: ${state.energyHistory[i]}/10 | Drift: ${state.driftHistory[i] || 0}m\n`;
         });
-        document.getElementById('final-stats').innerHTML = html + `</table>`;
+        report += `\nRELEASED THOUGHTS:\n`;
+        state.distractions.forEach(d => report += `[Cycle ${d.cycle}] ${d.text}\n`);
+        
+        document.getElementById('copy-area').innerText = report;
     }
 
-    function exportCSV() {
-        let csv = "Cycle,Final Step,Energy,Drift(min)\n";
-        state.plan.forEach((p, i) => { csv += `${i+1},${p.step},${state.energyHistory[i]},${state.driftHistory[i]}\n`; });
-        csv += "\nCycle,Thought Released\n";
-        state.distractions.forEach(d => { csv += `${d.cycle},"${d.text.replace(/"/g, '""')}"\n`; });
-        const link = document.createElement("a");
-        link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
-        link.download = "POM_Final_Report.csv";
-        link.click();
+    function copyToClipboard() {
+        const text = document.getElementById('copy-area').innerText;
+        navigator.clipboard.writeText(text).then(() => alert("Report copied to clipboard!"));
     }
 
     function rush() { state.timeLeft = 1; }
