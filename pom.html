@@ -19,7 +19,7 @@
         }
         #main-container { display: flex; width: 95%; max-width: 1100px; gap: 40px; margin: 2rem 0; align-items: flex-start; position: relative; }
         
-        /* Fibonacci Tower - RHS Background */
+        /* Fibonacci Tower */
         #tower-container { 
             position: fixed; bottom: 0; right: 50px; width: 250px; 
             display: flex; flex-direction: column-reverse; align-items: center; 
@@ -31,18 +31,43 @@
 
         #app { flex: 2; padding: 2rem; background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); z-index: 10; position: relative; }
         
-        /* Post-It Sidebar */
-        #sidebar { width: 80px; position: sticky; top: 2rem; display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 20; }
+        /* Fixed Sidebar & Post-It Logic */
+        #sidebar { 
+            width: 40px; 
+            position: sticky; 
+            top: 2rem; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            align-items: center; 
+            z-index: 100; /* Ensure sidebar is above app context */
+            overflow: visible;
+        }
         .post-it { 
-            background: var(--note-yellow); width: 30px; height: 30px; 
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2); border-radius: 2px; overflow: hidden;
-            font-size: 0; color: transparent; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            cursor: help; border: 1px solid rgba(0,0,0,0.1);
+            position: relative;
+            background: var(--note-yellow); 
+            width: 30px; 
+            height: 30px; 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2); 
+            border-radius: 2px; 
+            overflow: hidden;
+            font-size: 0; 
+            color: transparent; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: help; 
+            border: 1px solid rgba(0,0,0,0.1);
         }
         .post-it:hover { 
-            width: 240px; height: auto; padding: 15px; font-size: 0.9rem; color: #333; 
-            transform: translateX(-110%) scale(1.1); z-index: 1000; /* Ensure it stays above everything */
+            position: absolute;
+            right: 45px; /* Pushes it leftward into the viewable area */
+            width: 240px; 
+            height: auto; 
+            padding: 15px; 
+            font-size: 0.9rem; 
+            color: #333; 
+            z-index: 9999; 
             box-shadow: 10px 10px 30px rgba(0,0,0,0.4);
+            overflow: visible;
         }
         
         .hidden { display: none; }
@@ -51,7 +76,7 @@
         .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; }
-        #rush-btn { position: fixed; bottom: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; z-index: 100; }
+        #rush-btn { position: fixed; bottom: 20px; left: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; z-index: 100; }
         .dev-todo { margin-top: 2rem; padding: 1.2rem; background: rgba(0,0,0,0.05); border-radius: 15px; font-size: 0.85rem; border: 1px dashed #999; }
     </style>
 </head>
@@ -77,7 +102,7 @@
                     <li>Full-screen focus mode (Toggle)</li>
                     <li style="color:green">✔ Fibonacci Tower (Vertical Growth)</li>
                     <li style="color:green">✔ No final break</li>
-                    <li style="color:green">✔ Post-It Hover Depth</li>
+                    <li style="color:green">✔ Post-It Hover Depth (Fixed)</li>
                 </ul>
             </div>
         </div>
@@ -98,7 +123,7 @@
                     <select id="pivot-step" onchange="pivotPlan('step', this.value)"></select>
                     <select id="pivot-break" onchange="pivotPlan('icon', this.value)">
                         <option value="🚶">🚶 Moving</option><option value="🍎">🍎 Food</option>
-                        <option value="🏋️">🏋️ Exercise</option><option value="💬">💬 Social</option><option value="🧹">🧹 Clean </option>
+                        <option value="🏋️">🏋️ Exercise</option><option value="💬">💬 Social</option><option value="🧹">🧹 Cleaning</option>
                     </select>
                 </div>
             </div>
@@ -116,7 +141,7 @@
             <div id="final-stats"></div>
             <div id="copy-area"></div>
             <button class="primary-btn" style="margin-top:10px;" onclick="copyToClipboard()">Copy All Data</button>
-            <button style="background:none; border:none; color:#999; cursor:pointer; margin-top:10px;" onclick="location.reload()">Start New Session</button>
+            <button style="background:none; border-radius:12px; color:#666; cursor:pointer; margin-top:10px; border:1px solid #ccc; padding:10px;" onclick="location.reload()">Start New Session</button>
         </div>
     </div>
 
@@ -184,7 +209,7 @@
         state.cycles = parseInt(document.getElementById('cycle-count').value);
         let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:15px;">`;
         for(let i=1; i<=state.cycles; i++) {
-            html += `<tr style="border-bottom:1px solid #ddd"><td style="padding:10px"><b>C${i}:</b></td><td><select id="step-${i}">${state.rawSteps.map(s=>`<option>${s}</option>`).join('')}<option>Review</option></select></td><td><select id="break-${i}"><option value="🚶">🚶 Moving</option><option value="🍎">🍎 Food</option><option value="🏋️">🏋️ Exercise</option><option value="💬">💬 Social</option><option value="🧹">🧹 Broom</option></select></td></tr>`;
+            html += `<tr style="border-bottom:1px solid #ddd"><td style="padding:10px"><b>C${i}:</b></td><td><select id="step-${i}">${state.rawSteps.map(s=>`<option>${s}</option>`).join('')}<option>Review</option></select></td><td><select id="break-${i}"><option value="🚶">🚶 Moving</option><option value="🍎">🍎 Food</option><option value="🏋️">🏋️ Exercise</option><option value="💬">💬 Social</option><option value="🧹">🧹 Cleaning</option></select></td></tr>`;
         }
         document.getElementById('timeline-list').innerHTML = html + `</table>`;
         document.getElementById('setup-area').classList.add('hidden');
@@ -274,10 +299,13 @@
         const el = document.getElementById('distraction-input');
         if(!el.value) return;
         state.distractions.push({ text: el.value, cycle: state.currentCycle });
+        const noteContainer = document.createElement('div');
+        noteContainer.style.position = 'relative';
         const note = document.createElement('div');
         note.className = 'post-it';
         note.innerHTML = el.value;
-        document.getElementById('sidebar').prepend(note);
+        noteContainer.appendChild(note);
+        document.getElementById('sidebar').prepend(noteContainer);
         el.value = '';
     }
 
