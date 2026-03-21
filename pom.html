@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POM | Integrated Systems</title>
+    <title>POM | Study Systems</title>
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.96);
@@ -29,8 +29,8 @@
         .hidden { display: none; }
         input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
         .primary-btn { background: var(--accent); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .activate-btn { background: var(--alert-red); color: white; font-size: 1.8rem; padding: 30px; border: 5px solid white; border-radius: 20px; font-weight: 900; cursor: pointer; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 300px; overflow-y: auto; }
         #rush-btn { position: fixed; bottom: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; opacity: 0.3; }
     </style>
@@ -39,7 +39,7 @@
 
 <div id="main-container">
     <div id="app">
-        <h1 id="main-title" style="text-align:center; margin-top:0;">POM</h1>
+        <h1 style="text-align:center; margin-top:0;">POM</h1>
         <div id="cycle-breadcrumb" style="text-align:center; font-weight:bold; color:var(--accent); font-size:0.9rem; margin-bottom:10px;"></div>
         
         <div id="setup-area">
@@ -73,7 +73,7 @@
 
             <div id="activation-zone" class="hidden" style="text-align:center;">
                 <button class="activate-btn" onclick="handleActivation()">BACK TO WORK</button>
-                <p style="color:var(--alert-red); font-weight:bold;">Break Over! Return to System.</p>
+                <p style="color:var(--alert-red); font-weight:bold;">Break Over! System Alert Active.</p>
             </div>
             
             <div id="break-display" class="hidden" style="text-align:center; font-size:5rem; margin:10px 0;"></div>
@@ -100,7 +100,7 @@
 <script>
     let state = {
         goal: '', cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0,
-        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, rawSteps: []
+        plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, rawSteps: [], alertId: null
     };
 
     let audioCtx;
@@ -123,8 +123,9 @@
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
             osc.start(); osc.stop(audioCtx.currentTime + 3);
         } else if (type === 'alert') {
+            osc.type = 'square';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
             osc.start(); osc.stop(audioCtx.currentTime + 0.2);
         }
@@ -170,8 +171,6 @@
             state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; 
             playSound('whistle');
             document.getElementById('warmup-controls').classList.remove('hidden');
-            document.getElementById('pivot-step').value = state.plan[state.currentCycle-1].step;
-            document.getElementById('pivot-break').value = state.plan[state.currentCycle-1].icon;
         }
         else if (phase === 'study') { 
             state.timeLeft = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; 
@@ -199,30 +198,26 @@
             clearInterval(state.timerId);
             if (state.phase === 'warmup') runPhase('study');
             else if (state.phase === 'study') runPhase('wrapup');
-            else if (state.phase === 'wrapup') runPhase('break');
+            else if (state.phase === 'wrapup') {
+                if (state.currentCycle === state.cycles) showSummary();
+                else runPhase('break');
+            }
             else if (state.phase === 'break') { 
                 document.getElementById('activation-zone').classList.remove('hidden'); 
                 state.breakEnd = new Date(); 
-                state.alertId = setInterval(() => playSound('alert'), 60000);
-                playSound('alert');
+                state.alertId = setInterval(() => { playSound('alert'); setTimeout(() => playSound('alert'), 300); }, 15000); // Persistent rapid alert
             }
         }
         updateDisplay();
     }
 
-    function updateCurrentEnergy(val) { state.energyHistory[state.currentCycle-1] = val; }
-    function pivotPlan(key, val) { state.plan[state.currentCycle-1][key] = val; }
-
     function handleActivation() {
         clearInterval(state.alertId);
         let drift = Math.floor((new Date() - state.breakEnd) / 60000);
         state.driftHistory.push(drift);
-        if (state.currentCycle < state.cycles) { 
-            state.currentCycle++; 
-            updateCycleBreadcrumb();
-            runPhase('warmup'); 
-        }
-        else showSummary();
+        state.currentCycle++; 
+        updateCycleBreadcrumb();
+        runPhase('warmup'); 
     }
 
     function updateDisplay() {
@@ -243,24 +238,26 @@
     }
 
     function showSummary() {
+        clearInterval(state.timerId);
         document.getElementById('timer-area').classList.add('hidden');
         document.getElementById('summary-area').classList.remove('hidden');
         let report = `SESSION REPORT: ${state.goal}\n------------------------------\n`;
         state.plan.forEach((p, i) => {
-            report += `CYCLE ${i+1}: ${p.step} | Energy: ${state.energyHistory[i]}/10 | Drift: ${state.driftHistory[i] || 0}m\n`;
+            report += `CYCLE ${i+1}: ${p.step} | Energy: ${state.energyHistory[i] || 5}/10 | Drift: ${state.driftHistory[i] || 0}m\n`;
         });
         report += `\nRELEASED THOUGHTS:\n`;
         state.distractions.forEach(d => report += `[Cycle ${d.cycle}] ${d.text}\n`);
-        
         document.getElementById('copy-area').innerText = report;
     }
 
     function copyToClipboard() {
         const text = document.getElementById('copy-area').innerText;
-        navigator.clipboard.writeText(text).then(() => alert("Report copied to clipboard!"));
+        navigator.clipboard.writeText(text).then(() => alert("Report copied!"));
     }
 
     function rush() { state.timeLeft = 1; }
+    function updateCurrentEnergy(v) { state.energyHistory[state.currentCycle-1] = v; }
+    function pivotPlan(k, v) { state.plan[state.currentCycle-1][k] = v; }
 </script>
 </body>
 </html>
