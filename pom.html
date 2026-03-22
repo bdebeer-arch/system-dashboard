@@ -132,6 +132,7 @@
 <script>
     let state = {
         goal: '', cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0,
+        endTime: null, // Critical: Target timestamp for current phase
         plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, 
         isPaused: false, rawSteps: [], bricks: 0,
         fib: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55], currentFibRow: 0, bricksInRow: 0, alertId: null
@@ -218,34 +219,38 @@
         document.getElementById('break-display').classList.add('hidden');
         document.getElementById('warmup-controls').classList.add('hidden');
         
-        if (phase === 'warmup') { 
-            state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; 
-            playSound('whistle');
-            document.getElementById('warmup-controls').classList.remove('hidden');
-        } else if (phase === 'study') { 
-            state.timeLeft = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; 
-            playSound('gong');
-        } else if (phase === 'wrapup') { 
-            state.timeLeft = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; 
-            playSound('gong');
-        } else if (phase === 'break') { 
-            state.timeLeft = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)';
+        let seconds = 0;
+        if (phase === 'warmup') { seconds = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; playSound('whistle'); document.getElementById('warmup-controls').classList.remove('hidden'); }
+        else if (phase === 'study') { seconds = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; playSound('gong'); }
+        else if (phase === 'wrapup') { seconds = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; playSound('gong'); }
+        else if (phase === 'break') { 
+            seconds = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)';
             document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon;
             document.getElementById('break-display').classList.remove('hidden');
             playSound('whistle');
         }
 
+        state.timeLeft = seconds;
+        state.endTime = Date.now() + (seconds * 1000); // Set timestamp target
+
         document.getElementById('status-msg').innerText = `${phase} | ${state.plan[state.currentCycle-1].step}`;
         if(state.timerId) clearInterval(state.timerId);
-        state.timerId = setInterval(tick, 1000);
+        state.timerId = setInterval(tick, 200); // Check more frequently to capture background tab returns
     }
 
     function tick() {
         if (state.isPaused) return;
-        state.timeLeft--;
-        if (state.timeLeft % 60 === 0 && (state.phase === 'study' || state.phase === 'wrapup')) {
+
+        // Sync logic: calculate remaining time from the real clock
+        const remaining = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1000));
+        
+        // Brick logic: Check if a minute has passed
+        if (remaining < state.timeLeft && remaining % 60 === 0 && (state.phase === 'study' || state.phase === 'wrapup')) {
             addFibBrick();
         }
+
+        state.timeLeft = remaining;
+
         if (state.timeLeft <= 0) {
             clearInterval(state.timerId);
             if (state.phase === 'warmup') runPhase('study');
@@ -263,16 +268,19 @@
     }
 
     function togglePause() {
-        if (state.phase === 'idle') return;
+        if (state.phase === 'idle' || state.phase === 'break') return;
         state.isPaused = !state.isPaused;
         const btn = document.getElementById('pause-btn');
         const app = document.getElementById('app');
         if (state.isPaused) {
             btn.innerText = "▶";
             app.classList.add('paused');
+            state.pauseStart = Date.now(); // Track when we paused
         } else {
             btn.innerText = "⏸";
             app.classList.remove('paused');
+            const pauseDuration = Date.now() - state.pauseStart;
+            state.endTime += pauseDuration; // Shift the target end time by the pause length
         }
     }
 
@@ -323,7 +331,11 @@
         navigator.clipboard.writeText(text).then(() => alert("All data copied to clipboard!"));
     }
 
-    function rush() { if(!state.isPaused) state.timeLeft = 1; }
+    function rush() { 
+        if(!state.isPaused) {
+            state.endTime = Date.now() + 1000; // Force end time to effectively 'now'
+        }
+    }
     function updateCurrentEnergy(v) { state.energyHistory[state.currentCycle-1] = v; }
     function pivotPlan(k, v) { state.plan[state.currentCycle-1][k] = v; }
     function updateCycleBreadcrumb() { document.getElementById('cycle-breadcrumb').innerText = `Cycle ${state.currentCycle} of ${state.cycles}`; }
