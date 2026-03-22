@@ -69,7 +69,7 @@
         #energy-val { font-weight: bold; color: var(--accent); font-size: 1.1rem; min-width: 25px; display: inline-block; }
     </style>
 </head>
-<body>
+<body onload="loadLocalPlan()">
 
 <div id="tower-container"></div>
 
@@ -79,9 +79,9 @@
         <div id="cycle-breadcrumb" style="text-align:center; font-weight:bold; color:var(--accent); font-size:0.8rem; margin-bottom:10px;"></div>
         
         <div id="setup-area">
-            <input type="text" id="goal-input" placeholder="What is the mission?">
-            <textarea id="steps-input" rows="3" placeholder="Steps (one per line)..."></textarea>
-            <input type="number" id="cycle-count" min="1" max="5" value="3">
+            <input type="text" id="goal-input" placeholder="What is the mission?" oninput="saveLocalPlan()">
+            <textarea id="steps-input" rows="3" placeholder="Steps (one per line)..." oninput="saveLocalPlan()"></textarea>
+            <input type="number" id="cycle-count" min="1" max="5" value="3" oninput="saveLocalPlan()">
             <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
         </div>
 
@@ -136,11 +136,30 @@
 <script>
     let state = {
         goal: '', cycles: 1, currentCycle: 1, phase: 'idle', 
-        timeLeft: 0, targetTime: null, // targetTime is the key for clock-based sync
+        timeLeft: 0, targetTime: null,
         plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, 
         isPaused: false, rawSteps: [], bricks: 0, lastBrickMinute: 0,
         fib: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55], currentFibRow: 0, bricksInRow: 0, alertId: null
     };
+
+    function saveLocalPlan() {
+        const planData = {
+            goal: document.getElementById('goal-input').value,
+            steps: document.getElementById('steps-input').value,
+            cycles: document.getElementById('cycle-count').value
+        };
+        localStorage.setItem('pom_default_plan', JSON.stringify(planData));
+    }
+
+    function loadLocalPlan() {
+        const saved = localStorage.getItem('pom_default_plan');
+        if (saved) {
+            const data = JSON.parse(saved);
+            document.getElementById('goal-input').value = data.goal || "";
+            document.getElementById('steps-input').value = data.steps || "";
+            document.getElementById('cycle-count').value = data.cycles || 3;
+        }
+    }
 
     let audioCtx;
     function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -235,12 +254,11 @@
 
         document.getElementById('status-msg').innerText = `${phase} | ${state.plan[state.currentCycle-1].step}`;
         if(state.timerId) clearInterval(state.timerId);
-        state.timerId = setInterval(tick, 200); // Higher frequency for clock check accuracy
+        state.timerId = setInterval(tick, 200);
     }
 
     function tick() {
         if (state.isPaused) {
-            // Adjust target time forward while paused so remaining duration stays constant
             state.targetTime += 200; 
             return;
         }
@@ -248,7 +266,6 @@
         const now = Date.now();
         state.timeLeft = Math.max(0, Math.ceil((state.targetTime - now) / 1000));
         
-        // Brick Logic (based on minute boundaries)
         let currentMinute = Math.floor(state.timeLeft / 60);
         if (currentMinute < state.lastBrickMinute && (state.phase === 'study' || state.phase === 'wrapup')) {
             addFibBrick();
