@@ -66,6 +66,7 @@
         
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; }
+        #energy-val { font-weight: bold; color: var(--accent); font-size: 1.1rem; min-width: 25px; display: inline-block; }
     </style>
 </head>
 <body>
@@ -94,8 +95,11 @@
             <div id="time-left" style="font-size: 6rem; font-weight: 800; text-align: center; margin: 10px 0;">00:00</div>
             
             <div id="warmup-controls" class="hidden" style="background:rgba(255,255,255,0.6); padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #ccc;">
-                <label style="font-size:0.8rem;"><b>Energy Level (1-10):</b></label>
-                <input type="range" id="energy-live" min="1" max="10" value="5" onchange="updateCurrentEnergy(this.value)">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <label style="font-size:0.8rem;"><b>Energy Level:</b></label>
+                    <span id="energy-val">5</span>
+                </div>
+                <input type="range" id="energy-live" min="1" max="10" value="5" oninput="updateCurrentEnergy(this.value)">
                 <div style="display:flex; gap:10px; margin-top:5px;">
                     <select id="pivot-step" onchange="pivotPlan('step', this.value)"></select>
                     <select id="pivot-break" onchange="pivotPlan('icon', this.value)">
@@ -131,10 +135,10 @@
 
 <script>
     let state = {
-        goal: '', cycles: 1, currentCycle: 1, phase: 'idle', timeLeft: 0,
-        endTime: null, // Critical: Target timestamp for current phase
+        goal: '', cycles: 1, currentCycle: 1, phase: 'idle', 
+        timeLeft: 0, targetTime: null, // targetTime is the key for clock-based sync
         plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, 
-        isPaused: false, rawSteps: [], bricks: 0,
+        isPaused: false, rawSteps: [], bricks: 0, lastBrickMinute: 0,
         fib: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55], currentFibRow: 0, bricksInRow: 0, alertId: null
     };
 
@@ -219,37 +223,37 @@
         document.getElementById('break-display').classList.add('hidden');
         document.getElementById('warmup-controls').classList.add('hidden');
         
-        let seconds = 0;
-        if (phase === 'warmup') { seconds = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; playSound('whistle'); document.getElementById('warmup-controls').classList.remove('hidden'); }
-        else if (phase === 'study') { seconds = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; playSound('gong'); }
-        else if (phase === 'wrapup') { seconds = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; playSound('gong'); }
-        else if (phase === 'break') { 
-            seconds = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)';
-            document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon;
-            document.getElementById('break-display').classList.remove('hidden');
-            playSound('whistle');
-        }
+        let duration = 0;
+        if (phase === 'warmup') { duration = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; playSound('whistle'); document.getElementById('warmup-controls').classList.remove('hidden'); }
+        else if (phase === 'study') { duration = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; playSound('gong'); }
+        else if (phase === 'wrapup') { duration = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; playSound('gong'); }
+        else if (phase === 'break') { duration = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)'; document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon; document.getElementById('break-display').classList.remove('hidden'); playSound('whistle'); }
 
-        state.timeLeft = seconds;
-        state.endTime = Date.now() + (seconds * 1000); // Set timestamp target
+        state.timeLeft = duration;
+        state.targetTime = Date.now() + (duration * 1000);
+        state.lastBrickMinute = Math.floor(state.timeLeft / 60);
 
         document.getElementById('status-msg').innerText = `${phase} | ${state.plan[state.currentCycle-1].step}`;
         if(state.timerId) clearInterval(state.timerId);
-        state.timerId = setInterval(tick, 200); // Check more frequently to capture background tab returns
+        state.timerId = setInterval(tick, 200); // Higher frequency for clock check accuracy
     }
 
     function tick() {
-        if (state.isPaused) return;
-
-        // Sync logic: calculate remaining time from the real clock
-        const remaining = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1000));
-        
-        // Brick logic: Check if a minute has passed
-        if (remaining < state.timeLeft && remaining % 60 === 0 && (state.phase === 'study' || state.phase === 'wrapup')) {
-            addFibBrick();
+        if (state.isPaused) {
+            // Adjust target time forward while paused so remaining duration stays constant
+            state.targetTime += 200; 
+            return;
         }
-
-        state.timeLeft = remaining;
+        
+        const now = Date.now();
+        state.timeLeft = Math.max(0, Math.ceil((state.targetTime - now) / 1000));
+        
+        // Brick Logic (based on minute boundaries)
+        let currentMinute = Math.floor(state.timeLeft / 60);
+        if (currentMinute < state.lastBrickMinute && (state.phase === 'study' || state.phase === 'wrapup')) {
+            addFibBrick();
+            state.lastBrickMinute = currentMinute;
+        }
 
         if (state.timeLeft <= 0) {
             clearInterval(state.timerId);
@@ -268,19 +272,16 @@
     }
 
     function togglePause() {
-        if (state.phase === 'idle' || state.phase === 'break') return;
+        if (state.phase === 'idle') return;
         state.isPaused = !state.isPaused;
         const btn = document.getElementById('pause-btn');
         const app = document.getElementById('app');
         if (state.isPaused) {
             btn.innerText = "▶";
             app.classList.add('paused');
-            state.pauseStart = Date.now(); // Track when we paused
         } else {
             btn.innerText = "⏸";
             app.classList.remove('paused');
-            const pauseDuration = Date.now() - state.pauseStart;
-            state.endTime += pauseDuration; // Shift the target end time by the pause length
         }
     }
 
@@ -331,12 +332,11 @@
         navigator.clipboard.writeText(text).then(() => alert("All data copied to clipboard!"));
     }
 
-    function rush() { 
-        if(!state.isPaused) {
-            state.endTime = Date.now() + 1000; // Force end time to effectively 'now'
-        }
+    function rush() { if(!state.isPaused) { state.targetTime = Date.now() + 1000; state.timeLeft = 1; } }
+    function updateCurrentEnergy(v) { 
+        state.energyHistory[state.currentCycle-1] = v; 
+        document.getElementById('energy-val').innerText = v;
     }
-    function updateCurrentEnergy(v) { state.energyHistory[state.currentCycle-1] = v; }
     function pivotPlan(k, v) { state.plan[state.currentCycle-1][k] = v; }
     function updateCycleBreadcrumb() { document.getElementById('cycle-breadcrumb').innerText = `Cycle ${state.currentCycle} of ${state.cycles}`; }
 </script>
