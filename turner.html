@@ -13,7 +13,7 @@
         }
 
         body { 
-            font-family: 'Inter', -apple-system, sans-serif; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             background: var(--bg-gradient); 
             color: var(--text-main); 
             display: flex; 
@@ -77,8 +77,6 @@
 
         .btn-start { width: 100%; background: var(--primary-brown); color: white; padding: 16px; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
 
-        /* Active Display */
-        #phase-icon { font-size: 4.5rem; margin-bottom: 10px; }
         #timer-text { font-size: 4rem; font-weight: 800; color: var(--primary-brown); margin: 0; }
         #status-text { font-weight: 700; color: #8d6e63; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
 
@@ -92,21 +90,21 @@
 <div class="main-layout">
     <div class="sidebar">
         <h3 style="color: var(--primary-brown); margin-top: 0;">Strategic Pacing</h3>
-        <p style="font-size: 0.8rem; line-height: 1.4;">Select a cognitive load to auto-calculate your total session time.</p>
+        <p style="font-size: 0.8rem; line-height: 1.4;">Select cognitive load for automatic time partitioning.</p>
         
         <label class="pacing-option">
             <input type="radio" name="pacing" onclick="calcTime(1)">
-            <span><b>Light Page</b><br><small>1 min total (Introductory text)</small></span>
+            <span><b>Light Page</b><br><small>1 min total (Intro/Parsing)</small></span>
         </label>
 
         <label class="pacing-option">
             <input type="radio" name="pacing" onclick="calcTime(1.5)">
-            <span><b>Dense Page</b><br><small>1.5 min total (Technical/Deep data)</small></span>
+            <span><b>Dense Page</b><br><small>1.5 min total (Deep Analysis)</small></span>
         </label>
 
         <div style="margin-top: 2rem; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 1rem;">
-            <b>Why Parse First?</b><br>
-            <small>Scanning (Read) followed by Synthesising (Reflect) ensures information is indexed before storage. This "Metadata Tagging" prevents the brain from being overwhelmed by raw data.</small>
+            <b>The "Metadata" Approach</b><br>
+            <small>Speed reading followed by summary forces the brain to 'index' information. This creates the cognitive hooks required for high-retention deep reading.</small>
         </div>
     </div>
 
@@ -138,7 +136,7 @@
         </div>
 
         <div id="display-area" style="display:none;">
-            <div id="phase-icon">📖</div>
+            <div id="phase-icon" style="font-size: 4.5rem; margin-bottom: 10px;">📖</div>
             <div id="status-text">Scanning Page 1</div>
             <div id="timer-text">00:00</div>
             <div style="display: flex; gap: 10px; justify-content: center;">
@@ -166,9 +164,7 @@
         const s = parseInt(document.getElementById('startPage').value) || 1;
         const e = parseInt(document.getElementById('endPage').value) || (s + 9);
         const pages = (e - s) + 1;
-        if (pages > 0) {
-            document.getElementById('minutes').value = Math.ceil(pages * selectedMultiplier);
-        }
+        if (pages > 0) document.getElementById('minutes').value = Math.ceil(pages * selectedMultiplier);
     }
 
     function startSession() {
@@ -186,6 +182,8 @@
         
         document.getElementById('setup-ui').style.display = 'none';
         document.getElementById('display-area').style.display = 'block';
+        
+        setupMediaSession();
         updateUI();
         runTimer();
     }
@@ -204,7 +202,15 @@
 
     function togglePause() {
         isPaused = !isPaused;
-        document.getElementById('pauseBtn').innerText = isPaused ? "Resume" : "Pause";
+        const btn = document.getElementById('pauseBtn');
+        if (btn) {
+            btn.innerText = isPaused ? "Resume" : "Pause";
+            btn.style.background = isPaused ? "#7f8c8d" : "var(--primary-brown)";
+            btn.style.color = "white";
+        }
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.playbackState = isPaused ? "paused" : "playing";
+        }
         updateUI();
         updatePiPCanvas();
     }
@@ -240,14 +246,25 @@
     }
 
     function updatePiPCanvas() {
-        ctx.fillStyle = "#2D1B17"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.font = "60px serif"; ctx.textAlign = "center";
+        ctx.fillStyle = isPaused ? "#424242" : "#2D1B17";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = "60px serif"; ctx.textAlign = "center"; ctx.fillStyle = "white";
         ctx.fillText(isPaused ? "⏸" : (currentPhase === 'read' ? '📖' : '💡'), 100, 80);
-        ctx.fillStyle = "white"; ctx.font = "bold 32px Arial";
+        ctx.font = "bold 32px Arial";
         const mins = Math.floor(timeLeft / 60), secs = timeLeft % 60;
         ctx.fillText(isPaused ? "PAUSE" : `${mins}:${secs.toString().padStart(2, '0')}`, 100, 130);
         ctx.font = "12px Arial"; ctx.fillStyle = "#A1887F";
         ctx.fillText(`PG ${currentPage} / ${endPage}`, 100, 170);
+    }
+
+    function setupMediaSession() {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: 'Page Turner', artist: 'Systems Innovator'
+            });
+            navigator.mediaSession.setActionHandler('play', togglePause);
+            navigator.mediaSession.setActionHandler('pause', togglePause);
+        }
     }
 
     async function togglePiP() {
@@ -255,7 +272,7 @@
             const stream = canvas.captureStream();
             video.srcObject = stream;
             video.onloadedmetadata = () => { video.play(); video.requestPictureInPicture(); };
-        } catch (e) {}
+        } catch (e) { alert("PiP not supported."); }
     }
 
     function playSound(type) {
