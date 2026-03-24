@@ -1,47 +1,136 @@
-<div id="setup-ui">
-    <div class="input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-        <div class="input-group">
-            <label>Start Page</label>
-            <input type="number" id="startPage" placeholder="1">
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Turner | Systems Innovator</title>
+    <style>
+        :root {
+            --primary-brown: #5D4037;
+            --accent-tan: #D7CCC8;
+            --text-main: #3e2723;
+            --bg-gradient: linear-gradient(135deg, #f5f1ed 0%, #e2d7d0 100%);
+        }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: var(--bg-gradient); 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+        }
+
+        .app-card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(12px);
+            padding: 2.5rem; 
+            border-radius: 24px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 480px; 
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .nav-header { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+        .nav-header a { text-decoration: none; color: var(--primary-brown); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        h1 { font-size: 2rem; margin: 0; color: var(--primary-brown); letter-spacing: -1px; }
+        .subtitle { font-size: 0.9rem; color: #8d6e63; margin-bottom: 2rem; opacity: 0.8; }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .input-group { text-align: left; }
+        label { display: block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; color: #a1887f; letter-spacing: 0.5px; }
+        input { width: 100%; padding: 12px; border: 2px solid #efebe9; border-radius: 12px; font-size: 1rem; color: var(--text-main); transition: all 0.3s; box-sizing: border-box; }
+        input:focus { outline: none; border-color: var(--primary-brown); background: white; }
+
+        .btn-start { width: 100%; background: var(--primary-brown); color: white; padding: 16px; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(93,64,55,0.2); }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(93,64,55,0.3); }
+
+        .pedagogy-note { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(0,0,0,0.05); text-align: left; font-size: 0.8rem; color: #6d4c41; line-height: 1.5; }
+        .pedagogy-note b { color: var(--primary-brown); }
+
+        /* Active Phase Styling */
+        .display-active { margin-top: 1rem; animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        #phase-icon { font-size: 4.5rem; margin-bottom: 10px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1)); }
+        #timer-text { font-size: 4rem; font-weight: 800; color: var(--primary-brown); margin: 0; font-variant-numeric: tabular-nums; }
+        #status-text { font-weight: 700; color: #8d6e63; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.8rem; }
+
+        .btn-pip { margin-top: 25px; background: rgba(255,255,255,0.5); border: 1px solid var(--accent-tan); padding: 10px 20px; border-radius: 10px; cursor: pointer; color: var(--primary-brown); font-size: 0.75rem; font-weight: 600; }
+        .btn-pip:hover { background: white; }
+
+        canvas, video { display: none; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <div class="nav-header">
+        <a href="index.html">&larr; Dashboard</a>
+        <span style="font-weight: 800; color: var(--accent-tan); font-size: 0.7rem; letter-spacing: 2px;">LITERACY // SYST</span>
+    </div>
+
+    <h1>Page Turner</h1>
+    <p class="subtitle">Strategic Information Parsing</p>
+    
+    <div id="setup-ui">
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Start Page</label>
+                <input type="number" id="startPage" placeholder="1">
+            </div>
+            <div class="input-group">
+                <label>End Page</label>
+                <input type="number" id="endPage" placeholder="10">
+            </div>
+            <div class="input-group">
+                <label>Minutes</label>
+                <input type="number" id="minutes" value="30">
+            </div>
         </div>
-        <div class="input-group">
-            <label>End Page</label>
-            <input type="number" id="endPage" placeholder="10">
-        </div>
-        <div class="input-group">
-            <label>Minutes</label>
-            <input type="number" id="minutes" value="30">
+        <button class="btn-start" onclick="startSession()">Initialise Parsing Session</button>
+
+        <div class="pedagogy-note">
+            <b>The Systems Advantage</b><br>
+            Rapidly tagging and parsing a specific range creates a "mental table of contents." This proactive metadata layering ensures that when you return for deep analysis, your brain already knows where the critical data points reside.
         </div>
     </div>
-    <button class="btn-start" onclick="startSession()">Initialise Session</button>
 
-    <div class="pedagogy-note">
-        <b>Why tag & parse?</b><br>
-        Defining a specific range allows for <i>targeted cognitive mapping</i>. By scanning the range first, you identify the structural scaffolding of the specific information you need before committing to a deep read.
+    <div class="display-active" id="display-area" style="display:none;">
+        <div id="phase-icon">📖</div>
+        <div id="status-text">Scanning Page 1</div>
+        <div id="timer-text">00:00</div>
+        <button class="btn-pip" onclick="togglePiP()">Enable PiP Overlay</button>
     </div>
 </div>
+
+<canvas id="pipCanvas" width="200" height="200"></canvas>
+<video id="pipVideo" autoplay muted playsinline></video>
 
 <script>
     let timer, timeLeft, isPaused = false, currentPhase = 'read', currentPage = 1, endPage = 1, timePerPagePhase;
     const canvas = document.getElementById('pipCanvas'), ctx = canvas.getContext('2d'), video = document.getElementById('pipVideo');
 
     function startSession() {
-        const startInput = document.getElementById('startPage').value;
-        const endInput = document.getElementById('endPage').value;
-        const minsInput = document.getElementById('minutes').value;
+        const sVal = document.getElementById('startPage').value;
+        const eVal = document.getElementById('endPage').value;
+        const mVal = document.getElementById('minutes').value;
 
-        // Logic: Default to 1 if start is empty
-        currentPage = startInput ? parseInt(startInput) : 1;
-        endPage = endInput ? parseInt(endInput) : currentPage + 9; // Default 10 page spread if end is empty
+        currentPage = sVal ? parseInt(sVal) : 1;
+        endPage = eVal ? parseInt(eVal) : (currentPage + 9);
         
         const totalPages = (endPage - currentPage) + 1;
 
         if (totalPages <= 0) {
-            alert("End page must be greater than or equal to start page.");
+            alert("Please ensure the End Page is greater than the Start Page.");
             return;
         }
 
-        timePerPagePhase = Math.floor((parseInt(minsInput) * 60) / (totalPages * 2));
+        timePerPagePhase = Math.floor((parseInt(mVal) * 60) / (totalPages * 2));
         timeLeft = timePerPagePhase;
         
         document.getElementById('setup-ui').style.display = 'none';
@@ -50,13 +139,16 @@
         runTimer();
     }
 
-    // Update UI Function to show current page in range
-    function updateUI() {
-        const mins = Math.floor(timeLeft / 60);
-        const secs = timeLeft % 60;
-        document.getElementById('timer-text').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
-        document.getElementById('phase-icon').innerText = currentPhase === 'read' ? '📖' : '💡';
-        document.getElementById('status-text').innerText = currentPhase === 'read' ? `Scanning Page ${currentPage}` : `Synthesising...`;
+    function runTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+            if (!isPaused) {
+                timeLeft--;
+                if (timeLeft <= 0) nextPhase();
+                updateUI();
+                updatePiPCanvas();
+            }
+        }, 1000);
     }
 
     function nextPhase() {
@@ -69,12 +161,60 @@
                 currentPhase = 'read';
                 playSound('whistle');
             } else {
-                alert("Range Complete. Session finished.");
+                alert("Deep Parsing Complete.");
                 location.reload();
             }
         }
         timeLeft = timePerPagePhase;
     }
 
-    // ... (Keep existing playSound, togglePiP, and updatePiPCanvas functions)
+    function updateUI() {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        document.getElementById('timer-text').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        document.getElementById('phase-icon').innerText = currentPhase === 'read' ? '📖' : '💡';
+        document.getElementById('status-text').innerText = currentPhase === 'read' ? `Scanning Page ${currentPage}` : `Synthesising...`;
+    }
+
+    function playSound(type) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'whistle') {
+                osc.frequency.setValueAtTime(850, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1250, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            } else {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            }
+            osc.start(); osc.stop(audioCtx.currentTime + (type === 'whistle' ? 0.2 : 1.5));
+        } catch(e) { console.log("Audio block prevented."); }
+    }
+
+    async function togglePiP() {
+        try {
+            const stream = canvas.captureStream();
+            video.srcObject = stream;
+            video.onloadedmetadata = () => { video.play(); video.requestPictureInPicture(); };
+        } catch (err) { alert("PiP is not supported by this browser."); }
+    }
+
+    function updatePiPCanvas() {
+        ctx.fillStyle = "#5D4037";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = "85px serif"; ctx.textAlign = "center";
+        ctx.fillText(currentPhase === 'read' ? '📖' : '💡', 100, 95);
+        ctx.fillStyle = "white"; ctx.font = "bold 42px Arial";
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        ctx.fillText(`${mins}:${secs.toString().padStart(2, '0')}`, 100, 155);
+        ctx.font = "700 14px Arial"; ctx.fillText(`PAGE ${currentPage}`, 100, 185);
+    }
 </script>
+
+</body>
+</html>
