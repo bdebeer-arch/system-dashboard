@@ -85,10 +85,14 @@
             <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
         </div>
 
-        <div id="timeline-area" class="hidden">
-            <div id="timeline-list"></div>
-            <button class="primary-btn" onclick="startLiveSession()">Initialise System</button>
-        </div>
+      <div id="timeline-area" class="hidden">
+    <div id="timeline-list"></div>
+    <div id="completion-estimate" style="text-align:center; margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; font-weight: bold; color: var(--accent);"></div>
+    <div style="display:flex; gap:10px;">
+        <button class="primary-btn" style="background:#7f8c8d;" onclick="backToSetup()">&larr; Back</button>
+        <button class="primary-btn" onclick="startLiveSession()">Initialise System</button>
+    </div>
+</div>
 
         <div id="timer-area" class="hidden">
             <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; background:rgba(0,0,0,0.05); padding:5px; border-radius:8px; font-size:0.8rem;"></div>
@@ -207,18 +211,43 @@
         state.bricksInRow++;
     }
 
-    function goToTimeline() {
-        state.goal = document.getElementById('goal-input').value || "Deep Study";
-        state.rawSteps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
-        state.cycles = parseInt(document.getElementById('cycle-count').value);
-        let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:15px;">`;
-        for(let i=1; i<=state.cycles; i++) {
-            html += `<tr style="border-bottom:1px solid #ddd"><td style="padding:10px"><b>C${i}:</b></td><td><select id="step-${i}">${state.rawSteps.map(s=>`<option>${s}</option>`).join('')}<option>Review</option></select></td><td><select id="break-${i}"><option value="🚶">🚶 Moving</option><option value="🍎">🍎 Food</option><option value="🏋️">🏋️ Exercise</option><option value="💬">💬 Social</option><option value="🧹">🧹 Cleaning</option></select></td></tr>`;
-        }
-        document.getElementById('timeline-list').innerHTML = html + `</table>`;
-        document.getElementById('setup-area').classList.add('hidden');
-        document.getElementById('timeline-area').classList.remove('hidden');
+function backToSetup() {
+    document.getElementById('timeline-area').classList.add('hidden');
+    document.getElementById('setup-area').classList.remove('hidden');
+}
+
+function goToTimeline() {
+    state.goal = document.getElementById('goal-input').value || "Deep Study";
+    state.rawSteps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
+    state.cycles = parseInt(document.getElementById('cycle-count').value);
+    
+    let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:15px;">`;
+    let currentTime = new Date();
+    const phaseTotalMinutes = 1 + 23 + 1 + 5; // warmup + study + wrapup + break
+
+    for(let i=1; i<=state.cycles; i++) {
+        // Calculate time at the start of this rotation
+        let timeString = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        html += `<tr style="border-bottom:1px solid #ddd">
+            <td style="padding:10px; font-size:0.8rem; color:#666;">${timeString}</td>
+            <td style="padding:10px"><b>C${i}:</b></td>
+            <td><select id="step-${i}">${state.rawSteps.map(s=>`<option>${s}</option>`).join('')}<option>Review</option></select></td>
+            <td><select id="break-${i}"><option value="🚶">🚶</option><option value="🍎">🍎</option><option value="🏋️">🏋️</option><option value="💬">💬</option><option value="🧹">🧹</option></select></td>
+        </tr>`;
+        
+        currentTime.setMinutes(currentTime.getMinutes() + phaseTotalMinutes);
     }
+    
+    document.getElementById('timeline-list').innerHTML = html + `</table>`;
+    
+    // Final Completion Time Display
+    const finalTime = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('completion-estimate').innerText = `Estimated Finish: ${finalTime}`;
+    
+    document.getElementById('setup-area').classList.add('hidden');
+    document.getElementById('timeline-area').classList.remove('hidden');
+}
 
     function startLiveSession() {
         for(let i=1; i<=state.cycles; i++) {
