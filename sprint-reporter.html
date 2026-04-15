@@ -87,10 +87,11 @@
         <div id="timer-text">00:15</div>
         <div id="repeat-info">Student 1 of 10</div>
         
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button class="btn-action" id="pauseBtn" onclick="togglePause()">Pause</button>
-            <button class="btn-action" onclick="togglePiP()">Mini-View</button>
-        </div>
+<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+    <button class="btn-action" id="pauseBtn" onclick="togglePause()">Pause</button>
+    <button class="btn-action" onclick="resetSprint()" style="border-color: #e74c3c; color: #e74c3c;">Reset / Back</button>
+    <button class="btn-action" onclick="togglePiP()">Mini-View</button>
+</div>
     </div>
 </div>
 
@@ -134,6 +135,25 @@
         runTimer();
     }
 
+function resetSprint() {
+    // 1. Stop the clock
+    clearInterval(timer);
+    isPaused = false;
+
+    // 2. UI Switch
+    document.getElementById('display-area').style.display = 'none';
+    document.getElementById('setup-ui').style.display = 'block';
+
+    // 3. Close PiP if it's open (browser dependent, usually requires a reload or manual close)
+    // For a cleaner reset, we alert or simply reload if you want a fresh state:
+    if (confirm("Reset current sprint and return to setup?")) {
+        location.reload(); 
+    } else {
+        // If they cancel, we restart the timer logic where it was
+        runTimer();
+    }
+}
+    
     function runTimer() {
         clearInterval(timer);
         timer = setInterval(() => {
