@@ -5,44 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sprint Reporter | Systems Innovator</title>
     <style>
-:root {
-    --bg-dark: #0f172a;
-    --card-slate: #1e293b;
-    --electric-blue: #3b82f6;
-    --text-bright: #f8fafc;
-    --text-dim: #94a3b8;
-    --danger-red: #ef4444;
-}
+        :root {
+            --bg-dark: #0f172a;
+            --card-slate: #1e293b;
+            --electric-blue: #3b82f6;
+            --text-bright: #f8fafc;
+            --text-dim: #94a3b8;
+            --danger-red: #ef4444;
+        }
 
-body { 
-    background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%); 
-    color: var(--text-bright); 
-    font-family: 'Inter', sans-serif;
-    display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
-}
+        body { 
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%); 
+            color: var(--text-bright); 
+            font-family: 'Inter', sans-serif;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;
+        }
 
-.app-card { 
-    background: rgba(30, 41, 59, 0.7); 
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 500px; text-align: center;
-}
+        .app-card { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 2.5rem; border-radius: 24px; width: 100%; max-width: 500px; text-align: center;
+        }
 
-h1, #timer-text { color: var(--electric-blue); text-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        h1, #timer-text { color: var(--electric-blue); text-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
 
-/* Updated Button Styles */
-.btn-action { 
-    background: rgba(255,255,255,0.05); 
-    padding: 10px 18px; 
-    border-radius: 10px; 
-    cursor: pointer; 
-    font-weight: 600; 
-    font-size: 0.85rem;
-    transition: all 0.2s;
-    border: 1px solid #334155;
-    color: var(--text-dim);
-}
-.btn-action:hover { background: rgba(255,255,255,0.1); color: var(--text-bright); }
+        .nav-header { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+        .nav-header a { text-decoration: none; color: var(--electric-blue); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+
+        .config-section { text-align: left; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; color: var(--text-dim); }
+        input, textarea { width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 10px; font-size: 1rem; color: white; box-sizing: border-box; }
+
+        .btn-start { width: 100%; background: var(--electric-blue); color: white; padding: 16px; border: none; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 1rem; margin-top: 10px; }
+
+        .btn-action { 
+            background: rgba(255,255,255,0.05); 
+            padding: 10px 18px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            border: 1px solid #334155;
+            color: var(--text-dim);
+        }
+        .btn-action:hover { background: rgba(255,255,255,0.1); color: var(--text-bright); }
+
+        canvas, video { display: none; }
     </style>
 </head>
 <body>
@@ -50,42 +61,41 @@ h1, #timer-text { color: var(--electric-blue); text-shadow: 0 0 20px rgba(59, 13
 <div class="app-card">
     <div class="nav-header">
         <a href="index.html">&larr; Dashboard</a>
-        <span style="font-weight: 800; color: var(--accent-tan); font-size: 0.7rem; letter-spacing: 2px;">OUTPUT // SYNTHESIS</span>
+        <span style="font-weight: 800; color: var(--text-dim); font-size: 0.7rem; letter-spacing: 2px;">OUTPUT // SYNTHESIS</span>
     </div>
 
     <h1>Sprint Reporter</h1>
-    <p class="subtitle">Forcing an output</p>
+    <p class="subtitle" style="color: var(--text-dim); margin-bottom: 2rem;">Forcing an output</p>
     
-<div id="setup-ui">
-    <div class="config-section">
-        <div class="input-group">
-            <label>Number of Reports (Repeats)</label>
-            <input type="number" id="repeats" value="10" min="1">
+    <div id="setup-ui">
+        <div class="config-section">
+            <div class="input-group">
+                <label>Reports (Repeats)</label>
+                <input type="number" id="repeats" value="10" min="1">
+            </div>
+            <div class="input-group">
+                <label>Seconds Per Phase</label>
+                <input type="number" id="phaseSeconds" value="15">
+            </div>
+            <div class="input-group">
+                <label>Custom Phases (Icon:Label, ...)</label>
+                <textarea id="customPhases" oninput="saveConfig()" style="height:80px;">🧠:Think, 🎭:Personality, 📈:Attitude, 🏆:Progress, 👣:Next Steps, 🌟:Wishing Well</textarea>
+            </div>
         </div>
-        <div class="input-group">
-            <label>Seconds Per Phase</label>
-            <input type="number" id="phaseSeconds" value="15">
-        </div>
-        <div class="input-group">
-            <label>Custom Phases (Icon:Label, ...)</label>
-            <textarea id="customPhases" style="width:100%; height:60px; border-radius:10px; border:2px solid #efebe9; padding:10px; font-family:inherit; font-size:0.8rem; box-sizing:border-box;">🧠:Think, 🎭:Personality, 📈:Attitude, 🏆:Progress, 👣:Next Steps, 🌟:Wishing Well</textarea>
-            <p style="font-size: 0.65rem; color: #8d6e63; margin-top: 5px;">Separate phases with commas. Use <b>Icon:Name</b> format.</p>
-        </div>
+        <button class="btn-start" onclick="startReporting()">Begin Reporting Sprint</button>
     </div>
-    <button class="btn-start" onclick="startReporting()">Begin Reporting Sprint</button>
-</div>
 
     <div id="display-area" style="display:none;">
         <div id="phase-icon" style="font-size: 5rem; margin-bottom: 10px;">🧠</div>
-        <div id="phase-label">Think</div>
-        <div id="timer-text">00:15</div>
-        <div id="repeat-info">Student 1 of 10</div>
+        <div id="phase-label" style="font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Think</div>
+        <div id="timer-text" style="font-size: 4rem; font-weight: 800; margin: 10px 0;">15s</div>
+        <div id="repeat-info" style="color: var(--text-dim); font-weight: 600;">Unit 1 of 10</div>
         
-<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-    <button class="btn-action" id="pauseBtn" onclick="togglePause()">Pause</button>
-    <button class="btn-action" onclick="resetSprint()" style="border-color: var(--danger-red); color: var(--danger-red);">Reset / Back</button>
-    <button class="btn-action" onclick="togglePiP()">Mini-View</button>
-</div>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            <button class="btn-action" id="pauseBtn" onclick="togglePause()">Pause</button>
+            <button class="btn-action" onclick="resetSprint()" style="border-color: var(--danger-red); color: var(--danger-red);">Reset / Back</button>
+            <button class="btn-action" onclick="togglePiP()">Mini-View</button>
+        </div>
     </div>
 </div>
 
@@ -99,6 +109,16 @@ h1, #timer-text { color: var(--electric-blue); text-shadow: 0 0 20px rgba(59, 13
     
     const canvas = document.getElementById('pipCanvas'), ctx = canvas.getContext('2d'), video = document.getElementById('pipVideo');
 
+    // Persistence Logic
+    window.onload = () => {
+        const saved = localStorage.getItem('sprintReporterConfig');
+        if (saved) document.getElementById('customPhases').value = saved;
+    };
+
+    function saveConfig() {
+        localStorage.setItem('sprintReporterConfig', document.getElementById('customPhases').value);
+    }
+
     function parsePhases() {
         const input = document.getElementById('customPhases').value;
         const phaseStrings = input.split(',');
@@ -111,7 +131,7 @@ h1, #timer-text { color: var(--electric-blue); text-shadow: 0 0 20px rgba(59, 13
         });
     }
 
-    function startReporting() {
+    async function startReporting() {
         activePhases = parsePhases();
         totalRepeats = parseInt(document.getElementById('repeats').value) || 1;
         secondsPerPhase = parseInt(document.getElementById('phaseSeconds').value) || 15;
@@ -124,29 +144,19 @@ h1, #timer-text { color: var(--electric-blue); text-shadow: 0 0 20px rgba(59, 13
         document.getElementById('setup-ui').style.display = 'none';
         document.getElementById('display-area').style.display = 'block';
         
-        setupMediaSession();
         updateUI();
+        updatePiPCanvas(); // Ensure canvas is ready for capture
+        setupMediaSession();
+        
+        await togglePiP(); // Launch PiP immediately
         runTimer();
     }
 
-function resetSprint() {
-    // 1. Stop the clock
-    clearInterval(timer);
-    isPaused = false;
-
-    // 2. UI Switch
-    document.getElementById('display-area').style.display = 'none';
-    document.getElementById('setup-ui').style.display = 'block';
-
-    // 3. Close PiP if it's open (browser dependent, usually requires a reload or manual close)
-    // For a cleaner reset, we alert or simply reload if you want a fresh state:
-    if (confirm("Reset current sprint and return to setup?")) {
-        location.reload(); 
-    } else {
-        // If they cancel, we restart the timer logic where it was
-        runTimer();
+    function resetSprint() {
+        if (confirm("Reset current sprint and return to setup?")) {
+            location.reload(); 
+        }
     }
-}
     
     function runTimer() {
         clearInterval(timer);
@@ -194,31 +204,27 @@ function resetSprint() {
         const p = activePhases[phaseIndex];
         document.getElementById('phase-icon').innerText = p.icon;
         document.getElementById('phase-label').innerText = isPaused ? "System Halted" : p.label;
-        document.getElementById('timer-text').innerText = timeLeft.toString().padStart(2, '0') + "s";
+        document.getElementById('timer-text').innerText = timeLeft + "s";
         document.getElementById('repeat-info').innerText = `Unit ${currentRepeat} of ${totalRepeats}`;
     }
 
-function updatePiPCanvas() {
-    // Midnight Professional Canvas Background
-    ctx.fillStyle = isPaused ? "#424242" : "#0f172a"; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.textAlign = "center"; 
-    ctx.fillStyle = "white";
-    
-    // Icon rendering
-    ctx.font = "70px serif"; 
-    ctx.fillText(isPaused ? "⏸" : activePhases[phaseIndex].icon, 100, 85);
-    
-    // Timer text
-    ctx.font = "bold 35px Arial";
-    ctx.fillText(isPaused ? "PAUSE" : timeLeft + "s", 100, 140);
-    
-    // Footer metadata
-    ctx.font = "12px Arial"; 
-    ctx.fillStyle = "#94a3b8";
-    ctx.fillText(`${activePhases[phaseIndex].label.toUpperCase()} | ${currentRepeat}/${totalRepeats}`, 100, 175);
-}
+    function updatePiPCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = isPaused ? "#424242" : "#0f172a"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.textAlign = "center"; 
+        ctx.fillStyle = "white";
+        ctx.font = "70px serif"; 
+        ctx.fillText(isPaused ? "⏸" : activePhases[phaseIndex].icon, 100, 85);
+        
+        ctx.font = "bold 35px Arial";
+        ctx.fillText(isPaused ? "PAUSE" : timeLeft + "s", 100, 140);
+        
+        ctx.font = "12px Arial"; 
+        ctx.fillStyle = "#94a3b8";
+        ctx.fillText(`${activePhases[phaseIndex].label.toUpperCase()} | ${currentRepeat}/${totalRepeats}`, 100, 175);
+    }
 
     function playSound(type) {
         try {
@@ -245,22 +251,14 @@ function updatePiPCanvas() {
         }
     }
 
-async function togglePiP() {
-    try {
-        if (document.pictureInPictureElement) {
-            await document.exitPictureInPicture();
-        } else {
+    async function togglePiP() {
+        try {
             const stream = canvas.captureStream();
             video.srcObject = stream;
-            // Play must be awaited to ensure the stream is active before requesting PiP
             await video.play();
             await video.requestPictureInPicture();
-        }
-    } catch (e) {
-        console.error("PiP failed: ", e);
-        alert("Picture-in-Picture failed to launch. Ensure you are interacting with the page.");
+        } catch (e) { console.error(e); }
     }
-}
 
     window.addEventListener('keydown', (e) => {
         if (e.code === "Space" && document.getElementById('display-area').style.display !== 'none') {
@@ -268,6 +266,5 @@ async function togglePiP() {
         }
     });
 </script>
-
 </body>
 </html>
