@@ -91,6 +91,11 @@
     <div class="sidebar">
         <h3 style="color: var(--primary-brown); margin-top: 0;">Strategic Pacing</h3>
         <p style="font-size: 0.8rem; line-height: 1.4;">Select cognitive load for automatic time partitioning.</p>
+
+<label class="pacing-option">
+    <input type="radio" name="pacing" onclick="calcTime(0.5)">
+    <span><b>Boost Mode</b><br><small>30s total (15s Read / 15s Reflect)</small></span>
+</label>
         
         <label class="pacing-option">
             <input type="radio" name="pacing" onclick="calcTime(1)">
