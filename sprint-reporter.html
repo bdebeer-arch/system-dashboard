@@ -198,16 +198,27 @@ function resetSprint() {
         document.getElementById('repeat-info').innerText = `Unit ${currentRepeat} of ${totalRepeats}`;
     }
 
-    function updatePiPCanvas() {
-        ctx.fillStyle = isPaused ? "#424242" : "#2D1B17";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.textAlign = "center"; ctx.fillStyle = "white";
-        ctx.font = "70px serif"; ctx.fillText(activePhases[phaseIndex].icon, 100, 85);
-        ctx.font = "bold 35px Arial";
-        ctx.fillText(isPaused ? "PAUSE" : timeLeft + "s", 100, 140);
-        ctx.font = "12px Arial"; ctx.fillStyle = "#A1887F";
-        ctx.fillText(`${activePhases[phaseIndex].label.toUpperCase()} | ${currentRepeat}/${totalRepeats}`, 100, 175);
-    }
+function updatePiPCanvas() {
+    // Midnight Professional Canvas Background
+    ctx.fillStyle = isPaused ? "#424242" : "#0f172a"; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.textAlign = "center"; 
+    ctx.fillStyle = "white";
+    
+    // Icon rendering
+    ctx.font = "70px serif"; 
+    ctx.fillText(isPaused ? "⏸" : activePhases[phaseIndex].icon, 100, 85);
+    
+    // Timer text
+    ctx.font = "bold 35px Arial";
+    ctx.fillText(isPaused ? "PAUSE" : timeLeft + "s", 100, 140);
+    
+    // Footer metadata
+    ctx.font = "12px Arial"; 
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText(`${activePhases[phaseIndex].label.toUpperCase()} | ${currentRepeat}/${totalRepeats}`, 100, 175);
+}
 
     function playSound(type) {
         try {
@@ -234,13 +245,22 @@ function resetSprint() {
         }
     }
 
-    async function togglePiP() {
-        try {
+async function togglePiP() {
+    try {
+        if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+        } else {
             const stream = canvas.captureStream();
             video.srcObject = stream;
-            video.onloadedmetadata = () => { video.play(); video.requestPictureInPicture(); };
-        } catch (e) {}
+            // Play must be awaited to ensure the stream is active before requesting PiP
+            await video.play();
+            await video.requestPictureInPicture();
+        }
+    } catch (e) {
+        console.error("PiP failed: ", e);
+        alert("Picture-in-Picture failed to launch. Ensure you are interacting with the page.");
     }
+}
 
     window.addEventListener('keydown', (e) => {
         if (e.code === "Space" && document.getElementById('display-area').style.display !== 'none') {
