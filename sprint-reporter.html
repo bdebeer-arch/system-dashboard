@@ -62,20 +62,24 @@
     <h1>Sprint Reporter</h1>
     <p class="subtitle">Holistic Batch Writing Engine</p>
     
-    <div id="setup-ui">
-        <div class="config-section">
-            <div class="input-group">
-                <label>Number of Reports (Repeats)</label>
-                <input type="number" id="repeats" value="10" min="1">
-            </div>
-            <div class="input-group">
-                <label>Seconds Per Phase</label>
-                <input type="number" id="phaseSeconds" value="15">
-            </div>
-            <p style="font-size: 0.75rem; color: #8d6e63; margin: 0;"><b>Sequence:</b> Think (🧠) → Personality (🎭) → Attitude (📈) → Progress (🏆) → Next Steps (👣) → Wishing Well (🌟)</p>
+<div id="setup-ui">
+    <div class="config-section">
+        <div class="input-group">
+            <label>Number of Reports (Repeats)</label>
+            <input type="number" id="repeats" value="10" min="1">
         </div>
-        <button class="btn-start" onclick="startReporting()">Begin Reporting Sprint</button>
+        <div class="input-group">
+            <label>Seconds Per Phase</label>
+            <input type="number" id="phaseSeconds" value="15">
+        </div>
+        <div class="input-group">
+            <label>Custom Phases (Icon:Label, ...)</label>
+            <textarea id="customPhases" style="width:100%; height:60px; border-radius:10px; border:2px solid #efebe9; padding:10px; font-family:inherit; font-size:0.8rem; box-sizing:border-box;">🧠:Think, 🎭:Personality, 📈:Attitude, 🏆:Progress, 👣:Next Steps, 🌟:Wishing Well</textarea>
+            <p style="font-size: 0.65rem; color: #8d6e63; margin-top: 5px;">Separate phases with commas. Use <b>Icon:Name</b> format.</p>
+        </div>
     </div>
+    <button class="btn-start" onclick="startReporting()">Begin Reporting Sprint</button>
+</div>
 
     <div id="display-area" style="display:none;">
         <div id="phase-icon" style="font-size: 5rem; margin-bottom: 10px;">🧠</div>
@@ -94,23 +98,28 @@
 <video id="pipVideo" autoplay muted playsinline></video>
 
 <script>
-    const phases = [
-        { label: "Think", icon: "🧠" },
-        { label: "Personality", icon: "🎭" },
-        { label: "Attitude", icon: "📈" },
-        { label: "Progress", icon: "🏆" },
-        { label: "Next Steps", icon: "👣" },
-        { label: "Wishing Well", icon: "🌟" }
-    ];
-
     let timer, timeLeft, isPaused = false;
     let currentRepeat = 1, totalRepeats = 1, phaseIndex = 0, secondsPerPhase = 15;
+    let activePhases = [];
     
     const canvas = document.getElementById('pipCanvas'), ctx = canvas.getContext('2d'), video = document.getElementById('pipVideo');
 
+    function parsePhases() {
+        const input = document.getElementById('customPhases').value;
+        const phaseStrings = input.split(',');
+        return phaseStrings.map(str => {
+            const parts = str.split(':');
+            return {
+                icon: parts[0]?.trim() || "📝",
+                label: parts[1]?.trim() || parts[0]?.trim() || "Phase"
+            };
+        });
+    }
+
     function startReporting() {
-        totalRepeats = parseInt(document.getElementById('repeats').value);
-        secondsPerPhase = parseInt(document.getElementById('phaseSeconds').value);
+        activePhases = parsePhases();
+        totalRepeats = parseInt(document.getElementById('repeats').value) || 1;
+        secondsPerPhase = parseInt(document.getElementById('phaseSeconds').value) || 15;
         
         currentRepeat = 1;
         phaseIndex = 0;
@@ -138,7 +147,7 @@
     }
 
     function nextPhase() {
-        if (phaseIndex < phases.length - 1) {
+        if (phaseIndex < activePhases.length - 1) {
             phaseIndex++;
             playSound('chime');
         } else {
@@ -163,30 +172,27 @@
 
     function finish() {
         clearInterval(timer);
-        alert("Sprint Complete! All reports drafted.");
+        alert("Sprint Complete!");
         location.reload();
     }
 
     function updateUI() {
-        const p = phases[phaseIndex];
+        const p = activePhases[phaseIndex];
         document.getElementById('phase-icon').innerText = p.icon;
         document.getElementById('phase-label').innerText = isPaused ? "System Halted" : p.label;
         document.getElementById('timer-text').innerText = timeLeft.toString().padStart(2, '0') + "s";
-        document.getElementById('repeat-info').innerText = `Student ${currentRepeat} of ${totalRepeats}`;
+        document.getElementById('repeat-info').innerText = `Unit ${currentRepeat} of ${totalRepeats}`;
     }
 
     function updatePiPCanvas() {
         ctx.fillStyle = isPaused ? "#424242" : "#2D1B17";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
         ctx.textAlign = "center"; ctx.fillStyle = "white";
-        ctx.font = "70px serif"; ctx.fillText(phases[phaseIndex].icon, 100, 85);
-        
+        ctx.font = "70px serif"; ctx.fillText(activePhases[phaseIndex].icon, 100, 85);
         ctx.font = "bold 35px Arial";
         ctx.fillText(isPaused ? "PAUSE" : timeLeft + "s", 100, 140);
-        
         ctx.font = "12px Arial"; ctx.fillStyle = "#A1887F";
-        ctx.fillText(`STUDENT ${currentRepeat} | ${phases[phaseIndex].label}`, 100, 175);
+        ctx.fillText(`${activePhases[phaseIndex].label.toUpperCase()} | ${currentRepeat}/${totalRepeats}`, 100, 175);
     }
 
     function playSound(type) {
@@ -195,11 +201,10 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            
             if (type === 'chime') {
                 osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            } else { // Gong
+            } else { 
                 osc.type = 'triangle'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2);
             }
