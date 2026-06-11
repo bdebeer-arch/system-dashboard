@@ -67,6 +67,8 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         #copy-area { background: #f4f4f4; padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; }
         #energy-val { font-weight: bold; color: var(--accent); font-size: 1.1rem; min-width: 25px; display: inline-block; }
+        .toggle-container { display: flex; align-items: center; gap: 10px; margin: 8px 0; padding: 4px; }
+        .toggle-container input { width: auto; margin: 0; }
     </style>
 </head>
 <body onload="loadLocalPlan()">
@@ -82,17 +84,21 @@
             <input type="text" id="goal-input" placeholder="What is the mission?" oninput="saveLocalPlan()">
             <textarea id="steps-input" rows="3" placeholder="Steps (one per line)..." oninput="saveLocalPlan()"></textarea>
             <input type="number" id="cycle-count" min="1" max="5" value="3" oninput="saveLocalPlan()">
+            <div class="toggle-container">
+                <input type="checkbox" id="escalating-breaks" onchange="saveLocalPlan()">
+                <label for="escalating-breaks">Escalating Breaks Mode (+5 mins cumulative per break)</label>
+            </div>
             <button class="primary-btn" onclick="goToTimeline()">Plan Timeline &rarr;</button>
         </div>
 
-      <div id="timeline-area" class="hidden">
-    <div id="timeline-list"></div>
-    <div id="completion-estimate" style="text-align:center; margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; font-weight: bold; color: var(--accent);"></div>
-    <div style="display:flex; gap:10px;">
-        <button class="primary-btn" style="background:#7f8c8d;" onclick="backToSetup()">&larr; Back</button>
-        <button class="primary-btn" onclick="startLiveSession()">Initialise System</button>
-    </div>
-</div>
+        <div id="timeline-area" class="hidden">
+            <div id="timeline-list"></div>
+            <div id="completion-estimate" style="text-align:center; margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 12px; font-weight: bold; color: var(--accent);"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="primary-btn" style="background:#7f8c8d;" onclick="backToSetup()">&larr; Back</button>
+                <button class="primary-btn" onclick="startLiveSession()">Initialise System</button>
+            </div>
+        </div>
 
         <div id="timer-area" class="hidden">
             <div id="status-msg" style="text-align:center; font-weight:bold; text-transform:uppercase; background:rgba(0,0,0,0.05); padding:5px; border-radius:8px; font-size:0.8rem;"></div>
@@ -143,14 +149,16 @@
         timeLeft: 0, targetTime: null,
         plan: [], distractions: [], energyHistory: [], driftHistory: [], timerId: null, 
         isPaused: false, rawSteps: [], bricks: 0, lastBrickMinute: 0,
-        fib: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55], currentFibRow: 0, bricksInRow: 0, alertId: null
+        fib: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55], currentFibRow: 0, bricksInRow: 0, alertId: null,
+        escalatingBreaks: false
     };
 
     function saveLocalPlan() {
         const planData = {
             goal: document.getElementById('goal-input').value,
             steps: document.getElementById('steps-input').value,
-            cycles: document.getElementById('cycle-count').value
+            cycles: document.getElementById('cycle-count').value,
+            escalatingBreaks: document.getElementById('escalating-breaks').checked
         };
         localStorage.setItem('pom_default_plan', JSON.stringify(planData));
     }
@@ -162,6 +170,7 @@
             document.getElementById('goal-input').value = data.goal || "";
             document.getElementById('steps-input').value = data.steps || "";
             document.getElementById('cycle-count').value = data.cycles || 3;
+            document.getElementById('escalating-breaks').checked = data.escalatingBreaks || false;
         }
     }
 
@@ -220,20 +229,23 @@ function goToTimeline() {
     state.goal = document.getElementById('goal-input').value || "Deep Study";
     state.rawSteps = document.getElementById('steps-input').value.split('\n').filter(s => s.trim() !== '');
     state.cycles = parseInt(document.getElementById('cycle-count').value);
+    state.escalatingBreaks = document.getElementById('escalating-breaks').checked;
     
     let html = `<table style="width:100%; border-collapse:collapse; margin-bottom:15px;">`;
     let currentTime = new Date();
-    const phaseTotalMinutes = 1 + 23 + 1 + 5; // warmup + study + wrapup + break
 
     for(let i=1; i<=state.cycles; i++) {
-        // Calculate time at the start of this rotation
         let timeString = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        // Calculate break duration based on whether escalating configuration is checked
+        let breakMins = state.escalatingBreaks ? (i * 5) : 5;
+        let phaseTotalMinutes = 1 + 23 + 1 + breakMins; // warmup + study + wrapup + dynamic break
         
         html += `<tr style="border-bottom:1px solid #ddd">
             <td style="padding:10px; font-size:0.8rem; color:#666;">${timeString}</td>
             <td style="padding:10px"><b>C${i}:</b></td>
             <td><select id="step-${i}">${state.rawSteps.map(s=>`<option>${s}</option>`).join('')}<option>Review</option></select></td>
-            <td><select id="break-${i}"><option value="🚶">🚶</option><option value="🍎">🍎</option><option value="🏋️">🏋️</option><option value="💬">💬</option><option value="🧹">🧹</option></select></td>
+            <td><select id="break-${i}"><option value="🚶">🚶 (${breakMins}m)</option><option value="🍎">🍎 (${breakMins}m)</option><option value="🏋️">🏋️ (${breakMins}m)</option><option value="💬">💬 (${breakMins}m)</option><option value="🧹">🧹 (${breakMins}m)</option></select></td>
         </tr>`;
         
         currentTime.setMinutes(currentTime.getMinutes() + phaseTotalMinutes);
@@ -241,7 +253,6 @@ function goToTimeline() {
     
     document.getElementById('timeline-list').innerHTML = html + `</table>`;
     
-    // Final Completion Time Display
     const finalTime = currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     document.getElementById('completion-estimate').innerText = `Estimated Finish: ${finalTime}`;
     
@@ -275,7 +286,15 @@ function goToTimeline() {
         if (phase === 'warmup') { duration = 60; document.getElementById('app').style.backgroundColor = 'var(--warmup)'; playSound('whistle'); document.getElementById('warmup-controls').classList.remove('hidden'); }
         else if (phase === 'study') { duration = 23 * 60; document.getElementById('app').style.backgroundColor = 'var(--study)'; playSound('gong'); }
         else if (phase === 'wrapup') { duration = 60; document.getElementById('app').style.backgroundColor = 'var(--wrapup)'; playSound('gong'); }
-        else if (phase === 'break') { duration = 5 * 60; document.getElementById('app').style.backgroundColor = 'var(--break)'; document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon; document.getElementById('break-display').classList.remove('hidden'); playSound('whistle'); }
+        else if (phase === 'break') { 
+            // Escalation logic matches sequence cycles dynamically
+            let breakMinutes = state.escalatingBreaks ? (state.currentCycle * 5) : 5;
+            duration = breakMinutes * 60; 
+            document.getElementById('app').style.backgroundColor = 'var(--break)'; 
+            document.getElementById('break-display').innerText = state.plan[state.currentCycle-1].icon; 
+            document.getElementById('break-display').classList.remove('hidden'); 
+            playSound('whistle'); 
+        }
 
         state.timeLeft = duration;
         state.targetTime = Date.now() + (duration * 1000);
