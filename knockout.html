@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>St Paul's Collegiate - Tournament Bracket</title>
+    <title>Tournament Bracket System</title>
     <style>
         :root {
             --gold: #D4AF37;
@@ -57,7 +57,6 @@
             margin-bottom: 30px;
         }
 
-        /* Input field acting as native placeholder */
         textarea {
             width: 100%;
             height: 150px;
@@ -135,40 +134,137 @@
             gap: 10px;
         }
 
-        /* Bracket Viewport - Prezi Style Canvas */
-        .bracket-viewport {
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
             width: 100%;
             height: 650px;
+            position: relative;
+        }
+
+        /* View Mode Windows */
+        .global-window {
+            width: 100%;
+            height: 100%;
             background-color: #1a1a1a;
             border: 1px solid var(--grey);
             border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .bracket-canvas {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-            height: 100%;
             padding: 20px;
             box-sizing: border-box;
+        }
+
+        .match-window {
+            display: none;
+            grid-template-columns: 70% 30%;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .focus-panel {
+            background-color: #1a1a1a;
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .mini-map-panel {
+            background-color: #111111;
+            border: 1px solid var(--grey);
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            font-size: 0.6rem;
+            opacity: 0.85;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .mini-map-panel:hover {
+            opacity: 1;
+            border-color: var(--gold);
+        }
+
+        /* Announcement Cover Screen Component */
+        .announcement-cover {
+            display: none;
             position: absolute;
             top: 0;
             left: 0;
-            transform-origin: center center;
-            transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+            width: 100%;
+            height: 100%;
+            background-color: var(--black);
+            z-index: 10;
+            border-radius: 8px;
+            border: 3px solid var(--gold);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
         }
 
+        .announcement-cover.visible {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .announce-title {
+            color: var(--gold);
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+        }
+
+        .announce-vs {
+            color: var(--white);
+            font-size: 2.8rem;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .announce-prompt {
+            margin-top: 40px;
+            color: var(--light-grey);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* Structural Layout Nodes */
         .round {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
             height: 100%;
             width: 18%;
-            position: relative;
-            z-index: 2;
         }
 
         .matchup {
@@ -180,13 +276,7 @@
             padding: 6px;
             margin: 5px 0;
             box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        /* Highlight target focus leg */
-        .matchup.active-focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+            cursor: pointer;
         }
 
         .team {
@@ -199,9 +289,8 @@
             align-items: center;
             font-size: 0.9rem;
             min-height: 20px;
-            cursor: pointer;
             user-select: none;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.2s;
         }
 
         .team:hover {
@@ -218,6 +307,46 @@
         .team.bye {
             color: #666;
             font-style: italic;
+        }
+
+        .focus-card {
+            background-color: var(--grey);
+            border: 3px solid var(--gold);
+            border-radius: 12px;
+            width: 80%;
+            max-width: 500px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .focus-team-btn {
+            background-color: var(--black);
+            border: 2px solid #444;
+            color: var(--white);
+            padding: 20px;
+            margin: 15px 0;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .focus-team-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            transform: scale(1.02);
+        }
+
+        .focus-vs {
+            font-size: 1.1rem;
+            color: var(--gold);
+            font-style: italic;
+            margin: 10px 0;
+            letter-spacing: 2px;
         }
 
         .champion-container {
@@ -241,12 +370,6 @@
             border-radius: 8px;
             width: 100%;
             box-sizing: border-box;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        .champion-box.active-focus {
-            border-color: var(--white);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
         }
 
         .champion-name {
@@ -254,7 +377,29 @@
             color: var(--gold);
             font-weight: bold;
             margin-top: 8px;
-            letter-spacing: 1px;
+        }
+
+        .mini-round {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            height: 100%;
+            width: 18%;
+        }
+        .mini-matchup {
+            background-color: var(--grey);
+            border: 1px solid #444;
+            margin: 2px 0;
+            padding: 2px;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .mini-matchup.active-focus {
+            border-color: var(--gold);
+            background-color: #332a12;
         }
     </style>
 </head>
@@ -263,51 +408,58 @@
 <div class="container">
     <header>
         <h1>Tournament Bracket System</h1>
-        <p class="subtitle">St Paul's Collegiate Aesthetic</p>
+        <p class="subtitle">Interactive Knockout Dashboard</p>
     </header>
 
-    <!-- Setup View -->
     <div class="setup-section" id="setupSection">
         <h3>Configure Competitors</h3>
-        <p class="note">Enter entries below (one per line or separated by commas). If the count is uneven or below 16, items will automatically receive a "BYE" to advance past the initial leg.</p>
+        <p class="note">Enter entries below (one per line or separated by commas). Use the Randomise button to shuffle names evenly before creating the grid.</p>
         <textarea id="competitorInput" onfocus="clearDefaultPlaceholder(this)" onblur="restoreDefaultPlaceholder(this)"></textarea>
-        <button class="btn" onclick="buildTournament()">Generate Bracket</button>
+        <div>
+            <button class="btn" onclick="buildTournament()">Generate Bracket</button>
+            <button class="btn btn-secondary" style="margin-left: 10px;" onclick="randomiseInputList()">Randomise Entries</button>
+        </div>
     </div>
 
-    <!-- Active Tournament View -->
     <div id="bracketView" style="display: none;">
         <div class="controls-bar">
             <div>
-                <button class="btn btn-secondary" style="margin:0;" onclick="handleNavigation(-1)">← Previous Leg</button>
-                <button class="btn btn-secondary" style="margin:0; margin-left: 5px;" onclick="handleNavigation(1)">Next Leg →</button>
+                <button class="btn" id="beginTournamentBtn" style="margin:0; background-color: var(--gold); color: var(--black);" onclick="enterMatchMode(true)">Begin Tournament Presentation</button>
+                <button class="btn btn-secondary" id="macroToggleBtn" style="margin:0; margin-left: 10px;" onclick="toggleViewMode('global')">Macro Grid View</button>
             </div>
-            <div class="nav-status" id="navigationStatus">Overview</div>
+            <div class="nav-status" id="navigationStatus">Macro View Mode</div>
             <div class="button-group">
-                <button class="btn btn-secondary" style="margin:0;" onclick="resetToOverview()">Global View</button>
                 <button class="btn" style="margin:0; background-color: #cc0000; color: white;" onclick="resetToSetup()">Full Reset</button>
             </div>
         </div>
 
-        <div class="bracket-viewport" id="viewport">
-            <div class="bracket-canvas" id="canvas">
-                <!-- Structure populated by JavaScript -->
+        <div class="workspace-grid">
+            <div class="global-window" id="globalWindow"></div>
+
+            <div class="match-window" id="matchWindow">
+                
+                <div class="announcement-cover" id="announcementCover" onclick="dismissAnnouncement()">
+                    <div class="announce-title" id="announceTitle">Round X</div>
+                    <div class="announce-vs" id="announceVs">Competitor A<br><span style="font-size:1.5rem; color:var(--gold); font-style:italic;">vs</span><br>Competitor B</div>
+                    <div class="announce-prompt">Click Screen to Enter Matchup</div>
+                </div>
+
+                <div class="focus-panel" id="focusPanel"></div>
+                <div class="mini-map-panel" id="miniMapPanel" onclick="toggleViewMode('global')" title="Click to open Macro Grid View"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Structural Data Configurations
     const defaultPlaceholderText = "Competitor A\nCompetitor B\nCompetitor C\nCompetitor D\nCompetitor E\nCompetitor F\nCompetitor G\nCompetitor H\nCompetitor I\nCompetitor J\nCompetitor K\nCompetitor L\nCompetitor M\nCompetitor N\nCompetitor O\nCompetitor P";
     let bracketData = [];
     const maxEntries = 16;
     
-    // Guided Zoom Tracking State
-    let currentZoomLevel = "overview"; // "overview", "match", "champion"
-    let currentRoundIndex = 0;
-    let currentMatchIndex = 0;
+    let currentViewMode = "global"; 
+    let currentRoundIdx = 0;
+    let currentMatchIdx = 0;
 
-    // Initialise default structural placeholder text
     const txtArea = document.getElementById('competitorInput');
     txtArea.value = defaultPlaceholderText;
     txtArea.style.color = "#777";
@@ -315,7 +467,7 @@
     function clearDefaultPlaceholder(element) {
         if (element.value.trim() === defaultPlaceholderText.trim()) {
             element.value = "";
-            element.style.color = varToString('--white');
+            element.style.color = "#ffffff";
         }
     }
 
@@ -324,10 +476,6 @@
             element.value = defaultPlaceholderText;
             element.style.color = "#777";
         }
-    }
-
-    function varToString(varName) {
-        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
     }
 
     function parseCompetitors(text) {
@@ -342,6 +490,30 @@
         return entries.map(e => e.trim()).filter(e => e !== "");
     }
 
+    // New Function to shuffle current input text lines using the Fisher-Yates algorithm
+    function randomiseInputList() {
+        const inputField = document.getElementById('competitorInput');
+        let currentText = inputField.value;
+
+        // Fallback to active placeholder values if empty or untouched
+        if (currentText.trim() === "" || currentText === defaultPlaceholderText) {
+            currentText = defaultPlaceholderText;
+            inputField.style.color = "#ffffff";
+        }
+
+        let entries = parseCompetitors(currentText);
+        if (entries.length === 0) return;
+
+        // In-place random array permutation
+        for (let i = entries.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [entries[i], entries[j]] = [entries[j], entries[i]];
+        }
+
+        // Reassemble back into newline formatting format
+        inputField.value = entries.join("\n");
+    }
+
     function buildTournament() {
         const inputVal = document.getElementById('competitorInput').value;
         let elements = parseCompetitors(inputVal);
@@ -354,15 +526,11 @@
             elements = elements.slice(0, maxEntries);
         }
 
-        // Pad list cleanly to 16 entries to standardise structural layout
         while (elements.length < maxEntries) {
             elements.push("BYE");
         }
 
-        // Initialize structural array layout
         bracketData = [];
-        
-        // Leg 1: Round of 16 Generation
         let leg1 = [];
         for (let i = 0; i < maxEntries; i += 2) {
             let p1 = elements[i];
@@ -377,31 +545,101 @@
         }
         bracketData.push(leg1);
 
-        // Map downstream structural rounds (Quarter-finals, Semi-finals, Grand Final)
         bracketData.push(Array(4).fill(null).map(() => ({ team1: "", team2: "", winner: null })));
         bracketData.push(Array(2).fill(null).map(() => ({ team1: "", team2: "", winner: null })));
         bracketData.push(Array(1).fill(null).map(() => ({ team1: "", team2: "", winner: null })));
         bracketData.push({ champion: null });
 
-        // Carry forward standard default BYE progressions
         cascadeAdvanceLogic(1);
         cascadeAdvanceLogic(2);
 
         document.getElementById('setupSection').style.display = 'none';
         document.getElementById('bracketView').style.display = 'block';
         
-        // Reset navigation state to start at Leg 1, Match 1
-        currentZoomLevel = "match";
-        currentRoundIndex = 0;
-        currentMatchIndex = 0;
+        currentViewMode = "global";
+        currentRoundIdx = 0;
+        currentMatchIdx = 0;
 
-        renderCanvasGrid();
-        executePlannedZoom();
+        refreshAllViews();
     }
 
-    function renderCanvasGrid() {
-        const canvas = document.getElementById('canvas');
-        canvas.innerHTML = '';
+    function toggleViewMode(mode) {
+        currentViewMode = mode;
+        const gWindow = document.getElementById('globalWindow');
+        const mWindow = document.getElementById('matchWindow');
+        
+        if (mode === 'global') {
+            gWindow.style.display = 'flex';
+            mWindow.style.display = 'none';
+            document.getElementById('navigationStatus').innerText = "Macro View Mode";
+            hideMatchAnnouncement();
+        } else {
+            gWindow.style.display = 'none';
+            mWindow.style.display = 'grid';
+        }
+        refreshAllViews();
+    }
+
+    function enterMatchMode(triggerIntroCard) {
+        toggleViewMode('match');
+        findNextActiveMatch();
+        
+        if (triggerIntroCard && !bracketData[4].champion) {
+            showMatchAnnouncement();
+        } else {
+            hideMatchAnnouncement();
+        }
+        refreshAllViews();
+    }
+
+    function showMatchAnnouncement() {
+        const cover = document.getElementById('announcementCover');
+        const roundNames = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
+        const match = bracketData[currentRoundIdx][currentMatchIdx];
+
+        if (!match || (!match.team1 && !match.team2)) return;
+
+        document.getElementById('announceTitle').innerText = roundNames[currentRoundIdx];
+        document.getElementById('announceVs').innerHTML = `${match.team1 || '---'}<br><span style="font-size:1.5rem; color:var(--gold); font-style:italic;">vs</span><br>${match.team2 || '---'}`;
+        
+        cover.style.display = 'flex';
+        setTimeout(() => cover.classList.add('visible'), 5);
+    }
+
+    function dismissAnnouncement() {
+        const cover = document.getElementById('announcementCover');
+        cover.classList.remove('visible');
+        setTimeout(() => cover.style.display = 'none', 400);
+    }
+
+    function hideMatchAnnouncement() {
+        const cover = document.getElementById('announcementCover');
+        cover.classList.remove('visible');
+        cover.style.display = 'none';
+    }
+
+    function findNextActiveMatch() {
+        for (let r = 0; r < 4; r++) {
+            for (let m = 0; m < bracketData[r].length; m++) {
+                let match = bracketData[r][m];
+                if (!match.winner && match.team1 && match.team2 && match.team1 !== "BYE" && match.team2 !== "BYE") {
+                    currentRoundIdx = r;
+                    currentMatchIdx = m;
+                    return;
+                }
+            }
+        }
+    }
+
+    function refreshAllViews() {
+        renderGlobalCanvas();
+        renderFocusPanel();
+        renderMiniMap();
+    }
+
+    function renderGlobalCanvas() {
+        const win = document.getElementById('globalWindow');
+        win.innerHTML = '';
         const roundHeaders = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
 
         for (let r = 0; r < 4; r++) {
@@ -412,15 +650,11 @@
             bracketData[r].forEach((match, mIdx) => {
                 const matchCard = document.createElement('div');
                 matchCard.className = 'matchup';
-                matchCard.id = `match-${r}-${mIdx}`;
                 
-                // Allow direct clicking to hop presentation focal paths manually
-                matchCard.onclick = (e) => {
-                    e.stopPropagation();
-                    currentZoomLevel = "match";
-                    currentRoundIndex = r;
-                    currentMatchIndex = mIdx;
-                    executePlannedZoom();
+                matchCard.onclick = () => {
+                    currentRoundIdx = r;
+                    currentMatchIdx = mIdx;
+                    enterMatchMode(true);
                 };
 
                 const p1Div = document.createElement('div');
@@ -428,8 +662,8 @@
                 p1Div.innerHTML = `<span>${match.team1 || '---'}</span>`;
                 p1Div.onclick = (e) => {
                     if (match.team1 && match.team1 !== 'BYE' && match.team2 !== 'BYE') {
-                        e.stopPropagation();
-                        assignWinnerNode(r, mIdx, match.team1);
+                        e.stopPropagation(); 
+                        assignWinnerNode(r, mIdx, match.team1, false);
                     }
                 };
 
@@ -439,7 +673,7 @@
                 p2Div.onclick = (e) => {
                     if (match.team2 && match.team2 !== 'BYE' && match.team1 !== 'BYE') {
                         e.stopPropagation();
-                        assignWinnerNode(r, mIdx, match.team2);
+                        assignWinnerNode(r, mIdx, match.team2, false);
                     }
                 };
 
@@ -447,32 +681,114 @@
                 matchCard.appendChild(p2Div);
                 roundColumn.appendChild(matchCard);
             });
-            canvas.appendChild(roundColumn);
+            win.appendChild(roundColumn);
         }
 
-        // Podium/Champion Pillar Build
         const champColumn = document.createElement('div');
         champColumn.className = 'champion-container';
-        
         const champBox = document.createElement('div');
         champBox.className = 'champion-box';
-        champBox.id = 'champion-podium';
-        champBox.onclick = (e) => {
-            e.stopPropagation();
-            currentZoomLevel = "champion";
-            executePlannedZoom();
-        };
-
         const finalName = bracketData[4].champion || "TBD";
         champBox.innerHTML = `
             <div style="font-size:0.75rem; text-transform:uppercase; color:var(--white); font-weight:bold; letter-spacing:1px;">Shield Champion</div>
             <div class="champion-name">${finalName}</div>
         `;
         champColumn.appendChild(champBox);
-        canvas.appendChild(champColumn);
+        win.appendChild(champColumn);
     }
 
-    function assignWinnerNode(rIdx, mIdx, winnerName) {
+    function renderFocusPanel() {
+        const panel = document.getElementById('focusPanel');
+        panel.innerHTML = '';
+
+        if (bracketData[4].champion) {
+            panel.innerHTML = `
+                <div style="font-size: 2rem; color: var(--gold); font-weight: bold; text-transform: uppercase; margin-bottom: 20px;">Tournament Complete</div>
+                <div class="focus-card">
+                    <h2 style="color:var(--white); margin:0;">Grand Champion</h2>
+                    <div style="font-size: 2.5rem; color: var(--gold); font-weight: bold; margin-top: 15px;">${bracketData[4].champion}</div>
+                </div>
+            `;
+            document.getElementById('navigationStatus').innerText = "Champion Proclaimed";
+            return;
+        }
+
+        const roundNames = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
+        document.getElementById('navigationStatus').innerText = `${roundNames[currentRoundIdx]} — Match ${currentMatchIdx + 1}`;
+
+        const activeMatch = bracketData[currentRoundIdx][currentMatchIdx];
+        
+        if (!activeMatch.team1 && !activeMatch.team2) {
+            panel.innerHTML = `
+                <div style="color: var(--light-grey); font-size: 1.2rem; text-align:center;">
+                    Waiting for winners from previous rounds to advance into this slot.<br><br>
+                    <button class="btn btn-secondary" onclick="toggleViewMode('global')">Return to Macro View</button>
+                </div>
+            `;
+            return;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'focus-card';
+        card.innerHTML = `<h3 style="color: var(--gold); text-transform: uppercase; margin: 0 0 15px 0; font-size: 1rem; letter-spacing:1px;">Select the Winner</h3>`;
+
+        const btn1 = document.createElement('button');
+        btn1.className = 'focus-team-btn';
+        btn1.innerText = activeMatch.team1 || '---';
+        if (activeMatch.winner === activeMatch.team1 && activeMatch.team1) btn1.style.borderColor = "var(--gold)";
+        btn1.onclick = () => { if(activeMatch.team1) assignWinnerNode(currentRoundIdx, currentMatchIdx, activeMatch.team1, true); };
+
+        const vs = document.createElement('div');
+        vs.className = 'focus-vs';
+        vs.innerText = "VS";
+
+        const btn2 = document.createElement('button');
+        btn2.className = 'focus-team-btn';
+        btn2.innerText = activeMatch.team2 || '---';
+        if (activeMatch.winner === activeMatch.team2 && activeMatch.team2) btn2.style.borderColor = "var(--gold)";
+        btn2.onclick = () => { if(activeMatch.team2) assignWinnerNode(currentRoundIdx, currentMatchIdx, activeMatch.team2, true); };
+
+        card.appendChild(btn1);
+        card.appendChild(vs);
+        card.appendChild(btn2);
+        panel.appendChild(card);
+    }
+
+    function renderMiniMap() {
+        const map = document.getElementById('miniMapPanel');
+        map.innerHTML = '<div style="text-align:center; color: var(--gold); font-weight: bold; border-bottom: 1px solid var(--grey); padding-bottom: 2px; margin-bottom: 5px; font-size: 0.55rem;">MACRO MINI-MAP</div>';
+        
+        const miniContainer = document.createElement('div');
+        miniContainer.style.display = 'flex';
+        miniContainer.style.justify = 'space-between';
+        miniContainer.style.height = 'calc(100% - 20px)';
+        miniContainer.style.alignItems = 'center';
+
+        for (let r = 0; r < 4; r++) {
+            const col = document.createElement('div');
+            col.className = 'mini-round';
+            bracketData[r].forEach((match, mIdx) => {
+                const mBox = document.createElement('div');
+                mBox.className = 'mini-matchup';
+                if (r === currentRoundIdx && mIdx === currentMatchIdx && currentViewMode === 'match') {
+                    mBox.style.borderColor = "var(--gold)";
+                    mBox.style.backgroundColor = "#332a12";
+                }
+                
+                let t1Display = match.team1 ? match.team1.substring(0, 5) : '---';
+                let t2Display = match.team2 ? match.team2.substring(0, 5) : '---';
+                if(match.winner) {
+                    mBox.style.borderLeft = "2px solid var(--gold)";
+                }
+                mBox.innerHTML = `<div>${t1Display}</div><div>${t2Display}</div>`;
+                col.appendChild(mBox);
+            });
+            miniContainer.appendChild(col);
+        }
+        map.appendChild(miniContainer);
+    }
+
+    function assignWinnerNode(rIdx, mIdx, winnerName, advanceIntroCard) {
         bracketData[rIdx][mIdx].winner = winnerName;
         let nextRound = rIdx + 1;
 
@@ -487,10 +803,13 @@
             bracketData[4].champion = winnerName;
         }
 
-        renderCanvasGrid();
-        
-        // Auto-advance presentation view to the next logical leg choice natively
-        handleNavigation(1);
+        if (currentViewMode === 'match') {
+            findNextActiveMatch();
+            if (advanceIntroCard && !bracketData[4].champion) {
+                showMatchAnnouncement();
+            }
+        }
+        refreshAllViews();
     }
 
     function severDownstreamLineage(rIdx, mIdx, slot) {
@@ -524,106 +843,6 @@
         });
     }
 
-    // Step-by-Step Presentation Control Logic
-    function handleNavigation(direction) {
-        if (currentZoomLevel === "overview") {
-            if (direction > 0) {
-                currentZoomLevel = "match";
-                currentRoundIndex = 0;
-                currentMatchIndex = 0;
-            }
-        } else if (currentZoomLevel === "match") {
-            currentMatchIndex += direction;
-            const matchesInRound = bracketData[currentRoundIndex].length;
-            
-            if (currentMatchIndex >= matchesInRound) {
-                currentRoundIndex++;
-                currentMatchIndex = 0;
-                if (currentRoundIndex >= 4) {
-                    currentZoomLevel = "champion";
-                }
-            } else if (currentMatchIndex < 0) {
-                currentRoundIndex--;
-                if (currentRoundIndex < 0) {
-                    currentZoomLevel = "overview";
-                } else {
-                    currentMatchIndex = bracketData[currentRoundIndex].length - 1;
-                }
-            }
-        } else if (currentZoomLevel === "champion") {
-            if (direction < 0) {
-                currentZoomLevel = "match";
-                currentRoundIndex = 3;
-                currentMatchIndex = 0;
-            } else {
-                currentZoomLevel = "overview";
-            }
-        }
-
-        executePlannedZoom();
-    }
-
-    function executePlannedZoom() {
-        const canvas = document.getElementById('canvas');
-        const viewport = document.getElementById('viewport');
-        
-        // Remove prior UI dynamic target states
-        document.querySelectorAll('.matchup, .champion-box').forEach(el => el.classList.remove('active-focus'));
-        
-        if (currentZoomLevel === "overview") {
-            canvas.style.transform = 'translate(0px, 0px) scale(1)';
-            document.getElementById('navigationStatus').innerText = "Overview Mode";
-            return;
-        }
-
-        let targetElement = null;
-        let textStatus = "";
-
-        if (currentZoomLevel === "match") {
-            targetElement = document.getElementById(`match-${currentRoundIndex}-${currentMatchIndex}`);
-            const roundNames = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
-            textStatus = `${roundNames[currentRoundIndex]} — Leg ${currentMatchIndex + 1}`;
-        } else if (currentZoomLevel === "champion") {
-            targetElement = document.getElementById('champion-podium');
-            textStatus = "Champion Presentation";
-        }
-
-        if (!targetElement) return;
-
-        targetElement.classList.add('active-focus');
-        document.getElementById('navigationStatus').innerText = textStatus;
-
-        // Visual Presentation Matrix Scaling Engine
-        const viewRect = viewport.getBoundingClientRect();
-        const elemRect = targetElement.getBoundingClientRect();
-        
-        const viewCenterX = viewRect.left + viewRect.width / 2;
-        const viewCenterY = viewRect.top + viewRect.height / 2;
-        const elemCenterX = elemRect.left + elemRect.width / 2;
-        const elemCenterY = elemRect.top + elemRect.height / 2;
-        
-        const currentTransform = window.getComputedStyle(canvas).transform;
-        let currentScale = 1;
-        
-        if (currentTransform && currentTransform !== 'none') {
-            const matrixValues = currentTransform.split('(')[1].split(')')[0].split(',');
-            currentScale = parseFloat(matrixValues[0]);
-        }
-
-        const desiredScale = (currentZoomLevel === "champion") ? 1.6 : 2.4;
-        
-        // Correct vector shift factoring alignment metrics
-        const dx = (viewCenterX - elemCenterX);
-        const dy = (viewCenterY - elemCenterY);
-        
-        canvas.style.transform = `translate(${dx}px, ${dy}px) scale(${desiredScale})`;
-    }
-
-    function resetToOverview() {
-        currentZoomLevel = "overview";
-        executePlannedZoom();
-    }
-
     function resetToSetup() {
         if (confirm("Are you sure you want to reset the entire tournament layout?")) {
             document.getElementById('bracketView').style.display = 'none';
@@ -631,7 +850,8 @@
             const inputField = document.getElementById('competitorInput');
             inputField.value = defaultPlaceholderText;
             inputField.style.color = "#777";
-            currentZoomLevel = "overview";
+            currentViewMode = "global";
+            hideMatchAnnouncement();
         }
     }
 </script>
