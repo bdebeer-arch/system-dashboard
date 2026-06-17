@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymathic HTML Report Builder v4</title>
+    <style>
+        :root {
+            --slate-base: #1e293b;
+            --slate-light: #f8fafc;
+            --blue-accent: #2563eb;
+            --blue-hover: #1d4ed8;
+            --border-color: #cbd5e1;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            color: var(--slate-base);
+            font-size: 1.75rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--slate-light);
+            padding-bottom: 15px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .meta-grid {
+                grid-template-columns: 1.5fr 1fr 3.5fr;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--slate-base);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .label-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: normal;
+            text-transform: none;
+            letter-spacing: normal;
+            margin-top: 2px;
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: #fff;
+            color: var(--text-dark);
+            transition: border-color 0.15s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--blue-accent);
+        }
+
+        .section-heading {
+            background-color: var(--slate-light);
+            padding: 8px 12px;
+            border-left: 4px solid var(--slate-base);
+            font-weight: 700;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            color: var(--slate-base);
+        }
+
+        .dropdown-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .dropdown-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .preview-container {
+            margin-top: 35px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--slate-light);
+            padding: 20px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .preview-title {
+            font-weight: 700;
+            color: var(--slate-base);
+        }
+
+        .copy-btn {
+            background-color: var(--blue-accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--blue-hover);
+        }
+
+        .preview-pane {
+            white-space: pre-wrap;
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+            color: var(--text-dark);
+            min-height: 120px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Polymathic Report Builder</h1>
+    
+    <div class="meta-grid">
+        <div class="form-group">
+            <label for="studentName">Student First Name</label>
+            <input type="text" id="studentName" value="" placeholder="Type first name...">
+        </div>
+        <div class="form-group">
+            <label for="houseSelect">House Allocation</label>
+            <select id="houseSelect" onchange="updateReport()">
+                <option value="" selected disabled>-- Select House --</option>
+                <option value="School House">School</option>
+                <option value="Fitchett House">Fitchett</option>
+                <option value="Hamilton House">Hamilton</option>
+                <option value="Hall House">Hall</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="personalLine">
+                1 Sentence Summary (Personalised Line)
+                <span class="label-hint">| Focus on particularity: outstanding in house activities or day-to-day routines.</span>
+            </label>
+            <input type="text" id="personalLine" value="" placeholder="Type unique contextual observation here...">
+        </div>
+    </div>
+
+    <!-- PARAGRAPH 1 -->
+    <div class="section-heading">Paragraph 1: The Student</div>
+    <div class="dropdown-grid">
+        <div class="form-group">
+            <label for="p1_c1">1. Demeanour & Character</label>
+            <select id="p1_c1" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p1_c2">2. Social Integration</label>
+            <select id="p1_c2" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p1_c3">3. Staff Relations</label>
+            <select id="p1_c3" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p1_c4">4. Personal Presentation</label>
+            <select id="p1_c4" onchange="updateReport()"></select>
+        </div>
+    </div>
+
+    <!-- PARAGRAPH 2 -->
+    <div class="section-heading">Paragraph 2: Involvement</div>
+    <div class="dropdown-grid">
+        <div class="form-group">
+            <label for="p2_c1">5. House Spirit</label>
+            <select id="p2_c1" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p2_c2">6. Cultural Contribution</label>
+            <select id="p2_c2" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p2_c3">7. Co-curricular Pursuits</label>
+            <select id="p2_c3" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p2_c4">8. Creative & Performing Arts</label>
+            <select id="p2_c4" onchange="updateReport()"></select>
+        </div>
+    </div>
+
+    <!-- PARAGRAPH 3 -->
+    <div class="section-heading">Paragraph 3: Next Steps</div>
+    <div class="dropdown-grid">
+        <div class="form-group">
+            <label for="p3_c1">9. Academic Progress</label>
+            <select id="p3_c1" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p3_c2">10. Examination Reflection</label>
+            <select id="p3_c2" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p3_c3">11. Leadership Potential</label>
+            <select id="p3_c3" onchange="updateReport()"></select>
+        </div>
+        <div class="form-group">
+            <label for="p3_c4">12. Future Goal-Setting</label>
+            <select id="p3_c4" onchange="updateReport()"></select>
+        </div>
+    </div>
+
+    <!-- PREVIEW PANE -->
+    <div class="preview-container">
+        <div class="preview-header">
+            <div class="preview-title">Live Generated Report Preview</div>
+            <button class="copy-btn" onclick="copyText()">Copy Text</button>
+        </div>
+        <div class="preview-pane" id="previewPane"></div>
+    </div>
+</div>
+
+<script>
+    const tiers = [
+        { key: "Exemplary", val: 0 },
+        { key: "Diligent", val: 1 },
+        { key: "Sufficient", val: 2 },
+        { key: "Passive", val: 3 },
+        { key: "Variable", val: 4 },
+        { key: "Inconsistent", val: 5 },
+        { key: "Frustrated", val: 6 }
+    ];
+
+    const commentBank = {
+        p1_c1: [
+            "[] is a highly mature, polite, and respectful young man who has settled exceptionally well into [H].",
+            "[] has become known as a friendly, well-mannered, and cooperative student with a positive attitude.",
+            "[] carries himself with a quiet confidence and a polite demeanour in his daily routines.",
+            "[] is often a quiet and reserved member of the [H] dynamic, taking a steady approach.",
+            "[] is showing a pleasant personality, though his general engagement with house values can vary.",
+            "[] has found aspects of his transition challenging, occasionally needing to refocus his attitude.",
+            "[] has struggled to demonstrate the basic house values of respect and maturity early on this year."
+        ],
+        p1_c2: [
+            "He has seamlessly integrated into the cohort, establishing meaningful, quality relationships across all levels.",
+            "He has built strong connections within his peer group and is a highly valued member of the house whānau.",
+            "He has settled comfortably into his surroundings and interacts positively with those around him.",
+            "He is comfortable in his own company but interacts well within a small, select group of peers.",
+            "He is beginning to build connections with his peers, though social interactions require ongoing navigation.",
+            "He has faced some recent challenges negotiating the social dynamics and peer structures of his group.",
+            "He has isolated himself from general group interactions, leading to friction within his peer environment."
+        ],
+        p1_c3: [
+            "He can be trusted explicitly to do the right thing at all times and sets an impeccable standard of behaviour.",
+            "He seldom needs reminders about appropriate and expected behaviour, showing respect to both staff and peers.",
+            "He maintains the general standards of behaviour and instruction expected of a young man in [H].",
+            "He responds reasonably well to guidance, though he requires structural stability to sustain focus.",
+            "He occasionally requires direct staff intervention and reminders regarding basic house instructions.",
+            "He must work consistently on how he interacts with staff, ensuring clear expectations are followed promptly.",
+            "He has repeatedly shown a refusal to follow staff directions, presenting ongoing challenges within the community."
+        ],
+        p1_c4: [
+            "His grooming is impeccably managed and he shows a flawless commitment to executing daily house systems.",
+            "His grooming is generally of a very high standard, and he manages his personal space effectively.",
+            "He maintains a good, clean standard of presentation and handles his daily routines with confidence.",
+            "He meets basic presentation expectations but relies on peer modeling to maintain baseline consistency.",
+            "He often needs reminders to complete his daily routines, including room tidiness and preparation parameters.",
+            "His adherence to presentation standards has been careless, frequently slipping below acceptable thresholds.",
+            "He routinely neglects basic self-management metrics, ignoring direct guidance regarding house organization."
+        ],
+        p2_c1: [
+            "He has shown wholehearted dedication to house life, approaching all inter-house competitions with immense energy.",
+            "He participates positively in all house events, always making a valuable contribution where he can.",
+            "He contributes consistently to house activities and can be relied upon to step up when required.",
+            "While he might not always be at the forefront of activities, he participates willingly when called upon.",
+            "His involvement in house competitions is sporadic, showing enthusiasm only in specific contexts.",
+            "He has demonstrated a passive approach to general house spirit, often avoiding active group roles.",
+            "He has actively avoided house commitments, demonstrating a disappointing lack of effort toward house spirit."
+        ],
+        p2_c2: [
+            "He approached the haka and choir competitions with immense passion, setting an outstanding example for his peers.",
+            "He enthusiastically participated in the house choir, singing his part with great gusto and skill.",
+            "He was involved in both house singing and the haka, showing a willingness to support house culture.",
+            "He joined the house performance structures adequately, fulfilling his functional structural requirements.",
+            "His contribution to group cultural events was quiet, requiring peer encouragement to maintain focus.",
+            "He showed clear reluctance during cultural preparations, failing to commit meaningful energy to the house haka.",
+            "He flatly refused to participate or engage with the cultural traditions and performance efforts of the house."
+        ],
+        p2_c3: [
+            "He has fully immersed himself in a wide range of sports, achieving elite milestones and representing the school with pride.",
+            "He is actively involved in multiple sporting codes, demonstrating consistent commitment to his teams.",
+            "He engages steadily with his chosen co-curricular codes, maintaining regular physical activity.",
+            "He fulfills his basic sporting obligations but would benefit from exploring a wider range of activities.",
+            "His commitment to his sporting selections has been variable, marked by occasional lapses in attendance.",
+            "He failed to participate in major mandatory sporting events like cross-country, tracking below school expectations.",
+            "He has totally disengaged from the school's co-curricular pathway, refusing to fulfill team responsibilities."
+        ],
+        p2_c4: [
+            "He has achieved outstanding success within the school's music and performing arts programs, showcasing elite talent.",
+            "He has made meaningful cultural contributions through his active involvement in performance ensembles and bands.",
+            "He shows a genuine willingness to try new creative experiences and engages positively with arts programs.",
+            "He maintains a passive interest in creative opportunities, interacting with them when structurally prompted.",
+            "His engagement with artistic or creative pursuits has wavered, struggling to finish collaborative projects.",
+            "He has struggled to maintain focus within creative spaces, disrupting group work or performance tracks.",
+            "He has shown complete disregard for performance expectations, refusing to engage with creative school offerings."
+        ],
+        p3_c1: [
+            "In the classroom, he has maintained an outstanding fortnightly report average, reflecting a purposeful approach.",
+            "His recent academic metrics show a highly positive trajectory, demonstrating excellent effort across subjects.",
+            "He holds a steady, pleasing academic average that reflects a solid baseline attitude toward his learning.",
+            "He maintains a sufficient academic tracking position, though there is clear room to lift his effort.",
+            "His recent fortnightly report records reveal a slight dip, providing a clear checkpoint for renewed focus.",
+            "His academic data highlights explicit areas of concern where consistent focus is required to support progress.",
+            "His sustained academic underperformance reflects a profound lack of classroom application and study discipline."
+        ],
+        p3_c2: [
+            "He can take immense heart from his exceptional examination preparation and highly successful formal results.",
+            "The recent examinations provided helpful insight, confirming that his steady work ethic supports solid progress.",
+            "He has navigated his first foray into formal examinations well, learning key revision and preparation methods.",
+            "The mid-year examinations served their purpose of introducing him to formal assessment and sitting techniques.",
+            "The recent examination block proved challenging, highlighting a clear need to refine his revision strategies.",
+            "His examination performance suffered due to poor preparation, showing he must build basic study confidence.",
+            "He demonstrated zero engagement with the formal examination window, leaving assessments entirely incomplete."
+        ],
+        p3_c3: [
+            "He is undoubtedly an exemplary leader of the future who possesses natural skills to influence the school positively.",
+            "He has quickly made a positive impression and is actively encouraged to step further into junior leadership roles.",
+            "He is developing a quiet, reliable influence that supports the positive tone of his year group.",
+            "He has the potential to offer leadership if he can continue stepping outside of his comfort zone socially.",
+            "He must work on leading by personal example before he can expect to guide or influence his peers effectively.",
+            "His visibility within [H] is currently muted, requiring greater personal accountability to grow.",
+            "His negative behavior choices have compromised his standing, removing him from future leadership tracks."
+        ],
+        p3_c4: [
+            "I encourage him to maintain these exceptional standards to maximize every opportunity within our kura.",
+            "Moving forward, I look forward to watching him continue to build upon this fantastic start to his time at school.",
+            "Establishing these consistent habits will comfortably support his ongoing growth and development next term.",
+            "I encourage him to look at areas highlighted for improvement to make steady corrections for the future.",
+            "Going into next term, he must focus on consistently meeting school expectations in all structured environments.",
+            "He must explicitly steer clear of silly behaviour with friends in formal settings like chapel and assembly.",
+            "An urgent intervention is required regarding his attendance and compliance metrics to reset his trajectory."
+        ]
+    };
+
+    window.onload = function() {
+        for (let menuId in commentBank) {
+            const selectEl = document.getElementById(menuId);
+            
+            let defaultOpt = document.createElement("option");
+            defaultOpt.value = "";
+            defaultOpt.innerText = "-- Select Tier --";
+            defaultOpt.selected = true;
+            selectEl.appendChild(defaultOpt);
+
+            tiers.forEach(t => {
+                let opt = document.createElement("option");
+                opt.value = t.val;
+                opt.innerText = t.key;
+                selectEl.appendChild(opt);
+            });
+        }
+        
+        document.getElementById("studentName").addEventListener("input", updateReport);
+        document.getElementById("houseSelect").addEventListener("change", updateReport);
+        document.getElementById("personalLine").addEventListener("input", updateReport);
+        updateReport();
+    };
+
+    function getSegmentText(key, name, house) {
+        const idx = document.getElementById(key).value;
+        if (idx === "") return ""; 
+        return commentBank[key][idx].replace(/\[\]/g, name).replace(/\[H\]/g, house);
+    }
+
+    function updateReport() {
+        const nameInput = document.getElementById("studentName").value.trim();
+        const name = nameInput || "[Name Placeholder]";
+        
+        const houseInput = document.getElementById("houseSelect").value;
+        const house = houseInput || "[House Placeholder]";
+        
+        const personalLineInput = document.getElementById("personalLine").value.trim();
+        const personalLine = personalLineInput || "[Personalised Line Placeholder]";
+
+        // Build Paragraphs dynamically
+        const p1_parts = [
+            getSegmentText("p1_c1", name, house),
+            getSegmentText("p1_c2", name, house),
+            getSegmentText("p1_c3", name, house),
+            getSegmentText("p1_c4", name, house)
+        ].filter(text => text !== "");
+        const p1 = p1_parts.join(" ");
+
+        const p2_parts = [
+            getSegmentText("p2_c1", name, house),
+            getSegmentText("p2_c2", name, house),
+            getSegmentText("p2_c3", name, house),
+            getSegmentText("p2_c4", name, house)
+        ].filter(text => text !== "");
+        const p2 = p2_parts.join(" ");
+
+        const p3_parts = [
+            getSegmentText("p3_c1", name, house),
+            getSegmentText("p3_c2", name, house),
+            getSegmentText("p3_c3", name, house),
+            getSegmentText("p3_c4", name, house)
+        ].filter(text => text !== "");
+        const p3 = p3_parts.join(" ");
+
+        let finalOutput = `Please nudge this report according to this personalised line: Please note that ${name} is from ${house}. ${personalLine}\n\n\n`;
+        finalOutput += `${p1 || "[Paragraph 1 Content Empty]"}\n\n${p2 || "[Paragraph 2 Content Empty]"}\n\n${p3 || "[Paragraph 3 Content Empty]"}`;
+
+        document.getElementById("previewPane").innerText = finalOutput;
+    }
+
+    function copyText() {
+        const text = document.getElementById("previewPane").innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Report copied successfully.");
+        }).catch(err => {
+            alert("Failed to copy text: " + err);
+        });
+    }
+</script>
+
+</body>
+</html>
