@@ -454,7 +454,7 @@
         ].filter(text => text !== "");
         const p3 = p3_parts.join(" ");
 
-        let finalOutput = `Please nudge this report according to this personalised line: Please note that ${name} is from ${house}. ${personalLine}\n\n\n`;
+        let finalOutput = `Please nudge this report according to this personalised line, noting that ${name} is from ${house}: ${personalLine}\n\n\n`;
         finalOutput += `${p1 || "[Paragraph 1 Content Empty]"}\n\n${p2 || "[Paragraph 2 Content Empty]"}\n\n${p3 || "[Paragraph 3 Content Empty]"}`;
 
         document.getElementById("previewPane").innerText = finalOutput;
