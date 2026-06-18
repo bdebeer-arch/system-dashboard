@@ -194,12 +194,17 @@
                 <input type="text" id="studentName" placeholder="e.g. Thomas">
             </div>
             <div class="form-group">
-                <label for="houseName">House Variable</label>
-                <input type="text" id="houseName" placeholder="e.g. School House">
+                <label for="houseName">House Allocation</label>
+                <select id="houseName">
+                    <option value="School" selected>School</option>
+                    <option value="Fitchett">Fitchett</option>
+                    <option value="Hamilton">Hamilton</option>
+                    <option value="Hall">Hall</option>
+                </select>
             </div>
         </div>
         <div class="form-group">
-            <label for="personalLine">Personalised Line <span class="hint">(Instructions: Input explicit context flags to be injected securely at the head of execution)</span></label>
+            <label for="personalLine">Personalised Line <span class="hint">(Instructions: Input explicit context flags to be woven securely into the header)</span></label>
             <input type="text" id="personalLine" placeholder="e.g. Exhibited superb stamina during the cross-country race.">
         </div>
     </div>
@@ -503,7 +508,7 @@
 
     // DOM Selection Elements
     const studentNameInput = document.getElementById('studentName');
-    const houseNameInput = document.getElementById('houseName');
+    const houseNameSelect = document.getElementById('houseName');
     const personalLineInput = document.getElementById('personalLine');
     const selectElements = document.querySelectorAll('.builder-select');
     const outputBox = document.getElementById('narrativeOutput');
@@ -514,7 +519,11 @@
     // Compilation Engine Logic
     function compileReport() {
         const name = studentNameInput.value.trim() || '[Name]';
-        const house = houseNameInput.value.trim() || '[House]';
+        
+        // Dynamically structure house names so "House" always succeeds it properly
+        const selectedHouseBase = houseNameSelect.value;
+        const houseCombined = selectedHouseBase + ' House';
+
         const personalLine = personalLineInput.value.trim();
 
         let paragraph1 = [];
@@ -527,8 +536,12 @@
             if (!val) return;
 
             let text = matrix[id][val];
-            // Safe replacement of variables
-            text = text.replace(/\[name\]/g, name).replace(/\[house\]/g, house);
+            
+            // Variable replacements (Ensures house processing works seamlessly)
+            text = text.replace(/\[name\]/g, name).replace(/\[house\]/g, houseCombined);
+
+            // Clean up instances of Double Tracking (e.g. "School House House") just in case
+            text = text.replace(/House House/g, 'House');
 
             if (id.startsWith('p1_')) paragraph1.push(text);
             if (id.startsWith('p2_')) paragraph2.push(text);
@@ -539,7 +552,7 @@
         let outputText = '';
 
         if (personalLine) {
-            outputText += `Please nudge/weave into this report according to this personalised line, noting that ${name} is from ${house}: (${personalLine})\n\n\n`;
+            outputText += `Please nudge/weave into this report according to this personalised line, noting that ${name} is from ${houseCombined}: (${personalLine})\n\n\n`;
         }
 
         if (paragraph1.length > 0) outputText += paragraph1.join(' ') + '\n\n';
@@ -555,7 +568,7 @@
 
     // Input Event Listeners
     studentNameInput.addEventListener('input', compileReport);
-    houseNameInput.addEventListener('input', compileReport);
+    houseNameSelect.addEventListener('change', compileReport);
     personalLineInput.addEventListener('input', compileReport);
     selectElements.forEach(select => select.addEventListener('change', compileReport));
 
@@ -570,10 +583,10 @@
         });
     });
 
-    // Zero-Default Blank Slate System Reset
+    // Zero-Default System Reset (Retains School as core baseline default)
     resetBtn.addEventListener('click', () => {
         studentNameInput.value = '';
-        houseNameInput.value = '';
+        houseNameSelect.value = 'School';
         personalLineInput.value = '';
         selectElements.forEach(select => select.value = '');
         compileReport();
