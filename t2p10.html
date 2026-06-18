@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Y10 Pastoral Report Builder Tool</title>
+    <title>Year 10 Report Builder</title>
     <style>
         :root {
             --slate-primary: #1e293b;
@@ -32,7 +32,7 @@
             background: #ffffff;
             padding: 32px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         header {
@@ -85,7 +85,7 @@
             margin-left: 4px;
         }
 
-        input[type="text"], select, textarea {
+        input[type="text"], select {
             padding: 10px 12px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -93,10 +93,9 @@
             color: var(--text-dark);
             background-color: #ffffff;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        input[type="text"]:focus, select:focus, textarea:focus {
+        input[type="text"]:focus, select:focus {
             border-color: var(--blue-accent);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
@@ -161,7 +160,6 @@
             font-weight: 600;
             cursor: pointer;
             font-size: 13px;
-            transition: background-color 0.2s;
         }
 
         .btn-copy:hover {
@@ -182,11 +180,10 @@
 
 <div class="container">
     <header>
-        <h1>Interactive Pastoral Year 10 Student Report Builder</h1>
-        <p>Systems Framework for Year 10 Housemaster Comment Generation (British English Scripting)</p>
+        <h1> Report Builder</h1>
+        <p>Customised Descriptors Framework for Year 10 Housemaster Comment Generation</p>
     </header>
 
-    <!-- Meta Fields Grid -->
     <div class="meta-grid">
         <div class="form-group">
             <label for="studentName">Student First Name:</label>
@@ -208,7 +205,7 @@
         </div>
     </div>
 
-    <!-- Paragraph 1 System Box -->
+    <!-- Paragraph 1 UI -->
     <div class="paragraph-section">
         <h3>Paragraph 1: The Student (Internal Disposition & Relations)</h3>
         <div class="dropdown-grid">
@@ -231,7 +228,7 @@
         </div>
     </div>
 
-    <!-- Paragraph 2 System Box -->
+    <!-- Paragraph 2 UI -->
     <div class="paragraph-section">
         <h3>Paragraph 2: Involvement (Contributions & Cultural Capital)</h3>
         <div class="dropdown-grid">
@@ -254,7 +251,7 @@
         </div>
     </div>
 
-    <!-- Paragraph 3 System Box -->
+    <!-- Paragraph 3 UI -->
     <div class="paragraph-section">
         <h3>Paragraph 3: Next Steps (Strategic Pathways & Growth)</h3>
         <div class="dropdown-grid">
@@ -277,7 +274,6 @@
         </div>
     </div>
 
-    <!-- Live Rendering Preview Pane -->
     <div class="preview-box">
         <div class="preview-header">
             <span>Generated Report Pipeline Preview</span>
@@ -288,199 +284,183 @@
 </div>
 
 <script>
-    // Narrative Matrix Database Storage Array Structure
+    // Context-Responsive Decentralised Database Matrix Array
     const matrix = {
         sub1: {
-            "Exemplary": "A positive and cheerful character, it has been an absolute pleasure to observe [name]'s continued growth and unshakeable optimism this year.",
-            "Diligent": "Displaying a mature and personable outlook, [name] has established a consistently warm and welcoming presence within the House.",
-            "Sufficient": "Quiet and friendly, [name] has settled into [house] life with a steady and commendably positive attitude.",
-            "Passive": "Generally quiet and reserved, [name] maintains a neutral disposition that can sometimes lead him to blend into the background.",
-            "Variable": "[name] displays a changeable demeanor, occasionally bringing great energy to the House while at other times appearing quite withdrawn.",
-            "Inconsistent": "His general disposition has been unpredictable, requiring staff guidance to help him maintain a steady and constructive attitude.",
-            "Frustrated": "[name] has struggled to maintain a positive disposition, frequently allowing external frustrations to impact his daily manner in the House."
+            "Radiant / Unshakeable": "A positive and cheerful character, it has been an absolute pleasure to observe [name]'s continued growth and unshakeable optimism this year.",
+            "Mature / Welcoming": "Displaying a mature and personable outlook, [name] has established a consistently warm and welcoming presence within the House.",
+            "Grounded / Friendly": "Quiet and friendly, [name] has settled into [house] life with a steady and commendably positive attitude.",
+            "Reserved / Subdued": "Generally quiet and reserved, [name] maintains a neutral disposition that can sometimes lead him to blend into the background.",
+            "Fluctuating / Volatile": "[name] displays a changeable demeanor, occasionally bringing great energy to the House while at other times appearing quite withdrawn.",
+            "Unpredictable / Guided": "His general disposition has been unpredictable, requiring staff guidance to help him maintain a steady and constructive attitude.",
+            "Disrupted / Strained": "[name] has struggled to maintain a positive disposition, frequently allowing external frustrations to impact his daily manner in the House."
         },
         sub2: {
-            "Exemplary": "[name] is a highly thought of, vibrant, and deeply respected member of his peer group, setting an exceptional standard for collective unity.",
-            "Diligent": "He is incredibly popular within his peer group, forming tight-knit bonds and steadily strengthening his social stature in the community.",
-            "Sufficient": "[name] has successfully established himself as a key member of his peer group and interacts positively with his direct associates.",
-            "Passive": "[name] is content to remain on the periphery of his peer group, rarely driving social interactions but coexisting peacefully.",
-            "Variable": "His alignment with peers has fluctuated; he forms strong connections at times but periodically isolates himself from the wider group.",
-            "Inconsistent": "[name] has experienced friction within his cohort, requiring deliberate reflection on how his actions affect his social standing.",
-            "Frustrated": "[name] has found peer group integration highly challenging this term, frequently retreating from positive social dynamics."
+            "Unifying Force": "[name] is a highly thought of, vibrant, and deeply respected member of his peer group, setting an exceptional standard for collective unity.",
+            "Tight-Knit / Popular": "He is incredibly popular within his peer group, forming tight-knit bonds and steadily strengthening his social stature in the community.",
+            "Positively Embedded": "[name] has successfully established himself as a key member of his peer group and interacts positively with his direct associates.",
+            "Peripheral Presence": "[name] is content to remain on the periphery of his peer group, rarely driving social interactions but coexisting peacefully.",
+            "Intermittently Aligned": "His alignment with peers has fluctuated; he forms strong connections at times but periodically isolates himself from the wider group.",
+            "Social Friction": "[name] has experienced friction within his cohort, requiring deliberate reflection on how his actions affect his social standing.",
+            "Isolated / Withdrawn": "[name] has found peer group integration highly challenging this term, frequently retreating from positive social dynamics."
         },
         sub3: {
-            "Exemplary": "He displays a level of respect for others that is uncommon for someone of his age, effortlessly bridging gaps between junior and senior cohorts.",
-            "Diligent": "He sets a great example that undoubtedly has an impressionable effect on those who have joined the school this year.",
-            "Sufficient": "In the House, he interacts positively with his peer group and shows an appropriate level of respect to students of other year levels.",
-            "Passive": "He is polite when directly approached by older or younger students but rarely initiates inclusive cross-level interactions.",
-            "Variable": "His interactions across year levels are intermittent; he occasionally models great leadership but often retreats into a small circle.",
-            "Inconsistent": "[name] has found it difficult to maintain respectful boundaries with senior students and staff, leading to variable relational outcomes.",
-            "Frustrated": "His relational style has caused friction across year levels, highlighting a clear need to develop basic empathy and collective respect."
+            "Exceptional Mentor": "He displays a level of respect for others that is uncommon for someone of his age, effortlessly bridging gaps between junior and senior cohorts.",
+            "Impactful Role Model": "He sets a great example that undoubtedly has an impressionable effect on those who have joined the school this year.",
+            "Respectful Border": "In the House, he interacts positively with his peer group and shows an appropriate level of respect to students of other year levels.",
+            "Passive / Compliant": "He is polite when directly approached by older or younger students but rarely initiates inclusive cross-level interactions.",
+            "Insular / Restricted": "His interactions across year levels are intermittent; he occasionally models great leadership but often retreats into a small circle.",
+            "Boundary Testing": "[name] has found it difficult to maintain respectful boundaries with senior students and staff, leading to variable relational outcomes.",
+            "Relational Friction": "His relational style has caused friction across year levels, highlighting a clear need to develop basic empathy and collective respect."
         },
         sub4: {
-            "Exemplary": "His politeness, empathy, and maturity are very impressive and are routinely noticed by his peers, seniors, and staff alike.",
-            "Diligent": "He is a personable and reliable young man whose mature attitude means his interactions with others are always constructive.",
-            "Sufficient": "[name] approaches his day-to-day interactions with a grounded, approachable manner that endears him to those around him.",
-            "Passive": "[name] displays a compliant but detached relational style, completing daily routines without actively investing in the community.",
-            "Variable": "His personal maturity has been mixed; while capable of immense insight, he occasionally lapses into quite juvenile behaviours.",
-            "Inconsistent": "[name] has struggled to meet baseline behavioural expectations, requiring regular reminders regarding his day-to-day choices.",
-            "Frustrated": "A lack of maturity has hindered his interactions this term, causing ongoing strain in his relationships with staff and peers."
+            "Eminently Commendable": "His politeness, empathy, and maturity are very impressive and are routinely noticed by his peers, seniors, and staff alike.",
+            "Personable & Reliable": "He is a personable and reliable young man whose mature attitude means his interactions with others are always constructive.",
+            "Steady & Approachable": "[name] approaches his day-to-day interactions with a grounded, approachable manner that endears him to those around him.",
+            "Detached / Compliant": "[name] displays a compliant but detached relational style, completing daily routines without actively investing in the community.",
+            "Juvenile Lapses": "His personal maturity has been mixed; while capable of immense insight, he occasionally lapses into quite juvenile behaviours.",
+            "Behavioral Reminders": "[name] has struggled to meet baseline behavioural expectations, requiring regular reminders regarding his day-to-day choices.",
+            "Maturity Deficit": "A lack of maturity has hindered his interactions this term, causing ongoing strain in his relationships with staff and peers."
         },
         sub5: {
-            "Exemplary": "He continues to make the very most of every opportunity afforded him, being fully and proactively involved in every single House competition.",
-            "Diligent": "He puts maximum effort into all House competitions and can always be relied upon to give his absolute best for [house].",
-            "Sufficient": "He involves himself in House activities, actively participating in sports and events organised by the house leaders.",
-            "Passive": "He participates in events only when directly instructed to do so, demonstrating a lack of personal drive or competitive spirit.",
-            "Variable": "His competitive effort is highly dependent on the activity, working hard in preferred areas but entirely opting out of others.",
-            "Inconsistent": "He has occasionally let [house] down by failing to show up for scheduled commitments or withdrawing his effort on match days.",
-            "Frustrated": "[name] has openly resisted participating in House competitions, showing a disappointing disregard for collective house spirit."
+            "Fully Consumed": "He continues to make the very most of every opportunity afforded him, being fully and proactively involved in every single House competition.",
+            "Maximal Effort": "He puts maximum effort into all House competitions and can always be relied upon to give his absolute best for [house].",
+            "Constructive Participant": "He involves himself in House activities, actively participating in sports and events organised by the house leaders.",
+            "Compelled / Driven": "He participates in events only when directly instructed to do so, demonstrating a lack of personal drive or competitive spirit.",
+            "Selective / Situational": "His competitive effort is highly dependent on the activity, working hard in preferred areas but entirely opting out of others.",
+            "Unreliable Attendance": "He has occasionally let [house] down by failing to show up for scheduled commitments or withdrawing his effort on match days.",
+            "Overt Resistance": "[name] has openly resisted participating in House competitions, showing a disappointing disregard for collective house spirit."
         },
         sub6: {
-            "Exemplary": "His willingness to step up and lead from the front during the House Haka and singing was invaluable, upholding the true mana of [house].",
-            "Diligent": "It was particularly pleasing to see his genuine efforts during the Haka and singing, where he helped gain valuable competition points.",
-            "Sufficient": "He joined his peers constructively during the performance of the House Haka and singing, meeting the collective standard expected.",
-            "Passive": "His shy or reserved nature has meant he is sometimes reluctant to fully project his voice or embrace collective cultural events.",
-            "Variable": "His cultural commitment has wavered; he participated well in initial rehearsals but lacked focus during the final performances.",
-            "Inconsistent": "We are yet to see [name] fully apply himself during critical collective events such as the Haka or house singing competitions.",
-            "Frustrated": "He has actively disengaged from collective cultural expressions, requiring direct intervention during Haka and singing practices."
+            "Upholding Mana": "His willingness to step up and lead from the front during the House Haka and singing was invaluable, upholding the true mana of [house].",
+            "Valuable Earner": "It was particularly pleasing to see his genuine efforts during the Haka and singing, where he helped gain valuable competition points.",
+            "Standard Compliant": "He joined his peers constructively during the performance of the House Haka and singing, meeting the collective standard expected.",
+            "Hesitant / Shy": "His shy or reserved nature has meant he is sometimes reluctant to fully project his voice or embrace collective cultural events.",
+            "Unfocused Rehearsal": "His cultural commitment has wavered; he participated well in initial rehearsals but lacked focus during the final performances.",
+            "Under-Applied": "We are yet to see [name] fully apply himself during critical collective events such as the Haka or house singing competitions.",
+            "Active Disengagement": "He has actively disengaged from collective cultural expressions, requiring direct intervention during Haka and singing practices."
         },
         sub7: {
-            "Exemplary": "His jovial nature, infectious enthusiasm, and good humour add an immense amount of positive levity and community warmth to the House.",
-            "Diligent": "He brings a cheerful approach and a lot of positive energy to [house], helping lift the spirits of those around him.",
-            "Sufficient": "His calm, steady, and grounded manner helps build a comfortable and supportive environment within the common room.",
-            "Passive": "He presents a highly subdued presence that neither adds to nor detracts from the prevailing atmosphere of the House.",
-            "Variable": "The tone he sets is unpredictable; he can be exceptionally cooperative, but his mood swings occasionally disrupt the common room.",
-            "Inconsistent": "His behaviour has periodically undermined house cohesion, requiring staff redirection to maintain a supportive environment.",
-            "Frustrated": "He has introduced a persistent undercurrent of negativity to the group dynamic, which has negatively impacted community morale."
+            "Infectious Levity": "His jovial nature, infectious enthusiasm, and good humour add an immense amount of positive levity and community warmth to the House.",
+            "Positive Catalyst": "He brings a cheerful approach and a lot of positive energy to [house], helping lift the spirits of those around him.",
+            "Calm & Grounded": "His calm, steady, and grounded manner helps build a comfortable and supportive environment within the common room.",
+            "Neutral Presence": "He presents a highly subdued presence that neither adds to nor detracts from the prevailing atmosphere of the House.",
+            "Mood Fluctuations": "The tone he sets is unpredictable; he can be exceptionally cooperative, but his mood swings occasionally disrupt the common room.",
+            "Cohesion Undermined": "His behaviour has periodically undermined house cohesion, requiring staff redirection to maintain a supportive environment.",
+            "Persistent Negativity": "He has introduced a persistent undercurrent of negativity to the group dynamic, which has negatively impacted community morale."
         },
         sub8: {
-            "Exemplary": "[name] is extremely proactive in seeking opportunities, masterfully balancing intensive extra-curricular pursuits with internal house duties.",
-            "Diligent": "He is a busy young man who throws himself into external challenges while remaining thoroughly committed to his obligations at home.",
-            "Sufficient": "He balances his commitments with a genuine desire to connect with others, managing his scheduling without major fuss.",
-            "Passive": "While he fulfills basic duties, he is highly reluctant to step out of his comfort zone or take on any additional obligations.",
-            "Variable": "He struggles to find equilibrium, occasionally excelling in sports while completely neglecting his daily uniform and grooming standards.",
-            "Inconsistent": "He is easily overwhelmed by competing demands, leading to missed house meetings and multiple uniform reminders.",
-            "Frustrated": "[name] has failed to manage his commitments, using extra-curricular schedules as an excuse to avoid core house responsibilities."
+            "Masterfully Balanced": "[name] is extremely proactive in seeking opportunities, masterfully balancing intensive extra-curricular pursuits with internal house duties.",
+            "Energetic & Committed": "He is a busy young man who throws himself into external challenges while remaining thoroughly committed to his obligations at home.",
+            "Unfussed Alignment": "He balances his commitments with a genuine desire to connect with others, managing his scheduling without major fuss.",
+            "Comfort-Zone Bound": "While he fulfills basic duties, he is highly reluctant to step out of his comfort zone or take on any additional obligations.",
+            "Neglected Routines": "He struggles to find equilibrium, occasionally excelling in sports while completely neglecting his daily uniform and grooming standards.",
+            "Easily Overwhelmed": "He is easily overwhelmed by competing demands, leading to missed house meetings and multiple uniform reminders.",
+            "Core Evasion": "[name] has failed to manage his commitments, using extra-curricular schedules as an excuse to avoid core house responsibilities."
         },
         sub9: {
-            "Exemplary": "[name] has natural, undeniable leadership skills that will undoubtedly come to the absolute fore as he steps into senior responsibility.",
-            "Diligent": "He demonstrates an unassuming, natural leadership through consistent effort and a willingness to support his peers at every turn.",
-            "Sufficient": "He has the distinct potential to be a future leader within the House, provided he continues to develop his public confidence.",
-            "Passive": "While he behaves appropriately, he does not yet see himself in leadership roles and remains entirely hesitant to take charge.",
-            "Variable": "He shows flashes of leadership capability when directly assigned a role, but rarely exhibits spontaneous or proactive initiative.",
-            "Inconsistent": "His lack of personal consistency prevents him from being viewed as a reliable role model by his peers at this stage.",
-            "Frustrated": "He actively avoids accountability, showing a complete reluctance to develop the baseline leadership skills required of his cohort."
+            "Undeniable Catalyst": "[name] has natural, undeniable leadership skills that will undoubtedly come to the absolute fore as he steps into senior responsibility.",
+            "Unassuming Leader": "He demonstrates an unassuming, natural leadership through consistent effort and a willingness to support his peers at every turn.",
+            "Emerging / Potential": "He has the distinct potential to be a future leader within the House, provided he continues to develop his public confidence.",
+            "Hesitant / Reluctant": "While he behaves appropriately, he does not yet see himself in leadership roles and remains entirely hesitant to take charge.",
+            "Sporadic Initiative": "He shows flashes of leadership capability when directly assigned a role, but rarely exhibits spontaneous or proactive initiative.",
+            "Unreliable Role Model": "His lack of personal consistency prevents him from being viewed as a reliable role model by his peers at this stage.",
+            "Accountability Evader": "He actively avoids accountability, showing a complete reluctance to develop the baseline leadership skills required of his cohort."
         },
         sub10: {
-            "Exemplary": "He possesses the precise personal tools, determination, and focus to turn every unexpected trial into a profound developmental triumph.",
-            "Diligent": "His resilience and confidence are improving steadily, backed by a strong work ethic and an openness to new opportunities.",
-            "Sufficient": "He possesses a healthy mix of excitement and nerves, showing a steady determination to keep growing through adversity.",
-            "Passive": "He responds to difficult challenges by retreating into his shell, requiring ongoing staff encouragement to persevere.",
-            "Variable": "His resilience is highly situational; he handles physical challenges well but easily folds under social or structural pressures.",
-            "Inconsistent": "He struggles to cope when things do not go to plan, frequently requiring external intervention to rebuild his confidence.",
-            "Frustrated": "He demonstrates a low tolerance for discomfort, routinely pushing back against challenges rather than building personal resilience."
+            "Profoundly Resilient": "He possesses the precise personal tools, determination, and focus to turn every unexpected trial into a profound developmental triumph.",
+            "Steadily Improving": "His resilience and confidence are improving steadily, backed by a strong work ethic and an openness to new opportunities.",
+            "Tenacious / Growing": "He possesses a healthy mix of excitement and nerves, showing a steady determination to keep growing through adversity.",
+            "Retreats / Shielded": "He responds to difficult challenges by retreating into his shell, requiring ongoing staff encouragement to persevere.",
+            "Situationally Fragile": "His resilience is highly situational; he handles physical challenges well but easily folds under social or structural pressures.",
+            "Defeated by Setbacks": "He struggles to cope when things do not go to plan, frequently requiring external intervention to rebuild his confidence.",
+            "Low Discomfort Tolerance": "He demonstrates a low tolerance for discomfort, routinely pushing back against challenges rather than building personal resilience."
         },
         sub11: {
-            "Exemplary": "The upcoming experiential environment is hand-made for someone of his ilk; he will absolutely thrive under the unique demands of the programme.",
-            "Diligent": "Given his active nature and grounded optimism, we fully expect him to throw himself into the programme and smash the fitness benchmarks.",
-            "Sufficient": "The structure and challenges of the upcoming experience will provide an excellent developmental opportunity for him to mature.",
-            "Passive": "He is showing significant apprehension regarding the upcoming programme, indicating a need to mentally prepare for communal living.",
-            "Variable": "He has the practical skills required for the venture school but must drastically stabilise his attitude to succeed in a team environment.",
-            "Inconsistent": "His current lack of self-management raises distinct questions regarding how he will cope with the rigorous daily structure.",
-            "Frustrated": "Unless there is an immediate and radical shift in his cooperation, he will find the upcoming communal lifestyle incredibly difficult."
+            "Hand-Made for Tihoi": "The upcoming experiential environment is hand-made for someone of his ilk; he will absolutely thrive under the unique demands of the programme.",
+            "Smashing Benchmarks": "Given his active nature and grounded optimism, we fully expect him to throw himself into the programme and smash the fitness benchmarks.",
+            "Excellent Opportunity": "The structure and challenges of the upcoming experience will provide an excellent developmental opportunity for him to mature.",
+            "Apprehensive / Detached": "He is showing significant apprehension regarding the upcoming programme, indicating a need to mentally prepare for communal living.",
+            "Teambuilding Risk": "He has the practical skills required for the venture school but must drastically stabilise his attitude to succeed in a team environment.",
+            "Structure Deficient": "His current lack of self-management raises distinct questions regarding how he will cope with the rigorous daily structure.",
+            "Communal Living Risk": "Unless there is an immediate and radical shift in his cooperation, he will find the upcoming communal lifestyle incredibly difficult."
         },
         sub12: {
-            "Exemplary": "He is to be congratulated on an outstanding first half of the year and will be a spectacular addition to our senior leadership ranks.",
-            "Diligent": "I look forward to following his progress keenly and seeing him return as a highly valued member of the senior cohort next year.",
-            "Sufficient": "I look forward to seeing him in the senior school next year, where he must look to transfer these skills into ongoing success.",
-            "Passive": "He is on track to transition to the senior ranks, though he must step up his daily visibility to make a meaningful impact.",
-            "Variable": "His progression into the senior school is secure, but his long-term impact depends entirely on which habits he chooses to cultivate.",
-            "Inconsistent": "To earn his place as a respected senior student next year, he must spend the coming months correcting his current inconsistencies.",
-            "Frustrated": "Significant growth is urgently required if he is to navigate the transition into a responsible senior student with any degree of success."
+            "Outstanding Prospect": "He is to be congratulated on an outstanding first half of the year and will be a spectacular addition to our senior leadership ranks.",
+            "Highly Valued Senior": "I look forward to following his progress keenly and seeing him return as a highly valued member of the senior cohort next year.",
+            "Secure Progression": "I look forward to seeing him in the senior school next year, where he must look to transfer these skills into ongoing success.",
+            "Visibility Required": "He is on track to transition to the senior ranks, though he must step up his daily visibility to make a meaningful impact.",
+            "Habit Dependant": "His progression into the senior school is secure, but his long-term impact depends entirely on which habits he chooses to cultivate.",
+            "Urgent Adjustments": "To earn his place as a respected senior student next year, he must spend the coming months correcting his current inconsistencies.",
+            "Transition At-Risk": "Significant growth is urgently required if he is to navigate the transition into a responsible senior student with any degree of success."
         }
     };
 
-    const order = [
-        ['sub1', 'sub2', 'sub3', 'sub4'], // Para 1
-        ['sub5', 'sub6', 'sub7', 'sub8'], // Para 2
-        ['sub9', 'sub10', 'sub11', 'sub12'] // Para 3
+    const structure = [
+        ['sub1', 'sub2', 'sub3', 'sub4'],
+        ['sub5', 'sub6', 'sub7', 'sub8'],
+        ['sub9', 'sub10', 'sub11', 'sub12']
     ];
 
-    const tiers = ["Exemplary", "Diligent", "Sufficient", "Passive", "Variable", "Inconsistent", "Frustrated"];
-
-    // Initialize Dropdowns on Load
-    function initDropdowns() {
+    function init() {
         for (let i = 1; i <= 12; i++) {
             const select = document.getElementById('sub' + i);
-            let html = '<option value="">-- Select Tier --</option>';
-            tiers.forEach(tier => {
-                html += `<option value="${tier}">${tier}</option>`;
+            let html = '<option value="">-- Select Option --</option>';
+            Object.keys(matrix['sub' + i]).forEach(key => {
+                html += `<option value="${key}">${key}</option>`;
             });
             select.innerHTML = html;
         }
         updateReport();
     }
 
-    // Dynamic Text Processing and Interpolation Pipeline Engine
     function updateReport() {
-        const rawName = document.getElementById('studentName').value.trim();
-        const rawHouse = document.getElementById('houseAllocation').value;
+        const nameInput = document.getElementById('studentName').value.trim();
+        const houseInput = document.getElementById('houseAllocation').value;
         const personalLine = document.getElementById('personalLine').value.trim();
 
-        const namePlaceholder = rawName ? rawName : "[Name Placeholder]";
-        const housePlaceholder = rawHouse ? rawHouse : "[House Placeholder]";
+        const name = nameInput ? nameInput : "[Name Placeholder]";
+        const house = houseInput ? houseInput : "[House Placeholder]";
 
-        // Render Nudge Control Banner
-        let outputText = `Please nudge this report according to this personalised line, noting that ${namePlaceholder} is from ${housePlaceholder}: `;
-        if (personalLine) {
-            outputText += `(${personalLine})\n\n\n`;
-        } else {
-            outputText += `(No summary entered)\n\n\n`;
-        }
+        let compiled = `Please nudge this report according to this personalised line, noting that ${name} is from ${house}: `;
+        compiled += personalLine ? `(${personalLine})\n\n\n` : `(No summary entered)\n\n\n`;
 
-        // Generate Paragraph Blocks
-        let finalParagraphs = [];
-        
-        order.forEach((paraSubs, index) => {
+        let paragraphBlocks = [];
+        structure.forEach((paraGroup, index) => {
             let sentences = [];
-            let allEmpty = true;
+            let emptyGroup = true;
 
-            paraSubs.forEach(subId => {
-                const val = document.getElementById(subId).value;
-                if (val) {
-                    allEmpty = false;
-                    let sentence = matrix[subId][val];
-                    // Dynamic Regex Replacements safely handling case variations
-                    sentence = sentence.replace(/\[name\]/g, namePlaceholder);
-                    sentence = sentence.replace(/\[house\]/g, housePlaceholder);
-                    sentences.push(sentence);
+            paraGroup.forEach(subId => {
+                const selectedKey = document.getElementById(subId).value;
+                if (selectedKey) {
+                    emptyGroup = false;
+                    let str = matrix[subId][selectedKey];
+                    str = str.replace(/\[name\]/g, name).replace(/\[house\]/g, house);
+                    sentences.push(str);
                 }
             });
 
-            if (allEmpty) {
-                finalParagraphs.push(`[Paragraph ${index + 1} Content Empty]`);
+            if (emptyGroup) {
+                paragraphBlocks.push(`[Paragraph ${index + 1} Content Empty]`);
             } else {
-                // Ensure uniform padding space between grouped sentences
-                finalParagraphs.push(sentences.join(' '));
+                paragraphBlocks.push(sentences.join(' '));
             }
         });
 
-        outputText += finalParagraphs.join('\n\n');
-        document.getElementById('previewPane').innerText = outputText;
+        compiled += paragraphBlocks.join('\n\n');
+        document.getElementById('previewPane').innerText = compiled;
     }
 
-    // Secure Memory Buffer Clipboard Operation
     function copyToClipboard() {
         const text = document.getElementById('previewPane').innerText;
         navigator.clipboard.writeText(text).then(() => {
-            alert('Compiled report successfully copied to clipboard.');
+            alert('Compiled text copied to clipboard successfully.');
         }).catch(err => {
-            alert('Failed to copy text safely: ' + err);
+            alert('Clipboard routing failed: ' + err);
         });
     }
 
-    window.onload = initDropdowns;
+    window.onload = init;
 </script>
-
 </body>
 </html>
