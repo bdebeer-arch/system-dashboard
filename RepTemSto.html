@@ -20,8 +20,8 @@
             --helper-bg: #f0fdf4;
             --helper-border: #bbf7d0;
             --helper-text: #166534;
-            --nudge-bg: #fffbeb;
-            --nudge-border: #fef08a;
+            --nudge-bg: #fef3c7;
+            --nudge-border: #fde68a;
             --nudge-text: #78350f;
         }
 
@@ -78,7 +78,8 @@
             background-color: var(--bg-card);
             border-color: var(--border);
             color: var(--primary);
-            position: relative; z-index: 2;
+            position: relative;
+            z-index: 2;
         }
 
         .tab-content { display: none; }
@@ -100,22 +101,16 @@
             border: 1px solid var(--helper-border);
             border-radius: 8px;
             color: var(--helper-text);
-            display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;
-        }
-
-        .card.nudge-card {
-            background-color: var(--nudge-bg);
-            border: 2px solid var(--nudge-border);
-            border-radius: 8px;
-            color: var(--nudge-text);
-            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
             margin-bottom: 1.5rem;
         }
 
         h2 { color: var(--accent); font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--border); }
         .form-group { margin-bottom: 1.25rem; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+        .form-row-three { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; }
         label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
         .hint { font-weight: normal; color: var(--text-muted); font-size: 0.8rem; display: inline-block; margin-left: 0.5rem; }
 
@@ -124,7 +119,19 @@
         }
         input[type="text"]:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 
-        .output-box { background-color: #f1f5f9; border: 1px solid var(--border); border-radius: 4px; padding: 1rem; min-height: 120px; white-space: pre-wrap; font-size: 1rem; margin-bottom: 1rem; }
+        .output-box { background-color: #f1f5f9; border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; min-height: 120px; white-space: pre-wrap; font-size: 1rem; margin-bottom: 1rem; }
+        
+        .inlaid-nudge {
+            background-color: var(--nudge-bg);
+            border: 1px solid var(--nudge-border);
+            color: var(--nudge-text);
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 1.25rem;
+        }
+
         .btn-container { display: flex; gap: 1rem; }
 
         button { background-color: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 4px; cursor: pointer; flex: 1; }
@@ -173,7 +180,7 @@
     <div id="builderView" class="tab-content active">
         <div class="card" style="border-radius: 0 6px 6px 6px;">
             <h2>Student Configuration Scope</h2>
-            <div class="form-row triple">
+            <div class="form-row-three">
                 <div class="form-group">
                     <label for="studentName">Student First Name</label>
                     <input type="text" id="studentName" placeholder="e.g. Thomas">
@@ -181,7 +188,7 @@
                 <div class="form-group">
                     <label for="houseName">House Allocation</label>
                     <select id="houseName">
-                        <option value="" selected>-- None / Opt-Out --</option>
+                        <option value="">-- Opt Out / Not Specified --</option>
                         <option value="School">School</option>
                         <option value="Fitchett">Fitchett</option>
                         <option value="Hamilton">Hamilton</option>
@@ -189,22 +196,19 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="genderSelect">Cohort Gender Dynamic</label>
+                    <label for="genderSelect">Gender Dynamic</label>
                     <select id="genderSelect">
-                        <option value="" selected>-- None / Opt-Out --</option>
-                        <option value="Boy">Boy</option>
-                        <option value="Girl">Girl</option>
-                        <option value="Mixed">Mixed Class Mix</option>
+                        <option value="">-- Opt Out / Not Specified --</option>
+                        <option value="boy">Boy</option>
+                        <option value="girl">Girl</option>
+                        <option value="mixed">Mixed</option>
                     </select>
                 </div>
             </div>
-        </div>
-
-        <!-- VISUALLY SPLIT INLAYED NUDGE/WEAVE FLAG BLOCK -->
-        <div class="card nudge-card">
-            <label for="personalLine" style="color: var(--nudge-text); font-size: 0.95rem;">🎯 Personalised Context Instructions & System Nudges</label>
-            <p style="margin: 0 0 0.75rem 0; font-size: 0.85rem; opacity: 0.85;">Any information keyed here maps straight to your generation runtime metadata block.</p>
-            <input type="text" id="personalLine" placeholder="e.g. Received a silver medal at national level gymnastics." style="border-color: #cbd5e1;">
+            <div class="form-group">
+                <label for="personalLine">Personalised Context Flag <span class="hint">(Weaves instruction tags safely into compilation memory)</span></label>
+                <input type="text" id="personalLine" placeholder="e.g. Received a silver medal at national level gymnastics.">
+            </div>
         </div>
 
         <div class="card standalone"><h2 id="p1_title">Paragraph 1 Scope</h2><div id="p1_container"></div></div>
@@ -340,7 +344,7 @@
                 "p2_2: Community Cohesion and Visible Leadership Presence": {
                     y9_pair: "Being paired closely with the Year 9s, he sets a fantastic example that has a positive effect on those who joined the school this year, adding to their sense of belonging.",
                     infectious: "His enthusiasm and cheerful approach to what he does are highly infectious and consistently help to lift the spirits of those around him.",
-                    builds_whan: "His proactive efforts help to directly develop the whanaungatanga of [house], building the crucial sense of community that Salesiana counts on.",
+                    builds_whan: "His proactive efforts help to directly develop the whanaungatanga of [house], building the crucial sense of community that UK underpins our collective success.",
                     quiet_force: "His natural ability to connect with friends and contribute constructively suggests he is a quiet, yet incredibly impactful force for good in our environment.",
                     front_lead: "He does not hesitate to lead from the front, demonstrating a visible leadership presence that inspires his peers to lift their own engagement.",
                     kotahitanga: "His growing sense of kotahitanga is obvious in his daily demeanor, always working to unify the cohort rather than separate it.",
@@ -471,9 +475,7 @@
             Object.keys(data.subcategories[catName]).forEach(optKey => {
                 const optElement = document.createElement('option');
                 optElement.value = optKey;
-                let textValue = data.subcategories[catName][optKey];
-                let snippet = textValue.substring(0, 85) + (textValue.length > 85 ? '...' : '');
-                optElement.innerText = `${optKey}: ${snippet.replace(/\[name\]/g, 'Student').replace(/\[house\]/g, 'House')}`;
+                optElement.innerText = optKey; // Only insertion label token rendered now for ultra clean workspace appearance
                 select.appendChild(optElement);
             });
 
@@ -495,11 +497,12 @@
         
         const data = activeDatabase[activeClassKey];
         const name = document.getElementById('studentName').value.trim() || '[Name]';
-        const houseValue = document.getElementById('houseName').value;
-        const genderValue = document.getElementById('genderSelect').value;
+        
+        const rawHouse = document.getElementById('houseName').value;
+        const houseCombined = rawHouse ? (rawHouse + ' House') : '[House]';
+        
+        const selectedGender = document.getElementById('genderSelect').value;
         const personalLine = document.getElementById('personalLine').value.trim();
-
-        const houseCombined = houseValue ? houseValue + ' House' : '[House]';
 
         let p1 = [], p2 = [], p3 = [];
 
@@ -509,33 +512,57 @@
             if (!chosenKey) return;
 
             let text = data.subcategories[catName][chosenKey];
-            text = text.replace(/\[name\]/g, name).replace(/\[house\]/g, houseCombined).replace(/House House/g, 'House');
+            text = text.replace(/\[name\]/g, name);
+            
+            if(rawHouse) {
+                text = text.replace(/\[house\]/g, houseCombined).replace(/House House/g, 'House');
+            } else {
+                text = text.replace(/\[house\]/g, '[house]');
+            }
 
             if (catName.startsWith('p1_') || catName.includes('p1_') || catName.startsWith('1.')) p1.push(text);
             if (catName.startsWith('p2_') || catName.includes('p2_') || catName.startsWith('2.')) p2.push(text);
             if (catName.startsWith('p3_') || catName.includes('p3_') || catName.startsWith('3.')) p3.push(text);
         });
 
-        // Smart Nudge/Weave Generation System Block Header Compilation Logic
-        let out = '';
-        let systemDirectives = [];
-        
-        if (personalLine) systemDirectives.push(`Personalised target: "${personalLine}"`);
-        if (genderValue) systemDirectives.push(`Ensure gender/pronouns match profile parameters for a ${genderValue.toLowerCase()} framework based on the name ${name}`);
-        if (genderValue === 'Mixed') systemDirectives.push(`Apply balanced tone metrics for a co-educational Class Mix environment`);
-        if (houseValue) systemDirectives.push(`Track affiliation context explicitly to ${houseCombined}`);
+        const outputContainer = document.getElementById('narrativeOutput');
+        outputContainer.innerHTML = '';
 
-        if (systemDirectives.length > 0) {
-            out += `Please nudge/weave into this report composition according to the following parameter scopes:\n`;
-            systemDirectives.forEach(dir => { out += ` - ${dir}\n`; });
-            out += `\n\n`;
+        // Name is the tracking priority trigger baseline for rendering the instructions card
+        if (name !== '[Name]' || personalLine || selectedGender) {
+            let promptText = `Please nudge/weave into this report according to this personalised line, noting that ${name}`;
+            
+            if (rawHouse) {
+                promptText += ` is from ${houseCombined}`;
+            }
+            
+            if (selectedGender) {
+                promptText += ` and to also ensure gender styling based on name, and class mix: ${selectedGender}`;
+            }
+            
+            if (personalLine) {
+                promptText += `. Custom directive metrics: (${personalLine})`;
+            } else {
+                promptText += `.`;
+            }
+
+            const nudgeDiv = document.createElement('div');
+            nudgeDiv.className = 'inlaid-nudge';
+            nudgeDiv.innerText = promptText;
+            outputContainer.appendChild(nudgeDiv);
         }
 
-        if (p1.length > 0) out += p1.join(' ') + '\n\n';
-        if (p2.length > 0) out += p2.join(' ') + '\n\n';
-        if (p3.length > 0) out += p3.join(' ') + '\n\n';
+        let bodyText = '';
+        if (p1.length > 0) bodyText += p1.join(' ') + '\n\n';
+        if (p2.length > 0) bodyText += p2.join(' ') + '\n\n';
+        if (p3.length > 0) bodyText += p3.join(' ') + '\n\n';
 
-        document.getElementById('narrativeOutput').innerText = out.trim() || 'Select metrics above to map statements...';
+        if (bodyText.trim()) {
+            const textNode = document.createTextNode(bodyText.trim());
+            outputContainer.appendChild(textNode);
+        } else if (outputContainer.children.length === 0) {
+            outputContainer.innerText = 'Select metrics above to map statements...';
+        }
     }
 
     function copyAIPromptBlueprint() {
