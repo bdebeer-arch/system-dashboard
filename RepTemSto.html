@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Class Report System Workbench</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --accent: #0f172a;
+            --tab-inactive: #e2e8f0;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+
+        .container { max-width: 1050px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title h1 { color: var(--primary); margin: 0 0 0.5rem 0; font-size: 2rem; }
+        .header-title p { color: var(--text-muted); margin: 0; font-size: 1rem; }
+
+        .class-selector-box {
+            background: #eff6ff;
+            border: 1px solid var(--primary-light);
+            padding: 1rem;
+            border-radius: 6px;
+            min-width: 320px;
+        }
+
+        .class-selector-box label { color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+        .tab-btn {
+            background-color: var(--tab-inactive);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-bottom: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--bg-card);
+            border-color: var(--border);
+            color: var(--primary);
+            position: relative;
+            z-index: 2;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0 0 8px 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card.standalone { border-radius: 8px; }
+
+        h2 { color: var(--accent); font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--border); }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .hint { font-weight: normal; color: var(--text-muted); font-size: 0.8rem; display: inline-block; margin-left: 0.5rem; }
+
+        input[type="text"], select, textarea {
+            width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.95rem; background-color: #fff; box-sizing: border-box;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+
+        .output-box { background-color: #f1f5f9; border: 1px solid var(--border); border-radius: 4px; padding: 1rem; min-height: 120px; white-space: pre-wrap; font-size: 1rem; margin-bottom: 1rem; }
+        .btn-container { display: flex; gap: 1rem; }
+
+        button { background-color: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border-radius: 4px; cursor: pointer; flex: 1; }
+        button:hover { background-color: #1d4ed8; }
+        button.secondary { background-color: #64748b; }
+        button.secondary:hover { background-color: #475569; }
+        button.success { background-color: var(--success); }
+        button.success:hover { background-color: #15803d; }
+        button.danger { background-color: var(--danger); }
+        button.danger:hover { background-color: #b91c1c; }
+
+        .inspector-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+        .inspector-table th, .inspector-table td { border: 1px solid var(--border); padding: 0.75rem; text-align: left; vertical-align: top; }
+        .inspector-table th { background-color: #f8fafc; color: var(--accent); }
+        .inspector-table tr:nth-child(even) { background-color: #f8fafc; }
+
+        .toast { visibility: hidden; min-width: 250px; background-color: #334155; color: #fff; text-align: center; border-radius: 4px; padding: 1rem; position: fixed; z-index: 10; left: 50%; bottom: 30px; transform: translateX(-50%); }
+        .toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-title">
+            <h1>Multi-Class System Workbench</h1>
+            <p>Persistent Local Memory & Code Fragment Processing Workspace</p>
+        </div>
+        <div class="class-selector-box">
+            <label for="masterClassSelect">Active Evaluation Profile</label>
+            <select id="masterClassSelect" style="font-weight: bold; color: var(--primary); margin-top: 0.25rem;"></select>
+        </div>
+    </header>
+
+    <!-- App Navigation Controls -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchView('builderView', this)">Interactive Builder Workspace</button>
+        <button class="tab-btn" onclick="switchView('inspectorView', this)">Database Option Matrix Inspector</button>
+        <button class="tab-btn" style="background-color: #fef08a; color: #854d0e;" onclick="switchView('systemMemoryView', this)">⚙️ Load Code Matrices Fragment</button>
+    </div>
+
+    <!-- VIEW 1: BUILDER WORKSPACE -->
+    <div id="builderView" class="tab-content active">
+        <div class="card" style="border-radius: 0 6px 6px 6px;">
+            <h2>Student Configuration Scope</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="studentName">Student First Name</label>
+                    <input type="text" id="studentName" placeholder="e.g. Thomas">
+                </div>
+                <div class="form-group">
+                    <label for="houseName">House Allocation</label>
+                    <select id="houseName">
+                        <option value="School" selected>School</option>
+                        <option value="Fitchett">Fitchett</option>
+                        <option value="Hamilton">Hamilton</option>
+                        <option value="Hall">Hall</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="personalLine">Personalised Context Flag <span class="hint">(Weaves instruction tags safely into compilation memory)</span></label>
+                <input type="text" id="personalLine" placeholder="e.g. Received a silver medal at national level gymnastics.">
+            </div>
+        </div>
+
+        <!-- Targets for runtime dropdown building -->
+        <div class="card standalone"><h2 id="p1_title">Paragraph 1 Scope</h2><div id="p1_container"></div></div>
+        <div class="card standalone"><h2 id="p2_title">Paragraph 2 Scope</h2><div id="p2_container"></div></div>
+        <div class="card standalone"><h2 id="p3_title">Paragraph 3 Scope</h2><div id="p3_container"></div></div>
+
+        <div class="card standalone">
+            <h2>Compiled Narrative Engine Output</h2>
+            <div id="narrativeOutput" class="output-box">Select metrics above to map statements...</div>
+            <div class="btn-container">
+                <button id="copyBtn">Copy Statement Composition</button>
+                <button id="resetBtn" class="secondary">Reset Environment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: MATRIX INSPECTOR -->
+    <div id="inspectorView" class="tab-content">
+        <div class="card standalone">
+            <h2>Database Inspection Matrix</h2>
+            <p class="subtitle" style="margin-bottom: 1.5rem;">Below is the current raw payload mapping for all choices indexed under the selected module.</p>
+            <div id="inspectorTableContainer"></div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: SYSTEM CONFIGURATION MANAGER -->
+    <div id="systemMemoryView" class="tab-content">
+        <div class="card standalone">
+            <h2>Load & Append JavaScript Code Fragments</h2>
+            <p class="subtitle" style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
+                Paste your matrix code snippet directly below. The loader accepts native JavaScript object formatting securely.
+            </p>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="newClassKey">Unique Class Code Reference (No spaces)</label>
+                    <input type="text" id="newClassKey" placeholder="e.g. y10_pastoral_cohort">
+                </div>
+                <div class="form-group">
+                    <label for="newClassName">Display Selector Title</label>
+                    <input type="text" id="newClassName" placeholder="e.g. School House Year 10 Cohort (Pastoral Profile)">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group"><label for="p1LabelInput">Paragraph 1 Title</label><input type="text" id="p1LabelInput" value="Paragraph 1: The Student Profile"></div>
+                <div class="form-group"><label for="p2LabelInput">Paragraph 2 Title</label><input type="text" id="p2LabelInput" value="Paragraph 2: Involvement & Dynamics"></div>
+            </div>
+            <div class="form-group">
+                <label for="p3LabelInput">Paragraph 3 Title</label>
+                <input type="text" id="p3LabelInput" value="Paragraph 3: Next Steps">
+            </div>
+
+            <div class="form-group">
+                <label for="newClassJSON">Matrix Code Snippet Payload (Accepts raw code chunks)</label>
+                <textarea id="newClassJSON" rows="14" style="font-family: monospace; font-size: 0.85rem;" placeholder="p1_1: {&#10;    vibrant: '[name] brings...',&#10;    warm: '[name] is...'&#10;},&#10;p1_2: {&#10;    bonds: '...'&#10;}"></textarea>
+            </div>
+            
+            <div class="btn-container" style="margin-bottom: 2rem;">
+                <button class="success" onclick="importCustomCodeMatrix()">🚀 Commit Code Fragment to Memory</button>
+            </div>
+
+            <h2>Storage Systems Status</h2>
+            <p>Your database records are stored safe locally. Resetting memory rolls the browser back to factory baseline matrices.</p>
+            <button class="danger" style="max-width: 250px;" onclick="wipeMemoryStorage()">Clear Custom Memory Blocks</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">Action processed successfully!</div>
+
+<script>
+    // HARDCODED SYSTEM BASELINE SEED DATA BACKUPS
+    const baseDatabaseSeed = {
+        y10_pastoral_demo: {
+            title: "Demonstration Cohort Layout (Factory Seed)",
+            p1_label: "Paragraph 1: Profile Baseline",
+            p2_label: "Paragraph 2: Engagement",
+            p3_label: "Paragraph 3: Future Focus",
+            subcategories: {
+                "1.1 General Demeanour": {
+                    opt1: "[name] brings a vibrant and positive presence to [house], contributing in his energetic way with humour and sheer eagerness.",
+                    opt2: "[name] is a warm and well-settled presence in [house], maintaining a relaxed, approachable manner that endears him to others."
+                },
+                "2.1 Inter-House Competitions": {
+                    opt1: "He throws himself into house activities like Athletics Standards and competitive events, always setting a vibrant example."
+                },
+                "3.1 Growth Projections": {
+                    opt1: "His natural ability to adapt will ensure he thrives within the communal living dynamics, turning daily shared responsibilities into positive growth."
+                }
+            }
+        }
+    };
+
+    let activeDatabase = {};
+
+    // LOCAL STORAGE SYNC SYSTEM
+    function initDatabaseMemory() {
+        const cached = localStorage.getItem('school_house_matrix_db');
+        if (cached) {
+            try {
+                activeDatabase = JSON.parse(cached);
+            } catch(e) {
+                activeDatabase = {...baseDatabaseSeed};
+            }
+        } else {
+            activeDatabase = {...baseDatabaseSeed};
+            localStorage.setItem('school_house_matrix_db', JSON.stringify(activeDatabase));
+        }
+        rebuildClassDropdownMenu();
+    }
+
+    function rebuildClassDropdownMenu() {
+        const select = document.getElementById('masterClassSelect');
+        const currentSelection = select.value;
+        select.innerHTML = '';
+        
+        Object.keys(activeDatabase).forEach(key => {
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.innerText = activeDatabase[key].title || key;
+            select.appendChild(opt);
+        });
+
+        if (currentSelection && activeDatabase[currentSelection]) {
+            select.value = currentSelection;
+        }
+        renderBuilderInputs();
+    }
+
+    // INTERACTIVE SYSTEM FORM COMPILER BUILDERS
+    function renderBuilderInputs() {
+        const activeClassKey = document.getElementById('masterClassSelect').value;
+        if (!activeClassKey || !activeDatabase[activeClassKey]) return;
+        
+        const data = activeDatabase[activeClassKey];
+
+        document.getElementById('p1_title').innerText = data.p1_label || "Paragraph 1";
+        document.getElementById('p2_title').innerText = data.p2_label || "Paragraph 2";
+        document.getElementById('p3_title').innerText = data.p3_label || "Paragraph 3";
+
+        const p1Cont = document.getElementById('p1_container');
+        const p2Cont = document.getElementById('p2_container');
+        const p3Cont = document.getElementById('p3_container');
+
+        p1Cont.innerHTML = ''; p2Cont.innerHTML = ''; p3Cont.innerHTML = '';
+
+        Object.keys(data.subcategories).forEach(catName => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'form-group';
+
+            const label = document.createElement('label');
+            label.innerText = catName;
+            
+            const select = document.createElement('select');
+            select.className = 'builder-select';
+            select.setAttribute('data-category', catName);
+
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = ''; defaultOpt.innerText = '-- Select Option --';
+            select.appendChild(defaultOpt);
+
+            Object.keys(data.subcategories[catName]).forEach(optKey => {
+                const optElement = document.createElement('option');
+                optElement.value = optKey;
+                let textValue = data.subcategories[catName][optKey];
+                let snippet = textValue.substring(0, 85) + (textValue.length > 85 ? '...' : '');
+                optElement.innerText = `${optKey}: ${snippet.replace(/\[name\]/g, 'Student').replace(/\[house\]/g, 'House')}`;
+                select.appendChild(optElement);
+            });
+
+            select.addEventListener('change', compileReportOutput);
+            groupDiv.appendChild(label);
+            groupDiv.appendChild(select);
+
+            // Clean code prefix matching pattern selectors
+            if (catName.includes('p1_') || catName.startsWith('1.')) p1Cont.appendChild(groupDiv);
+            else if (catName.includes('p2_') || catName.startsWith('2.')) p2Cont.appendChild(groupDiv);
+            else if (catName.includes('p3_') || catName.startsWith('3.')) p3Cont.appendChild(groupDiv);
+        });
+
+        compileReportOutput();
+    }
+
+    function compileReportOutput() {
+        const activeClassKey = document.getElementById('masterClassSelect').value;
+        if (!activeClassKey || !activeDatabase[activeClassKey]) return;
+        
+        const data = activeDatabase[activeClassKey];
+        const name = document.getElementById('studentName').value.trim() || '[Name]';
+        const houseCombined = document.getElementById('houseName').value + ' House';
+        const personalLine = document.getElementById('personalLine').value.trim();
+
+        let p1 = [], p2 = [], p3 = [];
+
+        document.querySelectorAll('.builder-select').forEach(select => {
+            const catName = select.getAttribute('data-category');
+            const chosenKey = select.value;
+            if (!chosenKey) return;
+
+            let text = data.subcategories[catName][chosenKey];
+            text = text.replace(/\[name\]/g, name).replace(/\[house\]/g, houseCombined).replace(/House House/g, 'House');
+
+            if (catName.includes('p1_') || catName.startsWith('1.')) p1.push(text);
+            if (catName.includes('p2_') || catName.startsWith('2.')) p2.push(text);
+            if (catName.includes('p3_') || catName.startsWith('3.')) p3.push(text);
+        });
+
+        let out = '';
+        if (personalLine) out += `Please nudge/weave into this report according to this personalised line, noting that ${name} is from ${houseCombined}: (${personalLine})\n\n\n`;
+        if (p1.length > 0) out += p1.join(' ') + '\n\n';
+        if (p2.length > 0) out += p2.join(' ') + '\n\n';
+        if (p3.length > 0) out += p3.join(' ') + '\n\n';
+
+        document.getElementById('narrativeOutput').innerText = out.trim() || 'Select metrics above to map statements...';
+    }
+
+    // NATIVE JAVASCRIPT OBJECT RAW CHUNK INGESTION PARSER
+    function importCustomCodeMatrix() {
+        const key = document.getElementById('newClassKey').value.trim();
+        const title = document.getElementById('newClassName').value.trim();
+        const rawFragment = document.getElementById('newClassJSON').value.trim();
+
+        if (!key || !title || !rawFragment) { alert('Please execute all configuration parameters text tracking zones.'); return; }
+
+        try {
+            // Evaluates raw JS Object syntax literal fragments completely and safely in memory
+            const evaluatedObject = new Function(`return { ${rawFragment} };`)();
+            
+            const structuredClassProfile = {
+                title: title,
+                p1_label: document.getElementById('p1LabelInput').value,
+                p2_label: document.getElementById('p2LabelInput').value,
+                p3_label: document.getElementById('p3LabelInput').value,
+                subcategories: {}
+            };
+
+            // Re-map internal structural keys natively to the engine components
+            Object.keys(evaluatedObject).forEach(itemKey => {
+                structuredClassProfile.subcategories[itemKey] = evaluatedObject[itemKey];
+            });
+
+            activeDatabase[key] = structuredClassProfile;
+            localStorage.setItem('school_house_matrix_db', JSON.stringify(activeDatabase));
+            
+            showToast('Code Fragment Successfully Loaded into System Memory!');
+            rebuildClassDropdownMenu();
+            document.getElementById('masterClassSelect').value = key;
+            renderBuilderInputs();
+            switchView('builderView', document.querySelectorAll('.tab-btn')[0]);
+
+            // Clear configuration workspace elements
+            document.getElementById('newClassKey').value = '';
+            document.getElementById('newClassName').value = '';
+            document.getElementById('newClassJSON').value = '';
+        } catch(e) {
+            alert('Syntax Verification Failure. Please inspect your code block format structure:\n' + e.message);
+        }
+    }
+
+    // VIEW ROUTING
+    function switchView(viewId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        btnElement.classList.add('active');
+        
+        if (viewId === 'inspectorView') renderInspectorTable();
+    }
+
+    function renderInspectorTable() {
+        const activeClassKey = document.getElementById('masterClassSelect').value;
+        if (!activeClassKey || !activeDatabase[activeClassKey]) return;
+        const data = activeDatabase[activeClassKey];
+        
+        let html = `<table class="inspector-table"><thead><tr><th>Dimension Reference</th><th>Options Expansion Track Matrix</th></tr></thead><tbody>`;
+        Object.keys(data.subcategories).forEach(cat => {
+            html += `<tr><td><strong>${cat}</strong></td><td><ul style="margin:0; padding-left:1.2rem;">`;
+            Object.keys(data.subcategories[cat]).forEach(k => {
+                html += `<li><strong>${k}:</strong> ${data.subcategories[cat][k].replace(/\[name\]/g, '<strong>[Name]</strong>').replace(/\[house\]/g, '<strong>[House]</strong>')}</li>`;
+            });
+            html += `</ul></td></tr>`;
+        });
+        document.getElementById('inspectorTableContainer').innerHTML = html + `</tbody></table>`;
+    }
+
+    function wipeMemoryStorage() {
+        if(confirm('Confirm tracking reset loop back to clean setup? All input keys will clean.')) {
+            localStorage.removeItem('school_house_matrix_db');
+            initDatabaseMemory();
+            showToast('Custom matrices removed.');
+        }
+    }
+
+    function showToast(txt) {
+        const t = document.getElementById('toast'); t.innerText = txt; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // WORKSPACE EVENT WIRES
+    document.getElementById('masterClassSelect').addEventListener('change', renderBuilderInputs);
+    document.getElementById('studentName').addEventListener('input', compileReportOutput);
+    document.getElementById('houseName').addEventListener('change', compileReportOutput);
+    document.getElementById('personalLine').addEventListener('input', compileReportOutput);
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        const text = document.getElementById('narrativeOutput').innerText;
+        if (text.startsWith('Select metrics')) return;
+        navigator.clipboard.writeText(text).then(() => showToast('Composition copied to memory buffer!'));
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        document.getElementById('studentName').value = '';
+        document.getElementById('personalLine').value = '';
+        document.querySelectorAll('.builder-select').forEach(s => s.value = '');
+        compileReportOutput();
+    });
+
+    window.onload = initDatabaseMemory;
+</script>
+</body>
+</html>
