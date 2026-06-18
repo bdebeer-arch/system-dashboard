@@ -138,7 +138,6 @@
         </div>
     </header>
 
-    <!-- App Navigation Controls -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchView('builderView', this)">Interactive Builder Workspace</button>
         <button class="tab-btn" onclick="switchView('inspectorView', this)">Database Option Matrix Inspector</button>
@@ -170,7 +169,6 @@
             </div>
         </div>
 
-        <!-- Targets for runtime dropdown building -->
         <div class="card standalone"><h2 id="p1_title">Paragraph 1 Scope</h2><div id="p1_container"></div></div>
         <div class="card standalone"><h2 id="p2_title">Paragraph 2 Scope</h2><div id="p2_container"></div></div>
         <div class="card standalone"><h2 id="p3_title">Paragraph 3 Scope</h2><div id="p3_container"></div></div>
@@ -241,23 +239,121 @@
 <div id="toast" class="toast">Action processed successfully!</div>
 
 <script>
-    // HARDCODED SYSTEM BASELINE SEED DATA BACKUPS
+    // HARDCODED SYSTEM BASELINE SEED DATA BACKUPS (Now explicitly structured as standard subcategories)
     const baseDatabaseSeed = {
-        y10_pastoral_demo: {
-            title: "Demonstration Cohort Layout (Factory Seed)",
-            p1_label: "Paragraph 1: Profile Baseline",
-            p2_label: "Paragraph 2: Engagement",
-            p3_label: "Paragraph 3: Future Focus",
+        t2p10: {
+            title: "Y10a Pastoral Report",
+            p1_label: "Paragraph 1: The Student Profile",
+            p2_label: "Paragraph 2: Involvement & Dynamics",
+            p3_label: "Paragraph 3: Next Steps",
             subcategories: {
-                "1.1 General Demeanour": {
-                    opt1: "[name] brings a vibrant and positive presence to [house], contributing in his energetic way with humour and sheer eagerness.",
-                    opt2: "[name] is a warm and well-settled presence in [house], maintaining a relaxed, approachable manner that endears him to others."
+                "p1_1: General Demeanour and Character Presence": {
+                    vibrant: "[name] brings a vibrant and positive presence to [house], contributing in his energetic way with humour and sheer eagerness.",
+                    warm: "[name] is a warm and well-settled presence in [house], maintaining a relaxed, approachable manner that endears him to others.",
+                    quiet_conf: "[name] is a quietly confident member of [house], whose easy sense of humour and ability to get along makes him a valued presence.",
+                    mature: "[name] has settled into [house] with confidence and a commendably positive attitude, displaying a mature and personable outlook.",
+                    relaxed: "[name] brings a relaxed and cheerful presence to [house], with his good humour and easygoing nature making him a well-liked member of the community.",
+                    steadfast: "[name] is a quiet and steadfast member of [house] who operates with a grounded manner and a calm, reassuring presence.",
+                    shy: "[name] is a relatively quiet member of [house] who maintains a low profile but brings a gentle, polite, and caring nature to the group."
                 },
-                "2.1 Inter-House Competitions": {
-                    opt1: "He throws himself into house activities like Athletics Standards and competitive events, always setting a vibrant example."
+                "p1_2: Peer Group Integration and Social Standing": {
+                    bonds: "His positive and personable outlook has helped him form tight-knit bonds, steadily strengthening his social stature in the community.",
+                    table_tennis: "His familiarity and ease in the House, particularly around the table tennis set, have helped create an inclusive atmosphere where new students feel welcome.",
+                    cohesion: "He is a highly regarded member of the House, persistently contributing to the community with a generous spirit that fosters true cohesion.",
+                    key_member: "He has established himself as a key member of his peer group, navigating social interactions smoothly and with genuine integrity.",
+                    all_levels: "It is a real pleasure to see him interacting positively with students from all year levels, ensuring that his social circle remains broad.",
+                    y10_cohort: "He can most often be found sharing a laugh with his fellow Year 10 students, maintaining loyal and close-knit friendships within his immediate cohort.",
+                    subtle: "His steady relational style helps foster community unity in subtle but meaningful ways, even if he prefers to avoid the spotlight."
                 },
-                "3.1 Growth Projections": {
-                    opt1: "His natural ability to adapt will ensure he thrives within the communal living dynamics, turning daily shared responsibilities into positive growth."
+                "p1_3: Personal Maturity and Respectful Conduct": {
+                    unassuming: "He demonstrates a natural, unassuming maturity through his consistent effort and willingness to support his peers without seeking recognition.",
+                    high_respect: "He displays a level of respect for others that is uncommon for someone of his age, impressing staff and senior students alike.",
+                    empathy: "His politeness, empathy, and general standard of conduct are exemplary, making him a thoroughly dependable member of our house environment.",
+                    humble: "Despite his significant personal talents, he remains thoroughly humble, grounded, and respectful in all of his daily interactions.",
+                    right_thing: "He can always be relied upon to do the right thing, modeling excellent manners and an entirely positive attitude for those around him.",
+                    reflective: "He has shown a thoughtful capacity to reflect on his actions, learning how best to support both himself and his peers with integrity.",
+                    grooming: "While he occasionally requires minor reminders regarding uniform and grooming expectations, his core intentions are always respectful."
+                },
+                "p1_4: Growth in Confidence and Stature": {
+                    shell: "Over time, he has grown significantly in personal confidence, increasingly stepping out of his shell and engaging more deeply with the wider House.",
+                    emerging: "His recent actions reflect a growing confidence and emerging sense of personal presence that has been excellent to witness.",
+                    weekly: "He is increasing in personal confidence each week, establishing his own identity within the house with quiet certainty.",
+                    ownership: "He has grown in confidence and stature during his second year at school, taking greater ownership of his personal goals and journey.",
+                    well_rounded: "He is forming into a well-rounded young man, making steady progress across the board as his self-assurance matches his abilities.",
+                    security: "His steady commitment to personal growth is bearing fruit, allowing him to navigate house life with a greater sense of security.",
+                    direction: "He is on the cusp of truly discovering what he is capable of, as his baseline confidence continues to develop in a positive direction."
+                },
+                "p2_1: Participation in Inter-House Competitions": {
+                    throws: "He throws himself into house activities like Athletics Standards and competitive events, always setting a vibrant example.",
+                    fully_commits: "He fully commits himself to Inter-House competitions, giving maximum effort to ensure [house] performs to its absolute potential.",
+                    readily: "He brings energy and house spirit to every event, participating readily, without fuss, and with a thoroughly positive mindset.",
+                    active_involved: "Actively involved in all scheduled events, he has made a highly valuable contribution across a wide spectrum of House life.",
+                    enthusiasm: "He contributes to all activities with genuine enthusiasm and purpose, proving that he completely understands and buys into our competitive goals.",
+                    step_up: "He can always be relied upon to step up in inter-house fixtures, making an invaluable competitive addition exactly when the team needs it.",
+                    reluctant: "His quiet nature has meant he is sometimes reluctant to fully embrace house competitions, and we have yet to see him fully apply his energy here."
+                },
+                "p2_2: Community Cohesion and Visible Leadership Presence": {
+                    y9_pair: "Being paired closely with the Year 9s, he sets a fantastic example that has a positive effect on those who joined the school this year, adding to their sense of belonging.",
+                    infectious: "His enthusiasm and cheerful approach to what he does are highly infectious and consistently help to lift the spirits of those around him.",
+                    builds_whan: "His proactive efforts help to directly develop the whanaungatanga of [house], building the crucial sense of community that underpins our collective success.",
+                    quiet_force: "His natural ability to connect with friends and contribute constructively suggests he is a quiet, yet incredibly impactful force for good in our environment.",
+                    front_lead: "He does not hesitate to lead from the front, demonstrating a visible leadership presence that inspires his peers to lift their own engagement.",
+                    kotahitanga: "His growing sense of kotahitanga is obvious in his daily demeanor, always working to unify the cohort rather than separate it.",
+                    steady_support: "While he doesn't actively pursue formal house leadership roles yet, his steady presence and willingness to support others subtly enhance our culture."
+                },
+                "p2_3: Contribution to Cultural and Creative House Events": {
+                    haka_front: "His willingness to stand near the front during the intense [house] Haka reflects his enthusiasm, pride, and emerging leadership; he thoroughly earned his place there.",
+                    points: "It was particularly pleasing to see his dedicated efforts during both the haka and house singing, where he helped secure valuable points for us.",
+                    comfort_zone: "I was highly impressed with his willingness to step out of his comfort zone and take on an extra, visible role during our cultural campaigns.",
+                    maaori: "He has upheld the absolute mana of his cultural responsibilities, showing a genuine passion to lead our House in all things relating to Te Ao Maaori.",
+                    singing_extra: "His willingness to step up and make an extra vocal contribution to the House Singing competition proved completely invaluable to our overall standard.",
+                    rehearsals: "He can be relied upon to put his heart and soul into cultural events, displaying excellent focus during rigorous rehearsals.",
+                    hesitant: "He is occasionally hesitant during large-scale cultural performances, and further encouragement will help him find his voice in these domains."
+                },
+                "p2_4: Engagement in Athletic and Sporting Endeavours": {
+                    standout: "His individual sporting achievements significantly stand him out from the pack, yet he remains remarkably humble about his physical talents.",
+                    keen_sports: "As a keen and talented sportsman with a grounded manner, he brings an excellent level of athletic spirit and energy to our house fixtures.",
+                    teams: "He has performed exceptionally well within his various sports teams, translating his individual skill into positive team-oriented outcomes.",
+                    standards: "He put maximum effort into his physical benchmarks, making highly valuable contributions during the recent Athletic Standards testing.",
+                    active_energy: "He infuses the house with an active energy, always ready to kick a ball around or represent the cohort in physical challenges.",
+                    disciplined: "He takes his physical health seriously, consistently maintaining a fit, active, and highly disciplined routine throughout the term.",
+                    collective: "While organized sports may not be his primary passion, he still gives his absolute best in physical events for the collective benefit of the house."
+                },
+                "p3_1: Translation of Communal Living and Teamwork": {
+                    communal: "His natural ability to adapt will ensure he thrives within the communal living dynamics, turning daily shared responsibilities into positive growth.",
+                    teamwork_out: "His deep commitment to teamwork will serve him exceptionally well in the outdoors where collaborative effort is highly valued.",
+                    relates_nat: "With his natural ability to relate well to others, he will navigate the close-knit community environment smoothly and constructively.",
+                    bunkmate: "The intensive group environment will offer him an ideal setting to forge lasting connections with boys sharing the journey.",
+                    compromise: "He understands how to compromise and contribute, helping to build a supportive, cooperative atmosphere within his immediate group.",
+                    shared_arr: "He approaches shared living arrangements with a rare level of maturity, ensuring his interactions with bunkmates remain consistently positive.",
+                    stretch_collab: "The upcoming group challenges will require him to stretch his collaborative habits, learning to rely on and support his peers fully."
+                },
+                "p3_2: Extracurricular and Academic Balancing Habits": {
+                    co_curr: "He marks himself as a young man who successfully balances his heavy co-curricular commitments with a genuine desire to connect with his studies.",
+                    across_board: "He is making excellent progress across the board, showing a balanced and mature approach to sport, academics, and culture alike.",
+                    energy_mgmt: "As a busy young man with extensive extracurricular commitments, learning to manage his energy and time effectively remains a key focus.",
+                    overshadow: "To achieve his full potential, he must ensure that his high energy for sporting pursuits does not overshadow his academic focus.",
+                    considered: "His measured and considered approach to his commitments sometimes belies the deep determination with which he takes on academic tasks.",
+                    proactive: "He is extremely proactive in seeking out opportunities to get the very most from both his academic and personal school experience.",
+                    align_interests: "He has demonstrated a fine ability to align his personal interests with school expectations, ensuring a well-rounded foundation."
+                },
+                "p3_3: Resilience in the Face of Broad Challenges": {
+                    self_belief: "This upcoming phase has the potential to create real growth in him, particularly in sharpening his personal resilience and self-belief.",
+                    push_outside: "He will be afforded invaluable developmental opportunities that will intentionally push him outside of his usual comfort zone.",
+                    problem_solve: "There is no question that he will rise to the challenges ahead, utilizing his natural problem-solving abilities to find success.",
+                    adversity: "By confronting difficult situations directly, he will continue to mature into a strong, resilient, and highly capable young man.",
+                    tenacity: "We trust that he will meet what lies ahead with the necessary tenacity and eager desire to stretch his personal capabilities.",
+                    yielding: "He brings an excellent sense of humour paired with a steady, unyielding determination to keep growing through every setback.",
+                    core_teach: "He simply needs to fully embrace the core teachings of this period, and we will watch him grow into a highly self-assured individual."
+                },
+                "p3_4: Tihoi Venture School Readiness": {
+                    thrive_tihoi: "Given his active nature and grounded optimism, he is exceptionally well placed to thrive in the hands-on environment that the Tihoi programme offers.",
+                    infectious_tihoi: "He is undoubtedly excited about the upcoming shift to Tihoi, and his infectious energy will ensure he embraces both the social and physical challenges with total positivity.",
+                    work_ethic_tihoi: "While he approaches new environments with measured observation, his steady work ethic and underlying tenacity guarantee he will get stuck into the Tihoi experience without fuss.",
+                    mature_tihoi: "His mature outlook and natural capability mean he will navigate the structural demands of Tihoi with ease, allowing his character and independent thinking to flourish.",
+                    shell_tihoi: "The unique environment at Tihoi will offer him a superb platform to step further out of his shell, building the robust resilience and confidence required for his senior years.",
+                    communal_tihoi: "Although the communal nature of Tihoi may initially test his quiet disposition, the experience will allow him to forge deep, lasting connections with his bunkmates.",
+                    outdoor_tihoi: "To extract the full value from the Tihoi venture, he must look to actively throw himself into the outdoor challenges and resist the temptation to stay within his comfortable routines."
                 }
             }
         }
@@ -265,12 +361,13 @@
 
     let activeDatabase = {};
 
-    // LOCAL STORAGE SYNC SYSTEM
     function initDatabaseMemory() {
+        // ALWAYS forcefully integrate base database updates over cached variables to clear rendering issues
         const cached = localStorage.getItem('school_house_matrix_db');
         if (cached) {
             try {
-                activeDatabase = JSON.parse(cached);
+                const parsed = JSON.parse(cached);
+                activeDatabase = Object.assign({}, baseDatabaseSeed, parsed);
             } catch(e) {
                 activeDatabase = {...baseDatabaseSeed};
             }
@@ -283,7 +380,6 @@
 
     function rebuildClassDropdownMenu() {
         const select = document.getElementById('masterClassSelect');
-        const currentSelection = select.value;
         select.innerHTML = '';
         
         Object.keys(activeDatabase).forEach(key => {
@@ -293,13 +389,10 @@
             select.appendChild(opt);
         });
 
-        if (currentSelection && activeDatabase[currentSelection]) {
-            select.value = currentSelection;
-        }
+        select.value = "t2p10"; // Force default selection lock
         renderBuilderInputs();
     }
 
-    // INTERACTIVE SYSTEM FORM COMPILER BUILDERS
     function renderBuilderInputs() {
         const activeClassKey = document.getElementById('masterClassSelect').value;
         if (!activeClassKey || !activeDatabase[activeClassKey]) return;
@@ -344,10 +437,10 @@
             groupDiv.appendChild(label);
             groupDiv.appendChild(select);
 
-            // Clean code prefix matching pattern selectors
-            if (catName.includes('p1_') || catName.startsWith('1.')) p1Cont.appendChild(groupDiv);
-            else if (catName.includes('p2_') || catName.startsWith('2.')) p2Cont.appendChild(groupDiv);
-            else if (catName.includes('p3_') || catName.startsWith('3.')) p3Cont.appendChild(groupDiv);
+            // Parser logic looks at key signature formats inside database allocations safely
+            if (catName.startsWith('p1_') || catName.includes('p1_') || catName.startsWith('1.')) p1Cont.appendChild(groupDiv);
+            else if (catName.startsWith('p2_') || catName.includes('p2_') || catName.startsWith('2.')) p2Cont.appendChild(groupDiv);
+            else if (catName.startsWith('p3_') || catName.includes('p3_') || catName.startsWith('3.')) p3Cont.appendChild(groupDiv);
         });
 
         compileReportOutput();
@@ -372,9 +465,9 @@
             let text = data.subcategories[catName][chosenKey];
             text = text.replace(/\[name\]/g, name).replace(/\[house\]/g, houseCombined).replace(/House House/g, 'House');
 
-            if (catName.includes('p1_') || catName.startsWith('1.')) p1.push(text);
-            if (catName.includes('p2_') || catName.startsWith('2.')) p2.push(text);
-            if (catName.includes('p3_') || catName.startsWith('3.')) p3.push(text);
+            if (catName.startsWith('p1_') || catName.includes('p1_') || catName.startsWith('1.')) p1.push(text);
+            if (catName.startsWith('p2_') || catName.includes('p2_') || catName.startsWith('2.')) p2.push(text);
+            if (catName.startsWith('p3_') || catName.includes('p3_') || catName.startsWith('3.')) p3.push(text);
         });
 
         let out = '';
@@ -386,16 +479,14 @@
         document.getElementById('narrativeOutput').innerText = out.trim() || 'Select metrics above to map statements...';
     }
 
-    // NATIVE JAVASCRIPT OBJECT RAW CHUNK INGESTION PARSER
     function importCustomCodeMatrix() {
         const key = document.getElementById('newClassKey').value.trim();
         const title = document.getElementById('newClassName').value.trim();
         const rawFragment = document.getElementById('newClassJSON').value.trim();
 
-        if (!key || !title || !rawFragment) { alert('Please execute all configuration parameters text tracking zones.'); return; }
+        if (!key || !title || !rawFragment) { alert('Please enter all parameters.'); return; }
 
         try {
-            // Evaluates raw JS Object syntax literal fragments completely and safely in memory
             const evaluatedObject = new Function(`return { ${rawFragment} };`)();
             
             const structuredClassProfile = {
@@ -406,30 +497,32 @@
                 subcategories: {}
             };
 
-            // Re-map internal structural keys natively to the engine components
             Object.keys(evaluatedObject).forEach(itemKey => {
-                structuredClassProfile.subcategories[itemKey] = evaluatedObject[itemKey];
+                // Dynamically re-assign clean descriptors so structural categorization works seamlessly
+                let descriptiveLabel = itemKey;
+                if(itemKey.startsWith('p1_')) descriptiveLabel = `${itemKey}: Category Segment`;
+                if(itemKey.startsWith('p2_')) descriptiveLabel = `${itemKey}: Category Segment`;
+                if(itemKey.startsWith('p3_')) descriptiveLabel = `${itemKey}: Category Segment`;
+                
+                structuredClassProfile.subcategories[descriptiveLabel] = evaluatedObject[itemKey];
             });
 
+            const storageMap = JSON.parse(localStorage.getItem('school_house_matrix_db') || '{}');
+            storageMap[key] = structuredClassProfile;
+            localStorage.setItem('school_house_matrix_db', JSON.stringify(storageMap));
+            
             activeDatabase[key] = structuredClassProfile;
-            localStorage.setItem('school_house_matrix_db', JSON.stringify(activeDatabase));
             
             showToast('Code Fragment Successfully Loaded into System Memory!');
             rebuildClassDropdownMenu();
             document.getElementById('masterClassSelect').value = key;
             renderBuilderInputs();
             switchView('builderView', document.querySelectorAll('.tab-btn')[0]);
-
-            // Clear configuration workspace elements
-            document.getElementById('newClassKey').value = '';
-            document.getElementById('newClassName').value = '';
-            document.getElementById('newClassJSON').value = '';
         } catch(e) {
-            alert('Syntax Verification Failure. Please inspect your code block format structure:\n' + e.message);
+            alert('Syntax Verification Failure. Check code formatting:\n' + e.message);
         }
     }
 
-    // VIEW ROUTING
     function switchView(viewId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -456,10 +549,10 @@
     }
 
     function wipeMemoryStorage() {
-        if(confirm('Confirm tracking reset loop back to clean setup? All input keys will clean.')) {
+        if(confirm('Reset all structural tracking back to master baseline state?')) {
             localStorage.removeItem('school_house_matrix_db');
             initDatabaseMemory();
-            showToast('Custom matrices removed.');
+            showToast('Custom memory loops cleared and normalized completely.');
         }
     }
 
@@ -468,7 +561,6 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // WORKSPACE EVENT WIRES
     document.getElementById('masterClassSelect').addEventListener('change', renderBuilderInputs);
     document.getElementById('studentName').addEventListener('input', compileReportOutput);
     document.getElementById('houseName').addEventListener('change', compileReportOutput);
