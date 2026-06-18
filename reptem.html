@@ -47,7 +47,7 @@
                 </label>
                 <input type="text" id="personalisedLine" placeholder="e.g. He completed class tasks with neat determination..." oninput="updateReport()"
                        class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition duration-150">
-                <p class="text-xs text-slate-500 italic">| Focus on particularity: outstanding in-house activities or day-to-day routines.</p>
+                <p class="text-xs text-slate-500 italic">| Focus on particularity: .</p>
             </div>
         </div>
 
@@ -256,7 +256,7 @@
         
         // Inject Personalised line instructions if they are set
         if (pLine) {
-            reportText += `Please nudge/weave into this report according to this personalised line, noting that ${name} is from [House]: (${pLine})\n\n\n`;
+            reportText += `Please nudge/weave into this report according to this personalised line, noting that ${name} is: (${pLine})\n\n\n`;
         }
 
         // Section 1 evaluation
