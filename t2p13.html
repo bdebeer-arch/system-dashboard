@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymathic House Report Builder Tool</title>
+    <style>
+        :root {
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-600: #475569;
+            --slate-100: #f1f5f9;
+            --blue-600: #2563eb;
+            --blue-700: #1d4ed8;
+            --blue-500: #3b82f6;
+            --emerald-600: #059669;
+            --border-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--slate-900);
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+        }
+
+        header {
+            border-bottom: 2px solid var(--slate-100);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            color: var(--slate-800);
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        header p {
+            color: var(--slate-600);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            background: var(--slate-100);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--slate-800);
+            font-size: 0.9rem;
+        }
+
+        .form-group label span {
+            font-weight: 400;
+            color: var(--slate-600);
+            font-style: italic;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 0.65rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: var(--slate-900);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--blue-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--slate-800);
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .matrix-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .preview-box {
+            margin-top: 3rem;
+            background: var(--slate-900);
+            color: var(--slate-100);
+            padding: 2rem;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .preview-box h2 {
+            font-size: 1.1rem;
+            color: var(--blue-500);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .preview-content {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            min-height: 150px;
+        }
+
+        .actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            background-color: var(--blue-600);
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background-color: var(--blue-700);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--emerald-600);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Polymathic House Report Builder</h1>
+        <p>A precision systems partnership matrix configuration built exclusively for Byron.</p>
+    </header>
+
+    <!-- Meta Fields Grid -->
+    <div class="meta-grid">
+        <div class="form-group">
+            <label for="studentName">Student First Name</label>
+            <input type="text" id="studentName" placeholder="Enter student's first name..." oninput="updateReport()">
+        </div>
+        <div class="form-group">
+            <label for="houseAllocation">House Allocation</label>
+            <select id="houseAllocation" onchange="updateReport()">
+                <option value="">-- Select House --</option>
+                <option value="School House">School House</option>
+                <option value="Fitchett House">Fitchett House</option>
+                <option value="Hamilton House">Hamilton House</option>
+                <option value="Hall House">Hall House</option>
+            </select>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="personalisedLine">1 Sentence Summary (Personalised Line) <span>| Focus on particularity: outstanding in house activities or day-to-day routines.</span></label>
+            <input type="text" id="personalisedLine" placeholder="Enter custom focus or key performance note..." oninput="updateReport()">
+        </div>
+    </div>
+
+    <!-- PARAGRAPH 1 ELEMENTS -->
+    <div class="section-title">Paragraph 1: The Student</div>
+    <div class="matrix-grid">
+        <div class="form-group">
+            <label for="sub_1_1">1.1 Persona and House Dispositions</label>
+            <select id="sub_1_1" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="exemplary">Catalytic Leader [Exemplary]</option>
+                <option value="positive">Purposeful Contributor [Positive]</option>
+                <option value="steady">Steady Presence [Steady]</option>
+                <option value="reserved">Quietly Observant [Reserved]</option>
+                <option value="quiet">Unassuming Spectator [Quiet]</option>
+                <option value="detached">Detached Resident [Detached]</option>
+                <option value="disengaged">Disengaged Individual [Disengaged]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_1_2">1.2 Social Integration and Peer Dynamics</label>
+            <select id="sub_1_2" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="harmonious">Inspiriting Pillar [Harmonious]</option>
+                <option value="affable">Affable Cohort Asset [Affable]</option>
+                <option value="sociable">Constructive Peer [Sociable]</option>
+                <option value="content">Insular Companion [Content]</option>
+                <option value="selective">Withdrawn Hermit [Selective]</option>
+                <option value="isolated">Socially Isolated [Isolated]</option>
+                <option value="friction">Socially Frictional [Friction]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_1_3">1.3 Character, Integrity, and Conduct</label>
+            <select id="sub_1_3" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="integrity">Immaculate Mana [Integrity]</option>
+                <option value="respectful">Highly Well-Regarded [Respectful]</option>
+                <option value="consistent">Respectfully Compliant [Consistent]</option>
+                <option value="unassuming">Gentle / Untested [Unassuming]</option>
+                <option value="variable">Inconsistently Mature [Variable]</option>
+                <option value="lax">Lapsing Self-Discipline [Lax]</option>
+                <option value="unacceptable">Severely Defiant [Unacceptable]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_1_4">1.4 House Presence and Visibility</label>
+            <select id="sub_1_4" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="prominent">Immaculate Tone-Setter [Prominent]</option>
+                <option value="visible">Communal Anchor [Visible]</option>
+                <option value="regular">Regular Attendee [Regular]</option>
+                <option value="intermittent">Intermittently Present [Intermittent]</option>
+                <option value="minimal">Peripherally Visible [Minimal]</option>
+                <option value="sporadic">Sporadically Attendent [Sporadic]</option>
+                <option value="absent">Chronically Absent [Absent]</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- PARAGRAPH 2 ELEMENTS -->
+    <div class="section-title">Paragraph 2: Involvement</div>
+    <div class="matrix-grid">
+        <div class="form-group">
+            <label for="sub_2_1">2.1 Formal Portfolios and Leadership Roles</label>
+            <select id="sub_2_1" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="transformative">Inspiring Servant-Leader [Transformative]</option>
+                <option value="commendable">Dependable Role Model [Commendable]</option>
+                <option value="capable">Compliant Custodian [Capable]</option>
+                <option value="passive">Passive Incumbent [Passive]</option>
+                <option value="underwhelming">Underwhelming Execution [Underwhelming]</option>
+                <option value="negligent">Negligent of Duty [Negligent]</option>
+                <option value="abdicated">Total Portfolio Abdication [Abdicated]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_2_2">2.2 Co-Curricular and Sporting Cultural Contributions</label>
+            <select id="sub_2_2" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="champion">Flagship Vanguard [Champion]</option>
+                <option value="dedicated">Integral Team Member [Dedicated]</option>
+                <option value="participant">Reliable Participant [Participant]</option>
+                <option value="modest">Modest Contributor [Modest]</option>
+                <option value="limited">Peripheral Engagement [Limited]</option>
+                <option value="inert">Inert Non-Participant [Inert]</option>
+                <option value="refusal">Active Avoidance [Refusal]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_2_3">2.3 Organic Participation and Initiative</label>
+            <select id="sub_2_3" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="catalytic">Catalytic Engine [Catalytic]</option>
+                <option value="eager">Eager Volunteer [Eager]</option>
+                <option value="willing">Willing Participant [Willing]</option>
+                <option value="reactive">Reactive Participant [Reactive]</option>
+                <option value="reluctant">Reluctant Complier [Reluctant]</option>
+                <option value="uncooperative">Persistent Evader [Uncooperative]</option>
+                <option value="obstructive">Obstructive Resister [Obstructive]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_2_4">2.4 Cultural Alignment (Kotahitanga / Whanaungatanga)</label>
+            <select id="sub_2_4" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="anchored">Cultural Pillar [Anchored]</option>
+                <option value="aligned">Beautifully Aligned [Aligned]</option>
+                <option value="supportive">Supportively Respectful [Supportive]</option>
+                <option value="disconnected">Culturally Detached [Disconnected]</option>
+                <option value="indifferent">Indifferent to Identity [Indifferent]</option>
+                <option value="aloof">Aloof Outsider [Aloof]</option>
+                <option value="adversarial">Adversarial Disruptor [Adversarial]</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- PARAGRAPH 3 ELEMENTS -->
+    <div class="section-title">Paragraph 3: Next Steps</div>
+    <div class="matrix-grid">
+        <div class="form-group">
+            <label for="sub_3_1">3.1 Junior Mentorship and Role Modelling</label>
+            <select id="sub_3_1" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="inspiring">Legacy Mentor [Inspiring]</option>
+                <option value="guide">Intentional Guide [Guide]</option>
+                <option value="model">Conscious Senior Model [Model]</option>
+                <option value="visualise">Passive Example [Visualise]</option>
+                <option value="awaken">Required Adjuster [Awaken]</option>
+                <option value="neglected">Detached Precedent [Neglected]</option>
+                <option value="critical">Critical Reversal Required [Critical]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_3_2">3.2 Profile Elevation and Space Ownership</label>
+            <select id="sub_3_2" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="vanguard">Vanguard Commander [Vanguard]</option>
+                <option value="elevate">Visible Self-Advocate [Elevate]</option>
+                <option value="advance">Active Self-Promoter [Advance]</option>
+                <option value="venture">Comfort-Zone Voyager [Venture]</option>
+                <option value="assert">Passive Spectator Shift [Assert]</option>
+                <option value="confront">Insular Retreat Breaker [Confront]</option>
+                <option value="urgent">Urgent Self-Re-evaluation [Urgent]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_3_3">3.3 Institutional Service Legacy</label>
+            <select id="sub_3_3" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="legacy">Stellar Legacy Architect [Legacy]</option>
+                <option value="excellence">Servant-Leadership Model [Excellence]</option>
+                <option value="contribution">Steady Contributor [Contribution]</option>
+                <option value="potential">Unlocking Contributor [Potential]</option>
+                <option value="underdeveloped">Unwritten Track Record [Underdeveloped]</option>
+                <option value="deficient">Deficient Track Record [Deficient]</option>
+                <option value="redemptive">Personal Rehabilitation Focus [Redemptive]</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sub_3_4">3.4 Systemic Re-engagement and Consistency</label>
+            <select id="sub_3_4" onchange="updateReport()">
+                <option value="">-- Select Tier --</option>
+                <option value="standard">Flawless Continuity [Standard]</option>
+                <option value="sustain">Sustained Momentum [Sustain]</option>
+                <option value="consolidate">Consolidated Routine [Consolidate]</option>
+                <option value="align">Align Inconsistencies [Align]</option>
+                <option value="rectify">Rectify Patchy Engagement [Rectify]</option>
+                <option value="reengage">Complete Re-engagement [Reengage]</option>
+                <option value="mandatory">Mandatory Compliance Pipeline [Mandatory]</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Preview Pane Display Layout -->
+    <div class="preview-box">
+        <h2>Live Generated Report Preview Pane</h2>
+        <div class="preview-content" id="reportPreview">[Name Placeholder], [Paragraph 1 Content Empty]</div>
+        <div class="actions">
+            <button class="btn" onclick="copyToClipboard()">Copy Compiled Report</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toastBox">Report copied to system buffer!</div>
+
+<script>
+    // System database mapping using responsive keywords and arrays
+    const matrixDB = {
+        sub_1_1: {
+            exemplary: "is an exceptionally proactive and personable member of [H] who brings boundless energy and meaningful initiative to his daily interactions.",
+            positive: "is a purposeful and reliable member of [H] who approaches daily life with an admirable sense of pride and enthusiasm.",
+            steady: "is a cooperative member of [H] who displays a steady presence and a generally reliable disposition.",
+            reserved: "is a quietly observant student who contributes to [H] with sincerity and steadiness, though he often remains in the background.",
+            quiet: "maintains a highly reserved approach to daily life, navigating his routines in an unassuming manner that lacks active engagement.",
+            detached: "presents a detached demeanour within the community, showing limited personal investment or pride in his connection to [H].",
+            disengaged: "demonstrates a highly indifferent attitude towards daily operations, showing a distinct lack of purpose and accountability within [H]."
+        },
+        sub_1_2: {
+            harmonious: "He has developed profound relationships across all age groups, bringing an exceptionally warm, inclusive, and vibrant energy to the communal spaces.",
+            affable: "He possesses a strong peer network and an easy rapport with both staff and peers, adding a distinct layer of camaraderie to the senior cohort.",
+            sociable: "He interacts positively and politely with those around him, contributing constructively to the overall social fabric of the group.",
+            content: "He enjoys the dry wit and light-hearted banter of his immediate senior peers, though he rarely expands his social circle beyond them.",
+            selective: "He tends to keep to himself, interacting only with a small, familiar group of peers while remaining distant from the wider cohort.",
+            isolated: "He isolates himself from standard social circles, showing minimal interest in building relationships or connecting with his peers.",
+            friction: "His interactions are frequently strained or unproductive, resulting in an inability to integrate positively into the communal life of the house."
+        },
+        sub_1_3: {
+            integrity: "He embodies our core values at the highest level, admired across the school for his deep humility, moral uprightness, and undeniable mana.",
+            respectful: "He carries himself with a calm confidence and is highly well-regarded for his honesty, respectful conduct, and strength of character.",
+            consistent: "He is consistent in his conduct, maintaining a respectful attitude and a balanced approach to school rules and expectations.",
+            unassuming: "His conduct is generally sound and well-mannered, reflecting a gentle nature, though he has yet to establish a defining personal profile.",
+            variable: "His adherence to behavioral expectations is inconsistent, occasionally requiring gentle reminders regarding the standard of maturity expected of a senior.",
+            lax: "His standard of personal conduct is lapsing, often failing to demonstrate the respect and self-discipline foundational to our community.",
+            unacceptable: "His general conduct has fallen well short of expected benchmarks, showing an ongoing disregard for the values and behavioral frameworks of the house."
+        },
+        sub_1_4: {
+            prominent: "His exceptional visibility and constant, supportive presence in the common areas set an immaculate tone for the entire cohort.",
+            visible: "He is a highly consistent and dependable presence across all communal spaces, anchoring the daily life of the house.",
+            regular: "He maintains a regular and acceptable level of presence, participating in standard daily routines without issue.",
+            intermittent: "His physical presence within the shared spaces is intermittent, as he frequently withdraws to quiet or private areas.",
+            minimal: "His visibility within the house is quite limited, making it difficult for him to establish meaningful roots within the community.",
+            sporadic: "He has been plagued by sporadic attendance, failing to display a reliable or predictable presence during essential times.",
+            absent: "His chronic absence and failure to attend standard roll calls have significantly isolated him from the operational rhythms of the house."
+        },
+        sub_2_1: {
+            transformative: "He executes his prestigious senior leadership portfolio with brilliant organisation, absolute dedication, and an inspiring servant-leader mindset.",
+            commendable: "He fulfils his formal leadership role with genuine maturity and commitment, proving himself to be a highly dependable and respected figure.",
+            capable: "He manages his allocated portfolio duties adequately, demonstrating a basic level of responsibility and compliance.",
+            passive: "While he holds a senior leadership position, he needs to think more critically about how his daily presence can more actively support others.",
+            underwhelming: "His engagement with his formal leadership responsibilities has been minimal, leaving much of the execution to his peers.",
+            negligent: "He has largely neglected the duties associated with his formal portfolio, showing a lack of pride and accountability in his role.",
+            abdicated: "He has entirely abdicated his leadership responsibilities, demonstrating a complete failure to meet the obligations of his senior standing."
+        },
+        sub_2_2: {
+            champion: "As a premier athlete and a driving force in our flagship teams, his spectacular sporting contributions are universally appreciated.",
+            dedicated: "He is an integral member of the senior sports teams, dedicating significant time and energy to boosting the competitive spirit of the house.",
+            participant: "He participates reliably in scheduled co-curricular activities, representing his team with a commendable level of enthusiasm.",
+            modest: "His sporting and cultural contributions are modest, confined strictly to a single team environment with limited wider involvement.",
+            limited: "He shows only a peripheral interest in the sporting or cultural dimensions of the school, engaging only when explicitly required.",
+            inert: "He has failed to contribute meaningfully to any co-curricular activities this term, showing an indifferent attitude toward house representation.",
+            refusal: "He has actively avoided or refused participation in cultural and sporting commitments, entirely distancing himself from the competitive life of the house."
+        },
+        sub_2_3: {
+            catalytic: "He is always one of the absolute first to offer assistance, driving house initiatives forward with unmatched proactive energy.",
+            eager: "He displays a strong sense of initiative, engaging positively with routines and eagerly volunteering to support house events.",
+            willing: "He is a willing participant in group settings, answering calls for assistance reliably and executing standard tasks thoughtfully.",
+            reactive: "He participates only when directly called upon or prompted, showing a lack of spontaneous drive or independent proactivity.",
+            reluctant: "He demonstrates a reluctant attitude toward daily house routines, doing the absolute bare minimum to get by.",
+            uncooperative: "He regularly avoids minor house duties and displays a persistent uncooperativeness during routine communal cleanups.",
+            obstructive: "He actively resists and undermines basic house operations, demonstrating a thoroughly disruptive attitude toward collective routines."
+        },
+        sub_2_4: {
+            anchored: "He adds exceptional value to our community, serving as a powerful pillar of kotahitanga (unity) and whanaungatanga (belonging).",
+            aligned: "His daily efforts and presence contribute beautifully to the overall spirit of unity and shared identity that we strive to uphold.",
+            supportive: "He aligns well with the cultural values of the house, respecting communal traditions and maintaining supportive relationships.",
+            disconnected: "He has yet to fully immerse himself in the cultural fabric of the house, maintaining a somewhat detached relationship with its core values.",
+            indifferent: "He treats house identity and cultural frameworks with indifference, showing little care for building shared collective pride.",
+            aloof: "He stands aloof from the cultural expressions of the house, failing to appreciate or contribute to the community's inclusive spirit.",
+            adversarial: "His attitude is openly adversarial toward house traditions, actively fracturing the spirit of unity and kinship within the community."
+        },
+        sub_3_1: {
+            inspiring: "Looking ahead, he is inspired to leave a lasting legacy by deeply investing in the active, daily mentorship of our junior students.",
+            guide: "Looking ahead, he is encouraged to take ownership of his influence, providing intentional guidance and support to the younger boys.",
+            model: "Looking ahead, he is urged to build on this foundation by becoming a more conscious and active senior role model for the juniors.",
+            visualise: "Looking ahead, he is encouraged to consider how his daily conduct and presence can be leveraged to guide younger students more effectively.",
+            awaken: "Looking ahead, he must realise that younger members look up to him, necessitating a shift toward more visible, positive actions.",
+            neglected: "Looking ahead, he must urgently address his failure to engage with the juniors, as his current detachment sets a poor example.",
+            critical: "Looking ahead, it is critical that he completely reverses his behavior, as his negative example is currently detrimental to the younger students."
+        },
+        sub_3_2: {
+            vanguard: "Moving forward, he should confidently command the senior spaces, utilising his exceptional social intelligence to lift the entire community's tone.",
+            elevate: "Moving forward, he is encouraged to continue finding his voice and expanding his visibility across all areas of house life.",
+            advance: "Moving forward, he should seek out additional opportunities to step forward and lift his personal profile within the house.",
+            venture: "Moving forward, he is encouraged to step slightly outside his comfort zone to engage more confidently with diverse house events.",
+            assert: "Moving forward, he needs to assert himself more dynamically in common areas, transitioning from a passive spectator to an active contributor.",
+            confront: "Moving forward, he must confront his tendency to fade into the background, working intentionally to overcome his counterproductive insularity.",
+            urgent: "Moving forward, he must urgently re-evaluate his standing, shed his hostile shell, and find a constructive way to exist within the house spaces."
+        },
+        sub_3_3: {
+            legacy: "We thank him sincerely for his stellar service, and we look forward to the profound and lasting impact of his impeccable leadership legacy.",
+            excellence: "His integrity and reliable follow-through make him a model of servant leadership, and I look forward to his continued excellence.",
+            contribution: "His ongoing efforts add genuine value to our house culture, and we look forward to seeing his steady development continue.",
+            potential: "He has a solid foundation to build upon, and with greater focus, he can unlock his true potential as a senior contributor.",
+            underdeveloped: "His legacy remains completely unwritten; he must rapidly increase his effort if he wishes to leave a positive mark on the house.",
+            deficient: "His overall track record of service is highly deficient, requiring an immediate and massive shift in personal accountability.",
+            redemptive: "He must focus immediately on serious personal rehabilitation if he is to salvage his senior year and leave the house with any credit."
+        },
+        sub_3_4: {
+            standard: "He must simply maintain this flawless standard of operational alignment, ensuring his final terms remain exemplary.",
+            sustain: "He is encouraged to sustain this highly consistent momentum, keeping his daily alignment with house routines completely secure.",
+            consolidate: "He should focus on consolidating his daily routines, ensuring that his level of engagement remains reliable throughout the year.",
+            align: "He is encouraged to align himself more closely with the basic rhythms of daily house life, iron out minor inconsistencies, and show true reliability.",
+            rectify: "He must urgently rectify his patchy engagement with routines and demonstrate that he can be counted upon on a daily basis.",
+            reengage: "He must completely re-engage with the structured routines of the house, as his current levels of apathy are unsustainable.",
+            mandatory: "Full systemic compliance with all house schedules and attendance protocols is now strictly mandatory; further negligence will result in formal disciplinary action."
+        }
+    };
+
+    function updateReport() {
+        // Collect UI elements
+        const rawName = document.getElementById('studentName').value.trim();
+        const house = document.getElementById('houseAllocation').value;
+        const summary = document.getElementById('personalisedLine').value.trim();
+
+        const namePlaceholder = rawName || "[Name Placeholder]";
+        const housePlaceholder = house || "[House Placeholder]";
+
+        // Render Nudge Control logic pipeline
+        let finalOutput = "";
+        if (summary) {
+            finalOutput += `Please nudge this report according to this personalised line, noting that ${namePlaceholder} is from ${housePlaceholder}: (${summary})\n\n\n`;
+        } else {
+            finalOutput += `Please nudge this report according to this personalised line, noting that ${namePlaceholder} is from ${housePlaceholder}: (No summary entered)\n\n\n`;
+        }
+
+        // Process Sentence assembly pipelines with single padding configuration
+        function compileParagraph(subKeys) {
+            let buffer = [];
+            subKeys.forEach(key => {
+                const selectEl = document.getElementById(key);
+                if (selectEl && selectEl.value) {
+                    let text = matrixDB[key][selectEl.value];
+                    // Dynamic regex target replacements
+                    text = text.replace(/\[\s*]/g, namePlaceholder);
+                    text = text.replace(/\[H]/g, housePlaceholder);
+                    buffer.push(text);
+                }
+            });
+            return buffer.join(" ");
+        }
+
+        const p1 = compileParagraph(['sub_1_1', 'sub_1_2', 'sub_1_3', 'sub_1_4']);
+        const p2 = compileParagraph(['sub_2_1', 'sub_2_2', 'sub_2_3', 'sub_2_4']);
+        const p3 = compileParagraph(['sub_3_1', 'sub_3_2', 'sub_3_3', 'sub_3_4']);
+
+        // Check if selections are empty to offer robust fallbacks
+        let paragraphText = "";
+        paragraphText += p1 ? p1 + "\n\n" : "[Paragraph 1 Content Empty]\n\n";
+        paragraphText += p2 ? p2 + "\n\n" : "[Paragraph 2 Content Empty]\n\n";
+        paragraphText += p3 ? p3 : "[Paragraph 3 Content Empty]";
+
+        finalOutput += paragraphText;
+        document.getElementById('reportPreview').textContent = finalOutput;
+    }
+
+    function copyToClipboard() {
+        const textToCopy = document.getElementById('reportPreview').textContent;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const toast = document.getElementById('toastBox');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }).catch(err => {
+            console.error('Buffer read execution failure: ', err);
+        });
+    }
+
+    // Initialize with live update framework checks
+    updateReport();
+</script>
+
+</body>
+</html>
