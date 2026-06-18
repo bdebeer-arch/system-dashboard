@@ -17,6 +17,9 @@
             --tab-inactive: #e2e8f0;
             --success: #16a34a;
             --danger: #dc2626;
+            --helper-bg: #f0fdf4;
+            --helper-border: #bbf7d0;
+            --helper-text: #166534;
         }
 
         body {
@@ -89,6 +92,17 @@
         }
 
         .card.standalone { border-radius: 8px; }
+        
+        .card.helper-card {
+            background-color: var(--helper-bg);
+            border: 1px solid var(--helper-border);
+            border-radius: 8px;
+            color: var(--helper-text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+        }
 
         h2 { color: var(--accent); font-size: 1.25rem; margin-top: 0; margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--border); }
         .form-group { margin-bottom: 1.25rem; }
@@ -112,6 +126,8 @@
         button.success:hover { background-color: #15803d; }
         button.danger { background-color: var(--danger); }
         button.danger:hover { background-color: #b91c1c; }
+        button.helper-btn { background-color: var(--success); max-width: 320px; }
+        button.helper-btn:hover { background-color: #15803d; }
 
         .inspector-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
         .inspector-table th, .inspector-table td { border: 1px solid var(--border); padding: 0.75rem; text-align: left; vertical-align: top; }
@@ -194,6 +210,15 @@
 
     <!-- VIEW 3: SYSTEM CONFIGURATION MANAGER -->
     <div id="systemMemoryView" class="tab-content">
+        <!-- COVERT AI PROMPT GENERATION TOOL COUPLING -->
+        <div class="card helper-card">
+            <div>
+                <h3 style="margin: 0 0 0.25rem 0; color: #14532d; font-size: 1.1rem;">AI Matrix Conversion Blueprint</h3>
+                <p style="margin: 0; font-size: 0.88rem; color: #166534;">Have a new text document or HTML code script? Click the button to copy the engineering generation prompt, paste it to an AI with your file, and grab the raw payload.</p>
+            </div>
+            <button class="helper-btn" onclick="copyAIPromptBlueprint()">📋 Copy AI Generation Prompt</button>
+        </div>
+
         <div class="card standalone">
             <h2>Load & Append JavaScript Code Fragments</h2>
             <p class="subtitle" style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
@@ -239,7 +264,6 @@
 <div id="toast" class="toast">Action processed successfully!</div>
 
 <script>
-    // HARDCODED SYSTEM BASELINE SEED DATA BACKUPS (Now explicitly structured as standard subcategories)
     const baseDatabaseSeed = {
         t2p10: {
             title: "Y10a Pastoral Report",
@@ -362,7 +386,6 @@
     let activeDatabase = {};
 
     function initDatabaseMemory() {
-        // ALWAYS forcefully integrate base database updates over cached variables to clear rendering issues
         const cached = localStorage.getItem('school_house_matrix_db');
         if (cached) {
             try {
@@ -389,7 +412,7 @@
             select.appendChild(opt);
         });
 
-        select.value = "t2p10"; // Force default selection lock
+        select.value = "t2p10";
         renderBuilderInputs();
     }
 
@@ -437,7 +460,6 @@
             groupDiv.appendChild(label);
             groupDiv.appendChild(select);
 
-            // Parser logic looks at key signature formats inside database allocations safely
             if (catName.startsWith('p1_') || catName.includes('p1_') || catName.startsWith('1.')) p1Cont.appendChild(groupDiv);
             else if (catName.startsWith('p2_') || catName.includes('p2_') || catName.startsWith('2.')) p2Cont.appendChild(groupDiv);
             else if (catName.startsWith('p3_') || catName.includes('p3_') || catName.startsWith('3.')) p3Cont.appendChild(groupDiv);
@@ -479,6 +501,24 @@
         document.getElementById('narrativeOutput').innerText = out.trim() || 'Select metrics above to map statements...';
     }
 
+    function copyAIPromptBlueprint() {
+        const blueprint = `I am feeding you raw report comments/HTML scripts to be converted into a clean JSON-style JavaScript key-value structure for my modular Report Workbench loader.
+
+Instructions:
+1. Parse the text data attached below and organize the content into 3 target blocks (p1, p2, p3).
+2. Establish separate structural category sub-group tags (e.g., p1_1, p1_2, p2_1, p3_4).
+3. Under each sub-group tag, populate exactly 7 text choice variations mapped to short mnemonic keys.
+4. Replace raw student names with '[name]' and replace house names with '[house]'.
+5. Avoid adding the trailing word 'House' directly after the token, use '[house]' by itself.
+6. Provide raw JavaScript object properties code output only. Do NOT enclose inside standard markdown backticks blocks or JSON wrapper tags.
+
+[PASTE YOUR RAW CONTEXT DATA OR SCRIPT HTML CHUNKS HERE]`;
+
+        navigator.clipboard.writeText(blueprint).then(() => {
+            showToast('AI Engineering Blueprint copied to Clipboard!');
+        });
+    }
+
     function importCustomCodeMatrix() {
         const key = document.getElementById('newClassKey').value.trim();
         const title = document.getElementById('newClassName').value.trim();
@@ -498,11 +538,10 @@
             };
 
             Object.keys(evaluatedObject).forEach(itemKey => {
-                // Dynamically re-assign clean descriptors so structural categorization works seamlessly
                 let descriptiveLabel = itemKey;
-                if(itemKey.startsWith('p1_')) descriptiveLabel = `${itemKey}: Category Segment`;
-                if(itemKey.startsWith('p2_')) descriptiveLabel = `${itemKey}: Category Segment`;
-                if(itemKey.startsWith('p3_')) descriptiveLabel = `${itemKey}: Category Segment`;
+                if(itemKey.startsWith('p1_')) descriptiveLabel = `${itemKey}: Custom Parameter Element`;
+                if(itemKey.startsWith('p2_')) descriptiveLabel = `${itemKey}: Custom Parameter Element`;
+                if(itemKey.startsWith('p3_')) descriptiveLabel = `${itemKey}: Custom Parameter Element`;
                 
                 structuredClassProfile.subcategories[descriptiveLabel] = evaluatedObject[itemKey];
             });
