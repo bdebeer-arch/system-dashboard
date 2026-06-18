@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Builder</title>
+    <title>Y10 Report Builder</title>
     <style>
         :root {
             --primary: #1e293b;
@@ -112,8 +112,8 @@
 </head>
 <body>
 
-    <h1>10Math Report Builder</h1>
-    <p style="color: #64748b; margin-bottom: 2rem;">Modular narrative generator with dynamic personalization injection modules.</p>
+    <h1>Y10 Report Builder</h1>
+    <p style="color: #64748b; margin-bottom: 2rem;">Modular narrative generator featuring contextual, non-uniform dropdown parameters.</p>
 
     <div class="config-panel">
         <div class="matrix-grid" style="grid-template-columns: 1fr 2fr;">
@@ -199,147 +199,147 @@
     <script>
         const database = {
             p1s1: {
-                label: "Select Focus...",
+                label: "Work Ethic Profile",
                 items: {
-                    "Exemplary": "demonstrates an outstanding work ethic and a commendable, proactive approach to all classroom tasks.",
-                    "Diligent": "is a thoughtful and diligent student who consistently strives to complete all set work to a high standard.",
-                    "Fluctuating": "has shown the ability to focus beautifully at times, though maintaining this momentum consistently throughout lessons remains an area for growth.",
-                    "Passive": "approaches classroom tasks with a polite manner but requires encouragement to engage with more determination and urgency.",
-                    "Distracted": "is capable of engaging with the curriculum material but frequently loses focus or becomes distracted by peers during lessons.",
-                    "Avoidant": "struggles with classroom momentum and occasionally utilises avoidance strategies to delay starting designated tasks.",
-                    "Supervised": "possesses natural ability but is inclined to make poor choices regarding focus unless working under close supervision."
+                    "Exemplary Ethic": "demonstrates an outstanding work ethic and a commendable, proactive approach to all classroom tasks.",
+                    "Diligent Focus": "is a thoughtful and diligent student who consistently strives to complete all set work to a high standard.",
+                    "Fluctuating Momentum": "has shown the ability to focus beautifully at times, though maintaining this momentum consistently throughout lessons remains an area for growth.",
+                    "Passive Effort": "approaches classroom tasks with a polite manner but requires encouragement to engage with more determination and urgency.",
+                    "Easily Distracted": "is capable of engaging with the curriculum material but frequently loses focus or becomes distracted by peers during lessons.",
+                    "Avoidant Approach": "struggles with classroom momentum and occasionally utilises avoidance strategies to delay starting designated tasks.",
+                    "Supervision Required": "possesses natural ability but is inclined to make poor choices regarding focus unless working under close supervision."
                 }
             },
             p1s2: {
-                label: "Select Disposition...",
+                label: "Classroom Manner",
                 items: {
-                    "Exemplary": "He is a polite, mature, and focused student whose positive presence enhances the classroom environment.",
-                    "Conscientious": "He is a polite, conscientious, and attentive student who is a genuine pleasure to teach.",
-                    "Courteous": "He is a courteous, friendly, and respectful young man who relates well to both staff and peers.",
-                    "Social": "He is naturally a social young man who brings high levels of energy and enthusiasm to our lessons.",
-                    "Reserved": "He is a quiet and reserved member of the class who sets about tasks in a calm, polite manner.",
-                    "Unsettled": "He maintains a pleasant manner but can display silly behaviour that requires firm redirection to maintain classroom focus.",
-                    "Reticent": "He is polite and courteous in personal interactions but remains reticent to fully invest himself in classroom routines."
+                    "Polite / Mature": "He is a polite, mature, and focused student whose positive presence enhances the classroom environment.",
+                    "Pleasure to Teach": "He is a polite, conscientious, and attentive student who is a genuine pleasure to teach.",
+                    "Friendly / Courteous": "He is a courteous, friendly, and respectful young man who relates well to both staff and peers.",
+                    "Social / Enthusiastic": "He is naturally a social young man who brings high levels of energy and enthusiasm to our lessons.",
+                    "Quiet / Reserved": "He is a quiet and reserved member of the class who sets about tasks in a calm, polite manner.",
+                    "Silly / Unsettled": "He maintains a pleasant manner but can display silly behaviour that requires firm redirection to maintain classroom focus.",
+                    "Reticent / Distant": "He is polite and courteous in personal interactions but remains reticent to fully invest himself in classroom routines."
                 }
             },
             p1s3: {
-                label: "Select Engagement...",
+                label: "Engagement Style",
                 items: {
-                    "Collaborative": "Furthermore, he is keen to discuss mathematical ideas and strategies constructively with his peers and with me.",
-                    "Proactive": "Furthermore, he actively engages in lessons, contributes thoughtfully to discussions, and asks questions to deepen his understanding.",
-                    "Independent": "Furthermore, he possesses strong mathematical skills and frequently works independently with great confidence in class.",
-                    "Developing": "Furthermore, he has started to ask for help when needed in class and is beginning to see the value of collaborative learning.",
-                    "Passive": "Furthermore, he works quietly but is hesitant to actively participate in classroom discussions or seek help when unsure.",
-                    "Assisted": "Furthermore, he responds well to one-on-one guidance but requires regular reassurance to start and progress through tasks.",
-                    "Selective": "Furthermore, he engages well when motivated, but must ensure classroom interactions with peers remain strictly focused on the set work."
+                    "Collaborative Peer": "Furthermore, he is keen to discuss mathematical ideas and strategies constructively with his peers and with me.",
+                    "Proactive Contributor": "Furthermore, he actively engages in lessons, contributes thoughtfully to discussions, and asks questions to deepen his understanding.",
+                    "Independent Operator": "Furthermore, he possesses strong mathematical skills and frequently works independently with great confidence in class.",
+                    "Developing Communicator": "Furthermore, he has started to ask for help when needed in class and is beginning to see the value of collaborative learning.",
+                    "Passive Observer": "Furthermore, he works quietly but is hesitant to actively participate in classroom discussions or seek help when unsure.",
+                    "Assisted Progress": "Furthermore, he responds well to one-on-one guidance but requires regular reassurance to start and progress through tasks.",
+                    "Selective Interaction": "Furthermore, he engages well when motivated, but must ensure classroom interactions with peers remain strictly focused on the set work."
                 }
             },
             p1s4: {
-                label: "Select Self-Management...",
+                label: "Self-Management",
                 items: {
-                    "Exemplary": "He demonstrates exceptional self-management skills, consistently completing all homework tasks and maintaining excellent classroom organization.",
-                    "Consistent": "He is a reliable student who regularly completes his homework and arrives fully prepared for every lesson.",
-                    "Intermittent": "He generally manages his responsibilities well, though greater consistency with routine homework completion would further support his learning.",
-                    "Unprepared": "He has been guilty on occasion of not bringing the necessary gear to class, which directly hinders his academic readiness.",
-                    "Disrupted": "He struggles with time-management at the start of lessons, often delaying tasks by fiddling with non-essential items.",
-                    "Device-Dependent": "He can be found off-task or using his school device inappropriately, an occurrence that needs to decrease significantly in frequency.",
-                    "Unresolved": "He lacks personal ownership of his daily education, showing a low work output and a reluctance to follow direct structural instructions."
+                    "Excellent Homework": "He demonstrates exceptional self-management skills, consistently completing all homework tasks and maintaining excellent classroom organization.",
+                    "Reliable / Prepared": "He is a reliable student who regularly completes his homework and arrives fully prepared for every lesson.",
+                    "Intermittent Routine": "He generally manages his responsibilities well, though greater consistency with routine homework completion would further support his learning.",
+                    "Unprepared (Gear)": "He has been guilty on occasion of not bringing the necessary gear to class, which directly hinders his academic readiness.",
+                    "Disrupted Start": "He struggles with time-management at the start of lessons, often delaying tasks by fiddling with non-essential items.",
+                    "Device Misuse": "He can be found off-task or using his school device inappropriately, an occurrence that needs to decrease significantly in frequency.",
+                    "Lacks Ownership": "He lacks personal ownership of his daily education, showing a low work output and a reluctance to follow direct structural instructions."
                 }
             },
             p2s1: {
-                label: "Select Assessment...",
+                label: "Exam Performance",
                 items: {
-                    "Excellent": "In terms of performance, he achieved outstanding results in the mid-year examination, securing Excellence grades across all assessed topic areas.",
-                    "Commendable": "In terms of performance, he performed very well in the mid-year examination, achieving highly pleasing success across the paper including top-tier grades.",
-                    "Satisfactory": "In terms of performance, he managed to secure a solid passing grade across all examined topic areas, demonstrating a satisfactory baseline of knowledge.",
-                    "Mixed": "In terms of performance, he achieved mixed results in his examination, finding clear success in some sections while falling short of a pass in others.",
-                    "Marginal": "In terms of performance, he fell just short of a passing grade in multiple sections of the examination by the narrowest of margins.",
-                    "Unsuccessful": "In terms of performance, he was unable to find success or meet the passing thresholds across the various sections of his mid-year examination.",
-                    "Incomplete": "In terms of performance, he struggled significantly with the examination format, leaving the vast majority of the assessment papers unattempted."
+                    "Excellence Profile": "In terms of performance, he achieved outstanding results in the mid-year examination, securing Excellence grades across all assessed topic areas.",
+                    "Highly Pleasing Pass": "In terms of performance, he performed very well in the mid-year examination, achieving highly pleasing success across the paper including top-tier grades.",
+                    "Satisfactory Pass": "In terms of performance, he managed to secure a solid passing grade across all examined topic areas, demonstrating a satisfactory baseline of knowledge.",
+                    "Mixed / Partial Success": "In terms of performance, he achieved mixed results in his examination, finding clear success in some sections while falling short of a pass in others.",
+                    "Marginal Non-Pass": "In terms of performance, he fell just short of a passing grade in multiple sections of the examination by the narrowest of margins.",
+                    "Unsuccessful Result": "In terms of performance, he was unable to find success or meet the passing thresholds across the various sections of his mid-year examination.",
+                    "Incomplete Attempt": "In terms of performance, he struggled significantly with the examination format, leaving the vast majority of the assessment papers unattempted."
                 }
             },
             p2s2: {
-                label: "Select Skills...",
+                label: "Topic-Specific Mastery",
                 items: {
-                    "All-Rounder": "He demonstrated comprehensive curriculum mastery, showing a highly advanced grasp across all four assessed mathematical topics.",
-                    "Algebraic-Focus": "He showed particularly strong capabilities in the abstract sections of the course, such as algebraic manipulation and solving linear equations.",
-                    "Geometric-Focus": "He found clear success in the geometric components of the curriculum, showcasing strong skills in right-angled Trigonometry.",
-                    "Statistical-Focus": "He demonstrated a solid conceptual grasp of data and risk, executing Probability calculations and data tables accurately.",
-                    "Graphical-Focus": "He excelled in the visual components of the course, particularly within the Patterns and Graphs section of the curriculum.",
-                    "Inconsistent": "He displayed glimpses of mathematical understanding in isolated topics, but lacked the procedural consistency required to secure standard passing grades across the board.",
-                    "Deficit": "He struggled to master the foundational skills required this term, finding both the algebraic and geometric concepts a significant challenge."
+                    "Comprehensive Master": "He demonstrated comprehensive curriculum mastery, showing a highly advanced grasp across all four assessed mathematical topics.",
+                    "Strong Algebraic Skill": "He showed particularly strong capabilities in the abstract sections of the course, such as algebraic manipulation and solving linear equations.",
+                    "Strong Geometric Skill": "He found clear success in the geometric components of the curriculum, showcasing strong skills in right-angled Trigonometry.",
+                    "Strong Statistical Skill": "He demonstrated a solid conceptual grasp of data and risk, executing Probability calculations and data tables accurately.",
+                    "Strong Graphical Skill": "He excelled in the visual components of the course, particularly within the Patterns and Graphs section of the curriculum.",
+                    "Inconsistent Performance": "He displayed glimpses of mathematical understanding in isolated topics, but lacked the procedural consistency required to secure standard passing grades across the board.",
+                    "Significant Topic Deficit": "He struggled to master the foundational skills required this term, finding both the algebraic and geometric concepts a significant challenge."
                 }
             },
             p2s3: {
-                label: "Select Cognitive Style...",
+                label: "Cognitive Style",
                 items: {
-                    "Conceptual": "He demonstrated excellent conceptual understanding, moving well beyond mechanical problem-solving to excel in unfamiliar contexts.",
-                    "Analytical": "He displayed a sharp analytical mind, demonstrating a strong capability to interpret word problems and geometric diagrams accurately.",
-                    "Procedural": "He shows a solid grasp of procedural skills when working through standard, well-practised mathematical formulas.",
-                    "Mechanical": "He is capable of solving problems mechanically but needs to deepen his conceptual understanding to tackle complex tasks.",
-                    "Transfer-Deficit": "He possesses a satisfactory baseline of knowledge but struggles to transfer his skills or apply information to unfamiliar contexts.",
-                    "Abstract-Challenge": "He copes well with tangible, visual data but is easily confused when the mathematical concepts become more abstract in nature.",
-                    "Communication-Deficit": "He shows glimpses of mathematical understanding but lacks the communication skills required to show his working clearly."
+                    "Deep Conceptual Base": "He demonstrated excellent conceptual understanding, moving well beyond mechanical problem-solving to excel in unfamiliar contexts.",
+                    "Sharp Analytical View": "He displayed a sharp analytical mind, demonstrating a strong capability to interpret word problems and geometric diagrams accurately.",
+                    "Solid Procedural Skill": "He shows a solid grasp of procedural skills when working through standard, well-practised mathematical formulas.",
+                    "Mechanical Execution": "He is capable of solving problems mechanically but needs to deepen his conceptual understanding to tackle complex tasks.",
+                    "Transfer Challenges": "He possesses a satisfactory baseline of knowledge but struggles to transfer his skills or apply information to unfamiliar contexts.",
+                    "Abstract Confusion": "He copes well with tangible, visual data but is easily confused when the mathematical concepts become more abstract in nature.",
+                    "Communication Gaps": "He shows glimpses of mathematical understanding but lacks the communication skills required to show his working clearly."
                 }
             },
             p2s4: {
-                label: "Select External Factor...",
+                label: "Assessment Context",
                 items: {
-                    "Prepared": "His thorough prep work and utilisation of class revision time effectively supported his performance under exam conditions.",
-                    "Anxious": "It is highly probable that he struggled to manage the acute pressures of a high-stakes examination environment at this point in time.",
-                    "Rushed": "His outcome reflects a slight lack of examination experience, as he rushed through the paper and mismanaged his allocated time.",
-                    "Absence-Impacted": "He experienced a significant period of absence immediately preceding the assessment, which directly impacted his final results.",
-                    "Medical-Impacted": "He faced ongoing health challenges this term that inevitably disrupted his learning continuity and limited his assessment availability.",
-                    "Late-Preparation": "He unfortunately left his revision until it was 'too little, too late,' leaving him under-prepared for the scope of the paper.",
-                    "Effort-Deficit": "This outcome remains reflective of his lower output in class, as evidenced by the large sections of the assessment paper left unattempted."
+                    "Thorough Revision Use": "His thorough prep work and utilisation of class revision time effectively supported his performance under exam conditions.",
+                    "Assessment Anxiety": "It is highly probable that he struggled to manage the acute pressures of a high-stakes examination environment at this point in time.",
+                    "Rushed Time Management": "His outcome reflects a slight lack of examination experience, as he rushed through the paper and mismanaged his allocated time.",
+                    "Impact of Absence": "He experienced a significant period of absence immediately preceding the assessment, which directly impacted his final results.",
+                    "Impact of Medical Issues": "He faced ongoing health challenges this term that inevitably disrupted his learning continuity and limited his assessment availability.",
+                    "Late Preparation Burst": "He unfortunately left his revision until it was 'too little, too late,' leaving him under-prepared for the scope of the paper.",
+                    "Low Classroom Output": "This outcome remains reflective of his lower output in class, as evidenced by the large sections of the assessment paper left unattempted."
                 }
             },
             p3s1: {
-                label: "Select Recommendation...",
+                label: "Pathway Progression",
                 items: {
-                    "Accelerated": "Looking ahead, he possesses a strong mathematical foundation and is exceptionally well prepared for the rigorous demands of advanced senior mathematics courses.",
-                    "Mainstream": "Looking ahead, he is developing the solid analytical habits required for success and is well placed to transition into Year 11 Mathematics.",
-                    "General": "Given his specific struggles with abstract concepts, I highly recommend that he selects Year 11 General Mathematics next year.",
-                    "Slow-Paced": "Looking ahead, he would benefit from an academic pathway where the pace is slower, allowing him more time to thoroughly digest the curriculum material.",
-                    "Review-Required": "His senior pathway suitability has been impacted by persistent absences, and he must complete targeted bridging work before confirming his options.",
-                    "Conditional": "He has current aspirations for higher-tier mathematics, but this examination result indicates that significant consolidation is required to support that choice.",
-                    "Numeracy-Focus": "Looking ahead, he should focus his senior academic path towards functional numeracy modules to secure essential foundational qualification standards."
+                    "Advanced Senior Prep": "Looking ahead, he possesses a strong mathematical foundation and is exceptionally well prepared for the rigorous demands of advanced senior mathematics courses.",
+                    "Standard Year 11 Entry": "Looking ahead, he is developing the solid analytical habits required for success and is well placed to transition into Year 11 Mathematics.",
+                    "General Mathematics Rec": "Given his specific struggles with abstract concepts, I highly recommend that he selects Year 11 General Mathematics next year.",
+                    "Slower-Paced Recommendation": "Looking ahead, he would benefit from an academic pathway where the pace is slower, allowing him more time to thoroughly digest the curriculum material.",
+                    "Bridging Work Conditional": "His senior pathway suitability has been impacted by persistent absences, and he must complete targeted bridging work before confirming his options.",
+                    "Consolidation Required": "He has current aspirations for higher-tier mathematics, but this examination result indicates that significant consolidation is required to support that choice.",
+                    "Functional Numeracy Focus": "Looking ahead, he should focus his senior academic path towards functional numeracy modules to secure essential foundational qualification standards."
                 }
             },
             p3s2: {
-                label: "Select Revision Area...",
+                label: "Target Study Domain",
                 items: {
-                    "Algebraic-Manipulation": "Moving forward, it would be highly beneficial for him to continue working on basic algebraic manipulation, including expanding and factorising.",
-                    "Equations": "To prepare effectively for the senior school, he needs to focus his revision on forming and solving linear and quadratic equations.",
-                    "Trigonometry": "He is encouraged to dedicate time to consolidating his understanding of geometric diagrams and right-angled Trigonometry concepts.",
-                    "Graphs": "He would benefit from targeted practice in graphing skills, specifically interpreting Patterns and Graphs from contextual word problems.",
-                    "Numeracy-Basics": "A key priority moving forward must be the consolidation of fundamental numeracy skills, including percentages, fractions, and factors.",
-                    "Formulae": "He should focus his personal study on the procedural steps required for substituting and rearranging mathematical formulae.",
-                    "Contextual-Application": "To unlock higher grades next year, he needs to practice applying his accumulated topic knowledge to unfamiliar, contextually-based problems."
+                    "Algebraic Mechanics": "Moving forward, it would be highly beneficial for him to continue working on basic algebraic manipulation, including expanding and factorising.",
+                    "Equation Framing": "To prepare effectively for the senior school, he needs to focus his revision on forming and solving linear and quadratic equations.",
+                    "Trigonometric Concepts": "He is encouraged to dedicate time to consolidating his understanding of geometric diagrams and right-angled Trigonometry concepts.",
+                    "Graph Interpretation": "He would benefit from targeted practice in graphing skills, specifically interpreting Patterns and Graphs from contextual word problems.",
+                    "Foundational Numeracy": "A key priority moving forward must be the consolidation of fundamental numeracy skills, including percentages, fractions, and factors.",
+                    "Formula Manipulation": "He should focus his personal study on the procedural steps required for substituting and rearranging mathematical formulae.",
+                    "Contextual Problem Solving": "To unlock higher grades next year, he needs to practice applying his accumulated topic knowledge to unfamiliar, contextually-based problems."
                 }
             },
             p3s3: {
-                label: "Select Habit Target...",
+                label: "Habit Target Focus",
                 items: {
-                    "Growth-Mindset": "To progress further, he should adopt a growth mindset, embracing complex challenges as valuable opportunities to upskill.",
-                    "Proactive": "He is encouraged to take a more proactive role in his learning by asking clarifying questions and seeking immediate feedback.",
-                    "Reflective": "He should refine his learning habits by proofreading all work carefully and addressing errors systematically.",
-                    "Independent": "He needs to focus on developing independent study habits outside of class to properly embed core mathematical concepts.",
-                    "Engagement": "He would benefit from minimising classroom distractions and actively engaging with the daily learning process.",
-                    "Ownership": "As he approaches senior school, he must take greater personal ownership of his daily education and time-management.",
-                    "Consistency": "The key priority for him is to maintain a consistent, diligent approach to lesson preparation and daily practice routines."
+                    "Growth Mindset Adopted": "To progress further, he should adopt a growth mindset, embracing complex challenges as valuable opportunities to upskill.",
+                    "Proactive Feedback Request": "He is encouraged to take a more proactive role in his learning by asking clarifying questions and seeking immediate feedback.",
+                    "Reflective Error Checking": "He should refine his learning habits by proofreading all work carefully and addressing errors systematically.",
+                    "Independent Home Study": "He needs to focus on developing independent study habits outside of class to properly embed core mathematical concepts.",
+                    "Minimise Distractions": "He would benefit from minimising classroom distractions and actively engaging with the daily learning process.",
+                    "Personal Time Management": "As he approaches senior school, he must take greater personal ownership of his daily education and time-management.",
+                    "Consistent Practice Routine": "The key priority for him is to maintain a consistent, diligent approach to lesson preparation and daily practice routines."
                 }
             },
             p3s4: {
-                label: "Select Sign-off...",
+                label: "Closing Narrative Signature",
                 items: {
-                    "Encouraging": "I have thoroughly enjoyed teaching him this year and look forward to watching his skills continue to grow in future studies.",
-                    "Aspirational": "With a strong foundation and a steady work ethic, he is well prepared for the challenges of senior school Mathematics.",
-                    "Tihoi-Blessing": "I have enjoyed having him in the classroom and wish him all the very best as he embarks on his Tihoi adventure.",
-                    "Diploma-Focus": "He is certainly capable of achieving better results next year when he returns to sit his academic Diploma.",
-                    "Supportive": "I encourage him not to be too despondent regarding recent setbacks; he has every opportunity to build confidence moving forward.",
-                    "Reconstructive": "He must realise the true value of his daily learning opportunities to position himself for success in the senior school.",
-                    "Well-Wishes": "I have enjoyed getting to know him this term and wish him the best of luck with his upcoming school experiences."
+                    "Encouraging Growth Track": "I have thoroughly enjoyed teaching him this year and look forward to watching his skills continue to grow in future studies.",
+                    "Aspirational Senior Entry": "With a strong foundation and a steady work ethic, he is well prepared for the challenges of senior school Mathematics.",
+                    "Tihoi Experience Blessing": "I have enjoyed having him in the classroom and wish him all the very best as he embarks on his Tihoi adventure.",
+                    "Diploma Review Focus": "He is certainly capable of achieving better results next year when he returns to sit his academic Diploma.",
+                    "Supportive Strategy Prompt": "I encourage him not to be too despondent regarding recent setbacks; he has every opportunity to build confidence moving forward.",
+                    "Reconstructive Warning": "He must realise the true value of his daily learning opportunities to position himself for success in the senior school.",
+                    "Cordial Future Well-Wishes": "I have enjoyed getting to know him this term and wish him the best of luck with his upcoming school experiences."
                 }
             }
         };
@@ -377,14 +377,12 @@
 
             let htmlNarrative = "";
 
-            // Inject Mandatory Nudge Line First if text exists
             if (summaryLine) {
                 htmlNarrative += `<div class="nudge-header">Please nudge this report according to this personalised line: (${summaryLine})</div>`;
             } else {
-                htmlNarrative += `<div class="nudge-header" style="color:#cbd5e1; border-color:#cbd5e1;">Please nudge this report according to this personalised line: (No summary summary entered)</div>`;
+                htmlNarrative += `<div class="nudge-header" style="color:#cbd5e1; border-color:#cbd5e1;">Please nudge this report according to this personalised line: (No summary line entered)</div>`;
             }
 
-            // Compile Paragraph 1
             if (p1s1 || p1s2 || p1s3 || p1s4) {
                 let p1Text = p1s1 ? `${name} ${database.p1s1.items[p1s1]}` : "";
                 if (p1s2) p1Text += " " + database.p1s2.items[p1s2];
@@ -393,7 +391,6 @@
                 htmlNarrative += `<p class="narrative-p">${p1Text.trim()}</p>`;
             }
 
-            // Compile Paragraph 2
             if (p2s1 || p2s2 || p2s3 || p2s4) {
                 let p2Text = p2s1 ? database.p2s1.items[p2s1] : "";
                 if (p2s2) p2Text += " " + database.p2s2.items[p2s2];
@@ -404,7 +401,6 @@
                 htmlNarrative += `<p class="narrative-p">${p2Text.trim()}</p>`;
             }
 
-            // Compile Paragraph 3
             if (p3s1 || p3s2 || p3s3 || p3s4) {
                 let p3Text = p3s1 ? database.p3s1.items[p3s1] : "";
                 if (p3s2) p3Text += " " + database.p3s2.items[p3s2];
@@ -433,7 +429,7 @@
             }
             
             navigator.clipboard.writeText(textToCopy.trim()).then(() => {
-                alert("Report and initialization block copied to clipboard.");
+                alert("Report and initialization block successfully copied to clipboard.");
             }).catch(err => {
                 console.error('Could not copy text: ', err);
             });
