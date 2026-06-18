@@ -3,464 +3,582 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Year 10 Report Builder</title>
+    <title>School House Y10 Pastoral Report Builder</title>
     <style>
         :root {
-            --slate-primary: #1e293b;
-            --slate-dark: #0f172a;
-            --blue-accent: #2563eb;
-            --blue-hover: #1d4ed8;
-            --border-color: #cbd5e1;
-            --bg-light: #f8fafc;
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
             --text-main: #334155;
-            --text-dark: #0f172a;
-            --hint-color: #475569;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --accent: #0f172a;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-light);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
             color: var(--text-main);
             line-height: 1.5;
             margin: 0;
-            padding: 24px;
+            padding: 2rem 1rem;
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 900px;
             margin: 0 auto;
-            background: #ffffff;
-            padding: 32px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         header {
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 16px;
-            margin-bottom: 24px;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
         }
 
-        header h1 {
-            color: var(--slate-dark);
-            margin: 0 0 8px 0;
-            font-size: 24px;
-            font-weight: 700;
+        h1 {
+            color: var(--primary);
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
         }
 
-        header p {
+        .subtitle {
+            color: var(--text-muted);
             margin: 0;
-            color: var(--hint-color);
-            font-size: 14px;
+            font-size: 1rem;
         }
 
-        .meta-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 24px;
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--accent);
+            font-size: 1.25rem;
+            margin-top: 0;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed var(--border);
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
+            margin-bottom: 1.25rem;
         }
 
-        .form-group.full-width {
-            grid-column: span 2;
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
         }
 
         label {
+            display: block;
             font-weight: 600;
-            color: var(--slate-dark);
-            margin-bottom: 6px;
-            font-size: 14px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
         }
 
-        .pedagogical-hint {
+        .hint {
             font-weight: normal;
-            color: var(--hint-color);
-            font-style: italic;
-            margin-left: 4px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-left: 0.5rem;
         }
 
-        input[type="text"], select {
-            padding: 10px 12px;
-            border: 1px solid var(--border-color);
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border);
             border-radius: 4px;
-            font-size: 14px;
-            color: var(--text-dark);
-            background-color: #ffffff;
+            font-size: 0.95rem;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus, select:focus, textarea:focus {
             outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
 
-        input[type="text"]:focus, select:focus {
-            border-color: var(--blue-accent);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .paragraph-section {
-            background-color: var(--bg-light);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-
-        .paragraph-section h3 {
-            margin-top: 0;
-            margin-bottom: 16px;
-            color: var(--slate-primary);
-            font-size: 16px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 6px;
-        }
-
-        .dropdown-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .preview-box {
-            margin-top: 32px;
-            border: 2px solid var(--slate-primary);
-            border-radius: 6px;
-            background-color: #ffffff;
-            overflow: hidden;
-        }
-
-        .preview-header {
-            background-color: var(--slate-primary);
-            color: #ffffff;
-            padding: 12px 16px;
-            font-weight: 600;
-            font-size: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .preview-content {
-            padding: 20px;
-            min-height: 150px;
-            white-space: pre-line;
-            font-size: 15px;
-            color: var(--text-dark);
-            background-color: #fafafa;
-        }
-
-        .btn-copy {
-            background-color: var(--blue-accent);
-            color: #ffffff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: 600;
+        select {
             cursor: pointer;
-            font-size: 13px;
         }
 
-        .btn-copy:hover {
-            background-color: var(--blue-hover);
+        .output-box {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            min-height: 150px;
+            white-space: pre-wrap;
+            font-size: 1rem;
+            margin-bottom: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .meta-grid, .dropdown-grid {
-                grid-template-columns: 1fr;
-            }
-            .form-group.full-width {
-                grid-column: span 1;
-            }
+        .btn-container {
+            display: flex;
+            gap: 1rem;
         }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex: 1;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button.secondary {
+            background-color: #64748b;
+        }
+
+        button.secondary:hover {
+            background-color: #475569;
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #334155;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 1rem;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+        }
+
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1> Report Builder</h1>
-        <p>Customised Descriptors Framework for Year 10 Housemaster Comment Generation</p>
+        <h1>School House Report Builder</h1>
+        <p class="subtitle">Interactive Tool for Year 10 Pastoral Cohort (Reference: 2025 Y10 Day Housemaster Comments.pdf)</p>
     </header>
 
-    <div class="meta-grid">
-        <div class="form-group">
-            <label for="studentName">Student First Name:</label>
-            <input type="text" id="studentName" placeholder="e.g. Carlos" oninput="updateReport()">
+    <!-- Student Metadata -->
+    <div class="card">
+        <h2>Student Variables</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="studentName">Student First Name</label>
+                <input type="text" id="studentName" placeholder="e.g. Thomas">
+            </div>
+            <div class="form-group">
+                <label for="houseName">House Variable</label>
+                <input type="text" id="houseName" placeholder="e.g. School House">
+            </div>
         </div>
         <div class="form-group">
-            <label for="houseAllocation">House Allocation:</label>
-            <select id="houseAllocation" onchange="updateReport()">
-                <option value="">-- Select House --</option>
-                <option value="School House">School House</option>
-                <option value="Fitchett House">Fitchett House</option>
-                <option value="Hamilton House">Hamilton House</option>
-                <option value="Hall House">Hall House</option>
+            <label for="personalLine">Personalised Line <span class="hint">(Instructions: Input explicit context flags to be injected securely at the head of execution)</span></label>
+            <input type="text" id="personalLine" placeholder="e.g. Exhibited superb stamina during the cross-country race.">
+        </div>
+    </div>
+
+    <!-- Paragraph 1 -->
+    <div class="card">
+        <h2>Paragraph 1: The Student Profile</h2>
+        <div class="form-group">
+            <label for="p1_1">1.1 General Demeanour and Character Presence</label>
+            <select id="p1_1" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="vibrant">Vibrant and humorous character</option>
+                <option value="warm">Warm and approachable manner</option>
+                <option value="quiet_conf">Quietly confident and grounded</option>
+                <option value="mature">Mature and personable outlook</option>
+                <option value="relaxed">Relaxed and cheerful presence</option>
+                <option value="steadfast">Quiet and steadfast presence</option>
+                <option value="shy">Shy and reserved disposition</option>
             </select>
         </div>
-        <div class="form-group full-width">
-            <label for="personalLine">1 Sentence Summary (Personalised Line): <span class="pedagogical-hint">| Focus on particularity: outstanding in house activities or day-to-day routines.</span></label>
-            <input type="text" id="personalLine" placeholder="Enter custom narrative alignment..." oninput="updateReport()">
+        <div class="form-group">
+            <label for="p1_2">1.2 Peer Group Integration and Social Standing</label>
+            <select id="p1_2" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="bonds">Tight-knit social bonds</option>
+                <option value="table_tennis">Fosters cohesion with new students</option>
+                <option value="cohesion">Highly regarded and inclusive</option>
+                <option value="key_member">Key member of peer group</option>
+                <option value="all_levels">Strong connection with all levels</option>
+                <option value="y10_cohort">Close friendships within Year 10</option>
+                <option value="subtle">Quiet relational style</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p1_3">1.3 Personal Maturity and Respectful Conduct</label>
+            <select id="p1_3" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="unassuming">Unassuming maturity</option>
+                <option value="high_respect">High level of respect</option>
+                <option value="empathy">Politeness and empathy</option>
+                <option value="humble">Grounded and humble</option>
+                <option value="right_thing">Positive role model habits</option>
+                <option value="reflective">Thoughtful and self-reflective</option>
+                <option value="grooming">Developing consistent standards</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p1_4">1.4 Growth in Confidence and Stature</label>
+            <select id="p1_4" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="shell">Steadily stepping out of shell</option>
+                <option value="emerging">Emerging confidence and presence</option>
+                <option value="weekly">Increasing in daily stature</option>
+                <option value="ownership">Gaining independence</option>
+                <option value="well_rounded">Consolidating social confidence</option>
+                <option value="security">Steady character formation</option>
+                <option value="direction">Poised for personal expansion</option>
+            </select>
         </div>
     </div>
 
-    <!-- Paragraph 1 UI -->
-    <div class="paragraph-section">
-        <h3>Paragraph 1: The Student (Internal Disposition & Relations)</h3>
-        <div class="dropdown-grid">
-            <div class="form-group">
-                <label for="sub1">1. Disposition & Temperament</label>
-                <select id="sub1" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub2">2. Peer Group Integration</label>
-                <select id="sub2" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub3">3. Cross-Level Relations</label>
-                <select id="sub3" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub4">4. Maturity & Relational Style</label>
-                <select id="sub4" onchange="updateReport()"></select>
-            </div>
+    <!-- Paragraph 2 -->
+    <div class="card">
+        <h2>Paragraph 2: Involvement & Dynamics</h2>
+        <div class="form-group">
+            <label for="p2_1">2.1 Participation in Inter-House Competitions</label>
+            <select id="p2_1" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="throws">Throws himself into activities</option>
+                <option value="fully_commits">Fully commits to competitions</option>
+                <option value="readily">Participates readily without fuss</option>
+                <option value="active_involved">Actively involved across all areas</option>
+                <option value="enthusiasm">Enthusiastic and purpose-driven</option>
+                <option value="step_up">Stepping up when required</option>
+                <option value="reluctant">Reluctant to fully engage</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p2_2">2.2 Whanaungatanga & Visible Leadership Presence</label>
+            <select id="p2_2" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="y9_pair">Sets inclusive tone for Year 9s</option>
+                <option value="infectious">Infectious enthusiasm lifts community</option>
+                <option value="builds_whan">Develops whanaungatanga intentionally</option>
+                <option value="quiet_force">Quiet force for good</option>
+                <option value="front_lead">Visible leadership from the front</option>
+                <option value="kotahitanga">Upholds collective kotahitanga</option>
+                <option value="steady_support">Subtle, supportive community presence</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p2_3">2.3 Contribution to Cultural House Events (Haka/Singing)</label>
+            <select id="p2_3" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="haka_front">Earned a front position in Haka</option>
+                <option value="points">Valuable effort in Haka/Singing</option>
+                <option value="comfort_zone">Stepped out of comfort zone</option>
+                <option value="maaori">Led with cultural pride (Te Ao Maaori)</option>
+                <option value="singing_extra">Invaluable support in House Singing</option>
+                <option value="rehearsals">Reliable performer in cultural events</option>
+                <option value="hesitant">Encouragement needed in creative tasks</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p2_4">2.4 Engagement in Athletic and Sporting Endeavours</label>
+            <select id="p2_4" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="standout">Exceptional swimming/athletic standout</option>
+                <option value="keen_sports">Keen and competitive sportsman</option>
+                <option value="teams">Strong contributor to team goals</option>
+                <option value="standards">Valuable Athletic Standards points</option>
+                <option value="active_energy">Brings athletic energy to House</option>
+                <option value="disciplined">Maintains fit and active routine</option>
+                <option value="collective">Participates for collective benefit</option>
+            </select>
         </div>
     </div>
 
-    <!-- Paragraph 2 UI -->
-    <div class="paragraph-section">
-        <h3>Paragraph 2: Involvement (Contributions & Cultural Capital)</h3>
-        <div class="dropdown-grid">
-            <div class="form-group">
-                <label for="sub5">5. House Competitions</label>
-                <select id="sub5" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub6">6. Te Ao Māori & Culture</label>
-                <select id="sub6" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub7">7. Community Levity & Tone</label>
-                <select id="sub7" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub8">8. Co-Curricular Balance</label>
-                <select id="sub8" onchange="updateReport()"></select>
-            </div>
+    <!-- Paragraph 3 -->
+    <div class="card">
+        <h2>Paragraph 3: Next Steps</h2>
+        <div class="form-group">
+            <label for="p3_1">3.1 Translation of Communal Living/Teamwork into Character Growth</label>
+            <select id="p3_1" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="communal">Thrives within communal living dynamics</option>
+                <option value="teamwork_out">Teamwork values serve him outdoors</option>
+                <option value="relates_nat">Relates naturally in community settings</option>
+                <option value="bunkmate">Builds lasting bunkmate connections</option>
+                <option value="compromise">Contributes meaningfully to group unity</option>
+                <option value="shared_arr">Navigates group living with maturity</option>
+                <option value="stretch_collab">Stretches collaborative habits in team tasks</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p3_2">3.2 Extracurricular and Academic Balancing Habits</label>
+            <select id="p3_2" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="co_curr">Balances commitments with connection</option>
+                <option value="across_board">Progress across all fields</option>
+                <option value="energy_mgmt">Managing a busy schedule well</option>
+                <option value="overshadow">Needs to protect academic time</option>
+                <option value="considered">Measured approach to all tasks</option>
+                <option value="proactive">Proactive in seeking opportunities</option>
+                <option value="align_interests">Strong alignment of work and play</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p3_3">3.3 Resilience in the Face of Broad Developmental Challenges</label>
+            <select id="p3_3" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="self_belief">Build robust resilience and confidence</option>
+                <option value="push_outside">Step outside of comfort zone</option>
+                <option value="problem_solve">Rise to challenges confidently</option>
+                <option value="adversity">Grows through managed adversity</option>
+                <option value="tenacity">Tenacity to stretch capabilities</option>
+                <option value="yielding">Steady determination to keep growing</option>
+                <option value="core_teach">Embrace teachings with confidence</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="p3_4">3.4 Tihoi Venture School Readiness</label>
+            <select id="p3_4" class="builder-select">
+                <option value="">-- Select Option --</option>
+                <option value="thrive_tihoi">Thrive in hands-on environment</option>
+                <option value="infectious_tihoi">Infectious energy for physical challenges</option>
+                <option value="work_ethic_tihoi">Steady work ethic for outdoor demands</option>
+                <option value="mature_tihoi">Mature outlook for structural transition</option>
+                <option value="shell_tihoi">Platform to step out of shell</option>
+                <option value="communal_tihoi">Forging deep communal living connections</option>
+                <option value="outdoor_tihoi">Throw himself fully into outdoor program</option>
+            </select>
         </div>
     </div>
 
-    <!-- Paragraph 3 UI -->
-    <div class="paragraph-section">
-        <h3>Paragraph 3: Next Steps (Strategic Pathways & Growth)</h3>
-        <div class="dropdown-grid">
-            <div class="form-group">
-                <label for="sub9">9. Leadership Tracking</label>
-                <select id="sub9" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub10">10. Resilience & Growth</label>
-                <select id="sub10" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub11">11. Tihoi Programme Readiness</label>
-                <select id="sub11" onchange="updateReport()"></select>
-            </div>
-            <div class="form-group">
-                <label for="sub12">12. Senior Cohort Positioning</label>
-                <select id="sub12" onchange="updateReport()"></select>
-            </div>
+    <!-- Output Compile Engine -->
+    <div class="card">
+        <h2>Compiled Narrative Output</h2>
+        <div id="narrativeOutput" class="output-box">Select options above to live-compile your report comment...</div>
+        <div class="btn-container">
+            <button id="copyBtn">Copy Report Text</button>
+            <button id="resetBtn" class="secondary">Reset Builder</button>
         </div>
-    </div>
-
-    <div class="preview-box">
-        <div class="preview-header">
-            <span>Generated Report Pipeline Preview</span>
-            <button class="btn-copy" onclick="copyToClipboard()">Copy Text</button>
-        </div>
-        <div class="preview-content" id="previewPane"></div>
     </div>
 </div>
 
+<div id="toast" class="toast">Text copied to clipboard!</div>
+
 <script>
-    // Context-Responsive Decentralised Database Matrix Array
+    // Narrative Matrix Object Database
     const matrix = {
-        sub1: {
-            "Radiant / Unshakeable": "A positive and cheerful character, it has been an absolute pleasure to observe [name]'s continued growth and unshakeable optimism this year.",
-            "Mature / Welcoming": "Displaying a mature and personable outlook, [name] has established a consistently warm and welcoming presence within the House.",
-            "Grounded / Friendly": "Quiet and friendly, [name] has settled into [house] life with a steady and commendably positive attitude.",
-            "Reserved / Subdued": "Generally quiet and reserved, [name] maintains a neutral disposition that can sometimes lead him to blend into the background.",
-            "Fluctuating / Volatile": "[name] displays a changeable demeanor, occasionally bringing great energy to the House while at other times appearing quite withdrawn.",
-            "Unpredictable / Guided": "His general disposition has been unpredictable, requiring staff guidance to help him maintain a steady and constructive attitude.",
-            "Disrupted / Strained": "[name] has struggled to maintain a positive disposition, frequently allowing external frustrations to impact his daily manner in the House."
+        p1_1: {
+            vibrant: "[name] brings a vibrant and positive presence to [house], contributing in his energetic way with humour and sheer eagerness.",
+            warm: "[name] is a warm and well-settled presence in [house], maintaining a relaxed, approachable manner that endears him to others.",
+            quiet_conf: "[name] is a quietly confident member of [house], whose easy sense of humour and ability to get along makes him a valued presence.",
+            mature: "[name] has settled into [house] with confidence and a commendably positive attitude, displaying a mature and personable outlook.",
+            relaxed: "[name] brings a relaxed and cheerful presence to [house], with his good humour and easygoing nature making him a well-liked member of the community.",
+            steadfast: "[name] is a quiet and steadfast member of [house] who operates with a grounded manner and a calm, reassuring presence.",
+            shy: "[name] is a relatively quiet member of [house] who maintains a low profile but brings a gentle, polite, and caring nature to the group."
         },
-        sub2: {
-            "Unifying Force": "[name] is a highly thought of, vibrant, and deeply respected member of his peer group, setting an exceptional standard for collective unity.",
-            "Tight-Knit / Popular": "He is incredibly popular within his peer group, forming tight-knit bonds and steadily strengthening his social stature in the community.",
-            "Positively Embedded": "[name] has successfully established himself as a key member of his peer group and interacts positively with his direct associates.",
-            "Peripheral Presence": "[name] is content to remain on the periphery of his peer group, rarely driving social interactions but coexisting peacefully.",
-            "Intermittently Aligned": "His alignment with peers has fluctuated; he forms strong connections at times but periodically isolates himself from the wider group.",
-            "Social Friction": "[name] has experienced friction within his cohort, requiring deliberate reflection on how his actions affect his social standing.",
-            "Isolated / Withdrawn": "[name] has found peer group integration highly challenging this term, frequently retreating from positive social dynamics."
+        p1_2: {
+            bonds: "His positive and personable outlook has helped him form tight-knit bonds, steadily strengthening his social stature in the community.",
+            table_tennis: "His familiarity and ease in the House, particularly around the table tennis set, have helped create an inclusive atmosphere where new students feel welcome.",
+            cohesion: "He is a highly regarded member of the House, persistently contributing to the community with a generous spirit that fosters true cohesion.",
+            key_member: "He has established himself as a key member of his peer group, navigating social interactions smoothly and with genuine integrity.",
+            all_levels: "It is a real pleasure to see him interacting positively with students from all year levels, ensuring that his social circle remains broad.",
+            y10_cohort: "He can most often be found sharing a laugh with his fellow Year 10 students, maintaining loyal and close-knit friendships within his immediate cohort.",
+            subtle: "His steady relational style helps foster community unity in subtle but meaningful ways, even if he prefers to avoid the spotlight."
         },
-        sub3: {
-            "Exceptional Mentor": "He displays a level of respect for others that is uncommon for someone of his age, effortlessly bridging gaps between junior and senior cohorts.",
-            "Impactful Role Model": "He sets a great example that undoubtedly has an impressionable effect on those who have joined the school this year.",
-            "Respectful Border": "In the House, he interacts positively with his peer group and shows an appropriate level of respect to students of other year levels.",
-            "Passive / Compliant": "He is polite when directly approached by older or younger students but rarely initiates inclusive cross-level interactions.",
-            "Insular / Restricted": "His interactions across year levels are intermittent; he occasionally models great leadership but often retreats into a small circle.",
-            "Boundary Testing": "[name] has found it difficult to maintain respectful boundaries with senior students and staff, leading to variable relational outcomes.",
-            "Relational Friction": "His relational style has caused friction across year levels, highlighting a clear need to develop basic empathy and collective respect."
+        p1_3: {
+            unassuming: "He demonstrates a natural, unassuming maturity through his consistent effort and willingness to support his peers without seeking recognition.",
+            high_respect: "He displays a level of respect for others that is uncommon for someone of his age, impressing staff and senior students alike.",
+            empathy: "His politeness, empathy, and general standard of conduct are exemplary, making him a thoroughly dependable member of our house environment.",
+            humble: "Despite his significant personal talents, he remains thoroughly humble, grounded, and respectful in all of his daily interactions.",
+            right_thing: "He can always be relied upon to do the right thing, modeling excellent manners and an entirely positive attitude for those around him.",
+            reflective: "He has shown a thoughtful capacity to reflect on his actions, learning how best to support both himself and his peers with integrity.",
+            grooming: "While he occasionally requires minor reminders regarding uniform and grooming expectations, his core intentions are always respectful."
         },
-        sub4: {
-            "Eminently Commendable": "His politeness, empathy, and maturity are very impressive and are routinely noticed by his peers, seniors, and staff alike.",
-            "Personable & Reliable": "He is a personable and reliable young man whose mature attitude means his interactions with others are always constructive.",
-            "Steady & Approachable": "[name] approaches his day-to-day interactions with a grounded, approachable manner that endears him to those around him.",
-            "Detached / Compliant": "[name] displays a compliant but detached relational style, completing daily routines without actively investing in the community.",
-            "Juvenile Lapses": "His personal maturity has been mixed; while capable of immense insight, he occasionally lapses into quite juvenile behaviours.",
-            "Behavioral Reminders": "[name] has struggled to meet baseline behavioural expectations, requiring regular reminders regarding his day-to-day choices.",
-            "Maturity Deficit": "A lack of maturity has hindered his interactions this term, causing ongoing strain in his relationships with staff and peers."
+        p1_4: {
+            shell: "Over time, he has grown significantly in personal confidence, increasingly stepping out of his shell and engaging more deeply with the wider House.",
+            emerging: "His recent actions reflect a growing confidence and emerging sense of personal presence that has been excellent to witness.",
+            weekly: "He is increasing in personal confidence each week, establishing his own identity within the house with quiet certainty.",
+            ownership: "He has grown in confidence and stature during his second year at school, taking greater ownership of his personal goals and journey.",
+            well_rounded: "He is forming into a well-rounded young man, making steady progress across the board as his self-assurance matches his abilities.",
+            security: "His steady commitment to personal growth is bearing fruit, allowing him to navigate house life with a greater sense of security.",
+            direction: "He is on the cusp of truly discovering what he is capable of, as his baseline confidence continues to develop in a positive direction."
         },
-        sub5: {
-            "Fully Consumed": "He continues to make the very most of every opportunity afforded him, being fully and proactively involved in every single House competition.",
-            "Maximal Effort": "He puts maximum effort into all House competitions and can always be relied upon to give his absolute best for [house].",
-            "Constructive Participant": "He involves himself in House activities, actively participating in sports and events organised by the house leaders.",
-            "Compelled / Driven": "He participates in events only when directly instructed to do so, demonstrating a lack of personal drive or competitive spirit.",
-            "Selective / Situational": "His competitive effort is highly dependent on the activity, working hard in preferred areas but entirely opting out of others.",
-            "Unreliable Attendance": "He has occasionally let [house] down by failing to show up for scheduled commitments or withdrawing his effort on match days.",
-            "Overt Resistance": "[name] has openly resisted participating in House competitions, showing a disappointing disregard for collective house spirit."
+        p2_1: {
+            throws: "He throws himself into house activities like Athletics Standards and competitive events, always setting a vibrant example.",
+            fully_commits: "He fully commits himself to Inter-House competitions, giving maximum effort to ensure [house] performs to its absolute potential.",
+            readily: "He brings energy and house spirit to every event, participating readily, without fuss, and with a thoroughly positive mindset.",
+            active_involved: "Actively involved in all scheduled events, he has made a highly valuable contribution across a wide spectrum of House life.",
+            enthusiasm: "He contributes to all activities with genuine enthusiasm and purpose, proving that he completely understands and buys into our competitive goals.",
+            step_up: "He can always be relied upon to step up in inter-house fixtures, making an invaluable competitive addition exactly when the team needs it.",
+            reluctant: "His quiet nature has meant he is sometimes reluctant to fully embrace house competitions, and we have yet to see him fully apply his energy here."
         },
-        sub6: {
-            "Upholding Mana": "His willingness to step up and lead from the front during the House Haka and singing was invaluable, upholding the true mana of [house].",
-            "Valuable Earner": "It was particularly pleasing to see his genuine efforts during the Haka and singing, where he helped gain valuable competition points.",
-            "Standard Compliant": "He joined his peers constructively during the performance of the House Haka and singing, meeting the collective standard expected.",
-            "Hesitant / Shy": "His shy or reserved nature has meant he is sometimes reluctant to fully project his voice or embrace collective cultural events.",
-            "Unfocused Rehearsal": "His cultural commitment has wavered; he participated well in initial rehearsals but lacked focus during the final performances.",
-            "Under-Applied": "We are yet to see [name] fully apply himself during critical collective events such as the Haka or house singing competitions.",
-            "Active Disengagement": "He has actively disengaged from collective cultural expressions, requiring direct intervention during Haka and singing practices."
+        p2_2: {
+            y9_pair: "Being paired closely with the Year 9s, he sets a fantastic example that has a positive effect on those who joined the school this year, adding to their sense of belonging.",
+            infectious: "His enthusiasm and cheerful approach to what he does are highly infectious and consistently help to lift the spirits of those around him.",
+            builds_whan: "His proactive efforts help to directly develop the whanaungatanga of [house], building the crucial sense of community that underpins our collective success.",
+            quiet_force: "His natural ability to connect with friends and contribute constructively suggests he is a quiet, yet incredibly impactful force for good in our environment.",
+            front_lead: "He does not hesitate to lead from the front, demonstrating a visible leadership presence that inspires his peers to lift their own engagement.",
+            kotahitanga: "His growing sense of kotahitanga is obvious in his daily demeanor, always working to unify the cohort rather than separate it.",
+            steady_support: "While he doesn't actively pursue formal house leadership roles yet, his steady presence and willingness to support others subtly enhance our culture."
         },
-        sub7: {
-            "Infectious Levity": "His jovial nature, infectious enthusiasm, and good humour add an immense amount of positive levity and community warmth to the House.",
-            "Positive Catalyst": "He brings a cheerful approach and a lot of positive energy to [house], helping lift the spirits of those around him.",
-            "Calm & Grounded": "His calm, steady, and grounded manner helps build a comfortable and supportive environment within the common room.",
-            "Neutral Presence": "He presents a highly subdued presence that neither adds to nor detracts from the prevailing atmosphere of the House.",
-            "Mood Fluctuations": "The tone he sets is unpredictable; he can be exceptionally cooperative, but his mood swings occasionally disrupt the common room.",
-            "Cohesion Undermined": "His behaviour has periodically undermined house cohesion, requiring staff redirection to maintain a supportive environment.",
-            "Persistent Negativity": "He has introduced a persistent undercurrent of negativity to the group dynamic, which has negatively impacted community morale."
+        p2_3: {
+            haka_front: "His willingness to stand near the front during the intense [house] Haka reflects his enthusiasm, pride, and emerging leadership; he thoroughly earned his place there.",
+            points: "It was particularly pleasing to see his dedicated efforts during both the haka and house singing, where he helped secure valuable points for us.",
+            comfort_zone: "I was highly impressed with his willingness to step out of his comfort zone and take on an extra, visible role during our cultural campaigns.",
+            maaori: "He has upheld the absolute mana of his cultural responsibilities, showing a genuine passion to lead our House in all things relating to Te Ao Maaori.",
+            singing_extra: "His willingness to step up and make an extra vocal contribution to the House Singing competition proved completely invaluable to our overall standard.",
+            rehearsals: "He can be relied upon to put his heart and soul into cultural events, displaying excellent focus during rigorous rehearsals.",
+            hesitant: "He is occasionally hesitant during large-scale cultural performances, and further encouragement will help him find his voice in these domains."
         },
-        sub8: {
-            "Masterfully Balanced": "[name] is extremely proactive in seeking opportunities, masterfully balancing intensive extra-curricular pursuits with internal house duties.",
-            "Energetic & Committed": "He is a busy young man who throws himself into external challenges while remaining thoroughly committed to his obligations at home.",
-            "Unfussed Alignment": "He balances his commitments with a genuine desire to connect with others, managing his scheduling without major fuss.",
-            "Comfort-Zone Bound": "While he fulfills basic duties, he is highly reluctant to step out of his comfort zone or take on any additional obligations.",
-            "Neglected Routines": "He struggles to find equilibrium, occasionally excelling in sports while completely neglecting his daily uniform and grooming standards.",
-            "Easily Overwhelmed": "He is easily overwhelmed by competing demands, leading to missed house meetings and multiple uniform reminders.",
-            "Core Evasion": "[name] has failed to manage his commitments, using extra-curricular schedules as an excuse to avoid core house responsibilities."
+        p2_4: {
+            standout: "His individual sporting achievements significantly stand him out from the pack, yet he remains remarkably humble about his physical talents.",
+            keen_sports: "As a keen and talented sportsman with a grounded manner, he brings an excellent level of athletic spirit and energy to our house fixtures.",
+            teams: "He has performed exceptionally well within his various sports teams, translating his individual skill into positive team-oriented outcomes.",
+            standards: "He put maximum effort into his physical benchmarks, making highly valuable contributions during the recent Athletic Standards testing.",
+            active_energy: "He infuses the house with an active energy, always ready to kick a ball around or represent the cohort in physical challenges.",
+            disciplined: "He takes his physical health seriously, consistently maintaining a fit, active, and highly disciplined routine throughout the term.",
+            collective: "While organized sports may not be his primary passion, he still gives his absolute best in physical events for the collective benefit of the house."
         },
-        sub9: {
-            "Undeniable Catalyst": "[name] has natural, undeniable leadership skills that will undoubtedly come to the absolute fore as he steps into senior responsibility.",
-            "Unassuming Leader": "He demonstrates an unassuming, natural leadership through consistent effort and a willingness to support his peers at every turn.",
-            "Emerging / Potential": "He has the distinct potential to be a future leader within the House, provided he continues to develop his public confidence.",
-            "Hesitant / Reluctant": "While he behaves appropriately, he does not yet see himself in leadership roles and remains entirely hesitant to take charge.",
-            "Sporadic Initiative": "He shows flashes of leadership capability when directly assigned a role, but rarely exhibits spontaneous or proactive initiative.",
-            "Unreliable Role Model": "His lack of personal consistency prevents him from being viewed as a reliable role model by his peers at this stage.",
-            "Accountability Evader": "He actively avoids accountability, showing a complete reluctance to develop the baseline leadership skills required of his cohort."
+        p3_1: {
+            communal: "His natural ability to adapt will ensure he thrives within the communal living dynamics, turning daily shared responsibilities into positive growth.",
+            teamwork_out: "His deep commitment to teamwork will serve him exceptionally well in the outdoors where collaborative effort is highly valued.",
+            relates_nat: "With his natural ability to relate well to others, he will navigate the close-knit community environment smoothly and constructively.",
+            bunkmate: "The intensive group environment will offer him an ideal setting to forge lasting connections with boys sharing the journey.",
+            compromise: "He understands how to compromise and contribute, helping to build a supportive, cooperative atmosphere within his immediate group.",
+            shared_arr: "He approaches shared living arrangements with a rare level of maturity, ensuring his interactions with bunkmates remain consistently positive.",
+            stretch_collab: "The upcoming group challenges will require him to stretch his collaborative habits, learning to rely on and support his peers fully."
         },
-        sub10: {
-            "Profoundly Resilient": "He possesses the precise personal tools, determination, and focus to turn every unexpected trial into a profound developmental triumph.",
-            "Steadily Improving": "His resilience and confidence are improving steadily, backed by a strong work ethic and an openness to new opportunities.",
-            "Tenacious / Growing": "He possesses a healthy mix of excitement and nerves, showing a steady determination to keep growing through adversity.",
-            "Retreats / Shielded": "He responds to difficult challenges by retreating into his shell, requiring ongoing staff encouragement to persevere.",
-            "Situationally Fragile": "His resilience is highly situational; he handles physical challenges well but easily folds under social or structural pressures.",
-            "Defeated by Setbacks": "He struggles to cope when things do not go to plan, frequently requiring external intervention to rebuild his confidence.",
-            "Low Discomfort Tolerance": "He demonstrates a low tolerance for discomfort, routinely pushing back against challenges rather than building personal resilience."
+        p3_2: {
+            co_curr: "He marks himself as a young man who successfully balances his heavy co-curricular commitments with a genuine desire to connect with his studies.",
+            across_board: "He is making excellent progress across the board, showing a balanced and mature approach to sport, academics, and culture alike.",
+            energy_mgmt: "As a busy young man with extensive extracurricular commitments, learning to manage his energy and time effectively remains a key focus.",
+            overshadow: "To achieve his full potential, he must ensure that his high energy for sporting pursuits does not overshadow his academic focus.",
+            considered: "His measured and considered approach to his commitments sometimes belies the deep determination with which he takes on academic tasks.",
+            proactive: "He is extremely proactive in seeking out opportunities to get the very most from both his academic and personal school experience.",
+            align_interests: "He has demonstrated a fine ability to align his personal interests with school expectations, ensuring a well-rounded foundation."
         },
-        sub11: {
-            "Hand-Made for Tihoi": "The upcoming experiential environment is hand-made for someone of his ilk; he will absolutely thrive under the unique demands of the programme.",
-            "Smashing Benchmarks": "Given his active nature and grounded optimism, we fully expect him to throw himself into the programme and smash the fitness benchmarks.",
-            "Excellent Opportunity": "The structure and challenges of the upcoming experience will provide an excellent developmental opportunity for him to mature.",
-            "Apprehensive / Detached": "He is showing significant apprehension regarding the upcoming programme, indicating a need to mentally prepare for communal living.",
-            "Teambuilding Risk": "He has the practical skills required for the venture school but must drastically stabilise his attitude to succeed in a team environment.",
-            "Structure Deficient": "His current lack of self-management raises distinct questions regarding how he will cope with the rigorous daily structure.",
-            "Communal Living Risk": "Unless there is an immediate and radical shift in his cooperation, he will find the upcoming communal lifestyle incredibly difficult."
+        p3_3: {
+            self_belief: "This upcoming phase has the potential to create real growth in him, particularly in sharpening his personal resilience and self-belief.",
+            push_outside: "He will be afforded invaluable developmental opportunities that will intentionally push him outside of his usual comfort zone.",
+            problem_solve: "There is no question that he will rise to the challenges ahead, utilizing his natural problem-solving abilities to find success.",
+            adversity: "By confronting difficult situations directly, he will continue to mature into a strong, resilient, and highly capable young man.",
+            tenacity: "We trust that he will meet what lies ahead with the necessary tenacity and eager desire to stretch his personal capabilities.",
+            yielding: "He brings an excellent sense of humour paired with a steady, unyielding determination to keep growing through every setback.",
+            core_teach: "He simply needs to fully embrace the core teachings of this period, and we will watch him grow into a highly self-assured individual."
         },
-        sub12: {
-            "Outstanding Prospect": "He is to be congratulated on an outstanding first half of the year and will be a spectacular addition to our senior leadership ranks.",
-            "Highly Valued Senior": "I look forward to following his progress keenly and seeing him return as a highly valued member of the senior cohort next year.",
-            "Secure Progression": "I look forward to seeing him in the senior school next year, where he must look to transfer these skills into ongoing success.",
-            "Visibility Required": "He is on track to transition to the senior ranks, though he must step up his daily visibility to make a meaningful impact.",
-            "Habit Dependant": "His progression into the senior school is secure, but his long-term impact depends entirely on which habits he chooses to cultivate.",
-            "Urgent Adjustments": "To earn his place as a respected senior student next year, he must spend the coming months correcting his current inconsistencies.",
-            "Transition At-Risk": "Significant growth is urgently required if he is to navigate the transition into a responsible senior student with any degree of success."
+        p3_4: {
+            thrive_tihoi: "Given his active nature and grounded optimism, he is exceptionally well placed to thrive in the hands-on environment that the Tihoi programme offers.",
+            infectious_tihoi: "He is undoubtedly excited about the upcoming shift to Tihoi, and his infectious energy will ensure he embraces both the social and physical challenges with total positivity.",
+            work_ethic_tihoi: "While he approaches new environments with measured observation, his steady work ethic and underlying tenacity guarantee he will get stuck into the Tihoi experience without fuss.",
+            mature_tihoi: "His mature outlook and natural capability mean he will navigate the structural demands of Tihoi with ease, allowing his character and independent thinking to flourish.",
+            shell_tihoi: "The unique environment at Tihoi will offer him a superb platform to step further out of his shell, building the robust resilience and confidence required for his senior years.",
+            communal_tihoi: "Although the communal nature of Tihoi may initially test his quiet disposition, the experience will allow him to forge deep, lasting connections with his bunkmates.",
+            outdoor_tihoi: "To extract the full value from the Tihoi venture, he must look to actively throw himself into the outdoor challenges and resist the temptation to stay within his comfortable routines."
         }
     };
 
-    const structure = [
-        ['sub1', 'sub2', 'sub3', 'sub4'],
-        ['sub5', 'sub6', 'sub7', 'sub8'],
-        ['sub9', 'sub10', 'sub11', 'sub12']
-    ];
+    // DOM Selection Elements
+    const studentNameInput = document.getElementById('studentName');
+    const houseNameInput = document.getElementById('houseName');
+    const personalLineInput = document.getElementById('personalLine');
+    const selectElements = document.querySelectorAll('.builder-select');
+    const outputBox = document.getElementById('narrativeOutput');
+    const copyBtn = document.getElementById('copyBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const toast = document.getElementById('toast');
 
-    function init() {
-        for (let i = 1; i <= 12; i++) {
-            const select = document.getElementById('sub' + i);
-            let html = '<option value="">-- Select Option --</option>';
-            Object.keys(matrix['sub' + i]).forEach(key => {
-                html += `<option value="${key}">${key}</option>`;
-            });
-            select.innerHTML = html;
+    // Compilation Engine Logic
+    function compileReport() {
+        const name = studentNameInput.value.trim() || '[Name]';
+        const house = houseNameInput.value.trim() || '[House]';
+        const personalLine = personalLineInput.value.trim();
+
+        let paragraph1 = [];
+        let paragraph2 = [];
+        let paragraph3 = [];
+
+        selectElements.forEach(select => {
+            const id = select.id;
+            const val = select.value;
+            if (!val) return;
+
+            let text = matrix[id][val];
+            // Safe replacement of variables
+            text = text.replace(/\[name\]/g, name).replace(/\[house\]/g, house);
+
+            if (id.startsWith('p1_')) paragraph1.push(text);
+            if (id.startsWith('p2_')) paragraph2.push(text);
+            if (id.startsWith('p3_')) paragraph3.push(text);
+        });
+
+        // Structure Compilation
+        let outputText = '';
+
+        if (personalLine) {
+            outputText += `Please nudge/weave into this report according to this personalised line, noting that ${name} is from ${house}: (${personalLine})\n\n\n`;
         }
-        updateReport();
+
+        if (paragraph1.length > 0) outputText += paragraph1.join(' ') + '\n\n';
+        if (paragraph2.length > 0) outputText += paragraph2.join(' ') + '\n\n';
+        if (paragraph3.length > 0) outputText += paragraph3.join(' ') + '\n\n';
+
+        if (!outputText.replace(/\n/g, '').trim()) {
+            outputBox.innerText = 'Select options above to live-compile your report comment...';
+        } else {
+            outputBox.innerText = outputText.trim();
+        }
     }
 
-    function updateReport() {
-        const nameInput = document.getElementById('studentName').value.trim();
-        const houseInput = document.getElementById('houseAllocation').value;
-        const personalLine = document.getElementById('personalLine').value.trim();
+    // Input Event Listeners
+    studentNameInput.addEventListener('input', compileReport);
+    houseNameInput.addEventListener('input', compileReport);
+    personalLineInput.addEventListener('input', compileReport);
+    selectElements.forEach(select => select.addEventListener('change', compileReport));
 
-        const name = nameInput ? nameInput : "[Name Placeholder]";
-        const house = houseInput ? houseInput : "[House Placeholder]";
+    // Copy to Clipboard Action Implementation
+    copyBtn.addEventListener('click', () => {
+        const textToCopy = outputBox.innerText;
+        if (textToCopy.startsWith('Select options above')) return;
 
-        let compiled = `Please nudge this report according to this personalised line, noting that ${name} is from ${house}: `;
-        compiled += personalLine ? `(${personalLine})\n\n\n` : `(No summary entered)\n\n\n`;
-
-        let paragraphBlocks = [];
-        structure.forEach((paraGroup, index) => {
-            let sentences = [];
-            let emptyGroup = true;
-
-            paraGroup.forEach(subId => {
-                const selectedKey = document.getElementById(subId).value;
-                if (selectedKey) {
-                    emptyGroup = false;
-                    let str = matrix[subId][selectedKey];
-                    str = str.replace(/\[name\]/g, name).replace(/\[house\]/g, house);
-                    sentences.push(str);
-                }
-            });
-
-            if (emptyGroup) {
-                paragraphBlocks.push(`[Paragraph ${index + 1} Content Empty]`);
-            } else {
-                paragraphBlocks.push(sentences.join(' '));
-            }
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         });
+    });
 
-        compiled += paragraphBlocks.join('\n\n');
-        document.getElementById('previewPane').innerText = compiled;
-    }
-
-    function copyToClipboard() {
-        const text = document.getElementById('previewPane').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Compiled text copied to clipboard successfully.');
-        }).catch(err => {
-            alert('Clipboard routing failed: ' + err);
-        });
-    }
-
-    window.onload = init;
+    // Zero-Default Blank Slate System Reset
+    resetBtn.addEventListener('click', () => {
+        studentNameInput.value = '';
+        houseNameInput.value = '';
+        personalLineInput.value = '';
+        selectElements.forEach(select => select.value = '');
+        compileReport();
+    });
 </script>
+
 </body>
 </html>
