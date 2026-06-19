@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Polymathic Lesson Catalyst</title>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 20px;
+        }
+        h1 { color: var(--primary); margin-bottom: 5px; }
+        .subtitle { color: #64748b; font-style: italic; margin-top: 0; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--primary);
+        }
+        input[type="text"], input[type="password"], select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #1d4ed8; }
+        #output {
+            white-space: pre-wrap;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: "Courier New", Courier, monospace;
+            min-height: 200px;
+            overflow-x: auto;
+        }
+        .status {
+            font-weight: bold;
+            color: #d97706;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>The Polymathic Lesson Catalyst</h1>
+        <p class="subtitle">Decoupled Learning Objectives & Adaptive R&amp;D Architecture</p>
+    </header>
+
+    <!-- Configuration Space -->
+    <div class="card">
+        <label for="apiKey">OpenAI API Key (Stored Locally)</label>
+        <input type="password" id="apiKey" placeholder="sk-..." onchange="saveKey()">
+    </div>
+
+    <!-- Parameter Injection Space -->
+    <div class="card">
+        <label for="topic">Core Topic / Agreed Learning Objective (LO)</label>
+        <input type="text" id="topic" placeholder="e.g., The concept of Covenant in RS, or Linear Equations in Maths">
+
+        <div class="grid">
+            <div>
+                <label for="taxonomy">Target Taxonomy Depth</label>
+                <select id="taxonomy">
+                    <option value="Surface (Identify, Recall, Describe)">Surface (Identify, Recall, Describe)</option>
+                    <option value="Deep (Analyse, Explain, Relate)">Deep (Analyse, Explain, Relate)</option>
+                    <option value="Conceptual (Evaluate, Generalise, Create)">Conceptual (Evaluate, Generalise, Create)</option>
+                </select>
+            </div>
+            <div>
+                <label for="energy">Class Energy / Cognitive Load Profile</label>
+                <select id="energy">
+                    <option value="High Energy (Deep Collaboration & Socratic Inquiry)">High Energy (Deep Collaboration & Socratic Inquiry)</option>
+                    <option value="Standard (Balanced Direct Instruction & Practice)">Standard (Balanced Practice)</option>
+                    <option value="Low-Load Active Consolidation (Student-Led, Highly Structured, Low Teacher Output)">Low-Load Active Consolidation (e.g., Friday P5)</option>
+                </select>
+            </div>
+        </div>
+
+        <button onclick="generateLessonPlan()">Catalyse Lesson Matrix</button>
+    </div>
+
+    <!-- Output Processing Space -->
+    <div class="card">
+        <h2>Generated Pedagogical Output</h2>
+        <div id="status" class="status" style="display:none;">Processing request through LLM architecture...</div>
+        <div id="output">Your adaptive lesson design framework will generate here.</div>
+    </div>
+</div>
+
+<script>
+    // Lifecycle Management: Retrieve key on initialization
+    window.onload = function() {
+        const savedKey = localStorage.getItem('polymathic_api_key');
+        if (savedKey) {
+            document.getElementById('apiKey').value = savedKey;
+        }
+    }
+
+    function saveKey() {
+        const key = document.getElementById('apiKey').value;
+        localStorage.setItem('polymathic_api_key', key);
+    }
+
+    async function generateLessonPlan() {
+        const apiKey = document.getElementById('apiKey').value;
+        const topic = document.getElementById('topic').value;
+        const taxonomy = document.getElementById('taxonomy').value;
+        const energy = document.getElementById('energy').value;
+
+        if (!apiKey) {
+            alert('Please securely enter your OpenAI API key first.');
+            return;
+        }
+        if (!topic) {
+            alert('Please specify a core topic or baseline LO.');
+            return;
+        }
+
+        const statusDiv = document.getElementById('status');
+        const outputDiv = document.getElementById('output');
+        
+        statusDiv.style.display = 'block';
+        outputDiv.innerText = 'Communicating with endpoint...';
+
+        // Systems Prompt Engineering built to match Byron's professional specifications
+        const systemPrompt = `You are an expert curriculum designer and polymathic educator. Your task is to generate a highly actionable lesson architecture for New Zealand Year 9 and 10 classrooms. 
+CRITICAL RULE: If the user selects a 'Low-Load Active Consolidation' energy profile, you MUST VETO completely passive compliance methods (like silent book reading or long videos without structure). Instead, design student-led, highly structured, self-running gamified routines or peer challenges that require zero active lecturing from the teacher. All spelling must be British English.`;
+
+        const userPrompt = `
+Generate a structured lesson matrix based on these parameters:
+- Core Topic/LO: ${topic}
+- Taxonomy Target Level: ${taxonomy}
+- Class Energy/Cognitive Load Mode: ${energy}
+
+Please output the response exactly in this clear format:
+1. TARGET LEARNING OBJECTIVE (Scaled explicitly to the selected taxonomy level)
+2. THE ENGAGEMENT CATALYST (An unexpected hook, game, or concept anchor matched to the selected energy profile. Keep it low-teacher-load if selected)
+3. THE CORE METHODOLOGY (A clear, scannable breakdown of lesson delivery steps)
+4. STEP-DOWN MODIFICATION (Scaffolded backup resource or entry point for lower cognitive load)
+5. STEP-UP EXTENSION (Advanced cognitive challenge or Tuakana-Teina peer-coaching dynamic)`;
+
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.7
+                })
+            });
+
+            const data = await response.json();
+            statusDiv.style.display = 'none';
+
+            if (data.choices && data.choices[0]) {
+                outputDiv.innerText = data.choices[0].message.content;
+            } else {
+                outputDiv.innerText = 'Error processing response: ' + JSON.stringify(data);
+            }
+        } catch (error) {
+            statusDiv.style.display = 'none';
+            outputDiv.innerText = 'Network error or configuration fault: ' + error.message;
+        }
+    }
+</script>
+
+</body>
+</html>
