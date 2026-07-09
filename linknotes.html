@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Variable Grouper</title>
+    <title>Dynamic Variable & Subcategory Grouper</title>
     <style>
         :root {
             --bg-color: #1e1e2e;
@@ -11,6 +11,7 @@
             --text-color: #cdd6f4;
             --accent-color: #89b4fa;
             --border-color: #45475a;
+            --nested-bg: #181825;
         }
 
         * {
@@ -82,7 +83,7 @@
         }
 
         #sidebar {
-            width: 350px; /* Slightly widened to accommodate review text */
+            width: 380px;
             background-color: var(--panel-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
@@ -118,7 +119,7 @@
             border: 2px dashed var(--border-color);
             border-radius: 6px;
             padding: 12px;
-            min-height: 60px;
+            min-height: 100px;
             transition: all 0.2s ease;
         }
 
@@ -129,58 +130,61 @@
 
         .category-title {
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-size: 14px;
             display: flex;
             justify-content: space-between;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .category-title:hover {
-            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 4px;
         }
 
         .category-count {
             font-size: 12px;
             opacity: 0.6;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 2px 6px;
-            border-radius: 10px;
         }
 
-        /* Review Items List Inside Group Container */
-        .category-contents {
-            margin-top: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            display: none; /* Hidden by default, toggled via JavaScript */
-            flex-direction: column;
-            gap: 6px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 8px;
-        }
-
-        .category-contents.visible {
+        .grouped-items-container {
             display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 5px;
         }
 
-        .review-item {
-            font-size: 12px;
-            background-color: rgba(255, 255, 255, 0.03);
+        .grouped-item-card {
+            background-color: var(--nested-bg);
             border: 1px solid var(--border-color);
-            padding: 6px 8px;
             border-radius: 4px;
-            white-space: nowrap;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .grouped-item-text {
             overflow: hidden;
             text-overflow: ellipsis;
-            cursor: help;
+            white-space: nowrap;
+            margin-bottom: 6px;
+            font-weight: 500;
         }
 
-        .review-item:hover {
-            white-space: normal;
-            word-break: break-word;
-            background-color: rgba(255, 255, 255, 0.07);
+        .subcategory-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .subcategory-input-wrapper label {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .subcategory-input-wrapper input {
+            flex: 1;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 11px;
         }
 
         #canvas-container {
@@ -289,9 +293,9 @@
 
     <div class="main-container">
         <div id="sidebar">
-            <h3>Groups</h3>
+            <h3>Groups & Inspection</h3>
             <div class="category-creator">
-                <input type="text" id="new-group-name" placeholder="New group label...">
+                <input type="text" id="new-group-name" placeholder="New primary category...">
                 <button class="btn" id="add-group-btn">+</button>
             </div>
             <div class="category-list" id="category-list"></div>
@@ -314,11 +318,11 @@
         let displayVariable = '';
         const POOL_SIZE = 20; 
         const categories = new Set();
-        const openCategories = new Set(); // Track expanded review panels
-
         let zoomScale = 1;
         const MIN_ZOOM = 0.4;
         const MAX_ZOOM = 2.0;
+
+        const csvSplitter = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
 
         const fileInput = document.getElementById('csv-file');
         const viewSelect = document.getElementById('view-variable');
@@ -337,7 +341,7 @@
         viewSelect.addEventListener('change', (e) => {
             displayVariable = e.target.value;
             updateFloatingNodeLabels();
-            updateUI(); // Refresh contents view to mirror variable switch
+            updateUI(); // Refreshes text inside sidebar items to match current view variable
         });
         reshuffleBtn.addEventListener('click', () => { clearFloatingPool(); populateFloatingPool(); });
         addGroupBtn.addEventListener('click', generateCustomCategory);
@@ -363,13 +367,12 @@
             const lines = text.split(/\r?\n/).map(row => row.trim()).filter(row => row.length > 0);
             if (lines.length < 2) return;
 
-            const csvSplitter = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
             headers = lines[0].split(csvSplitter).map(h => h.replace(/^["']|["']$/g, '').trim());
             
             dataset = lines.slice(1).map((row, index) => {
                 const values = row.split(csvSplitter);
-                const item = { _id: index, assigned_group: '' };
-                
+                // Initialize both custom structural target variables dynamically
+                const item = { _id: index, assigned_group: '', assigned_subcategory: '' };
                 headers.forEach((header, i) => {
                     let val = values[i] ? values[i].trim() : '';
                     val = val.replace(/^["']|["']$/g, '').replace(/""/g, '"');
@@ -429,15 +432,9 @@
                     el.dataset.dragged = 'false';
                     return;
                 }
-                
                 const isExpanded = el.classList.contains('expanded');
-                document.querySelectorAll('.floating-node').forEach(node => {
-                    node.classList.remove('expanded');
-                });
-
-                if (!isExpanded) {
-                    el.classList.add('expanded');
-                }
+                document.querySelectorAll('.floating-node').forEach(node => node.classList.remove('expanded'));
+                if (!isExpanded) el.classList.add('expanded');
             });
 
             el.addEventListener('dragstart', (e) => {
@@ -446,9 +443,7 @@
                 setTimeout(() => el.style.opacity = '0.4', 0);
             });
 
-            el.addEventListener('dragend', () => {
-                el.style.opacity = '1';
-            });
+            el.addEventListener('dragend', () => el.style.opacity = '1');
 
             canvasStage.appendChild(el);
             item.domElement = el;
@@ -456,9 +451,7 @@
 
         function updateFloatingNodeLabels() {
             floatingItems.forEach(item => {
-                if (item.domElement) {
-                    item.domElement.textContent = item[displayVariable] || '(Empty)';
-                }
+                if (item.domElement) item.domElement.textContent = item[displayVariable] || '(Empty)';
             });
         }
 
@@ -478,27 +471,15 @@
 
             const zone = document.createElement('div');
             zone.className = 'category-zone';
-            zone.id = `zone-container-${name}`;
+            zone.id = `zone-${name}`;
             zone.dataset.groupName = name;
-            
-            // Structured title header bar + text payload array container
-            zone.innerHTML = `
-                <div class="category-title" onclick="toggleCategoryReview('${name}')">
-                    <span>${name}</span>
-                    <span class="category-count" id="count-${name}">0</span>
-                </div>
-                <div class="category-contents" id="contents-${name}"></div>
-            `;
 
             zone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 zone.classList.add('drag-over');
             });
 
-            zone.addEventListener('dragleave', () => {
-                zone.classList.remove('drag-over');
-            });
-
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
             zone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 zone.classList.remove('drag-over');
@@ -510,20 +491,6 @@
             updateUI();
         }
 
-        // Toggle visibility state for auditing elements inside the sidebar panel
-        window.toggleCategoryReview = function(name) {
-            const contentPanel = document.getElementById(`contents-${name}`);
-            if (!contentPanel) return;
-
-            if (openCategories.has(name)) {
-                openCategories.delete(name);
-                contentPanel.classList.remove('visible');
-            } else {
-                openCategories.add(name);
-                contentPanel.classList.add('visible');
-            }
-        };
-
         function assignItemToGroup(itemId, groupName) {
             const dataIndex = dataset.findIndex(item => item._id === itemId);
             if (dataIndex === -1) return;
@@ -532,9 +499,7 @@
 
             const floatIndex = floatingItems.findIndex(item => item._id === itemId);
             if (floatIndex !== -1) {
-                if (floatingItems[floatIndex].domElement) {
-                    floatingItems[floatIndex].domElement.remove();
-                }
+                if (floatingItems[floatIndex].domElement) floatingItems[floatIndex].domElement.remove();
                 floatingItems.splice(floatIndex, 1);
             }
 
@@ -544,31 +509,46 @@
 
         function updateUI() {
             categories.forEach(groupName => {
-                const groupedItems = dataset.filter(item => item.assigned_group === groupName);
-                
-                // Update Badge Counts
-                const counterEl = document.getElementById(`count-${groupName}`);
-                if (counterEl) counterEl.textContent = groupedItems.length;
+                const zone = document.getElementById(`zone-${groupName}`);
+                if (!zone) return;
 
-                // Populate content inspector view
-                const contentsPanel = document.getElementById(`contents-${groupName}`);
-                if (contentsPanel) {
-                    contentsPanel.innerHTML = '';
-                    
-                    groupedItems.forEach(item => {
-                        const rowItem = document.createElement('div');
-                        rowItem.className = 'review-item';
-                        // Show current display variable text inside the list row block
-                        rowItem.textContent = item[displayVariable] || '(Empty Field)';
-                        rowItem.title = item[displayVariable] || ''; // Native hover tooltip fallback
-                        contentsPanel.appendChild(rowItem);
-                    });
+                const matchedItems = dataset.filter(item => item.assigned_group === groupName);
 
-                    // Keep layout state expanded if users had it open during drops
-                    if (openCategories.has(groupName)) {
-                        contentsPanel.classList.add('visible');
+                // Re-render sub-elements container inside the target dropzone
+                zone.innerHTML = `
+                    <div class="category-title">
+                        <span>${groupName}</span>
+                        <span class="category-count">${matchedItems.length}</span>
+                    </div>
+                    <div class="grouped-items-container">
+                        ${matchedItems.map(item => `
+                            <div class="grouped-item-card">
+                                <div class="grouped-item-text" title="${String(item[displayVariable]).replace(/"/g, '&quot;')}">
+                                    ${item[displayVariable] || '(Empty)'}
+                                </div>
+                                <div class="subcategory-input-wrapper">
+                                    <label>Sub:</label>
+                                    <input type="text" 
+                                           class="subcat-input" 
+                                           data-id="${item._id}" 
+                                           value="${item.assigned_subcategory || ''}" 
+                                           placeholder="Type subcategory...">
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            });
+
+            // Bind change event listeners to all nested subcategory fields
+            document.querySelectorAll('.subcat-input').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const itemId = parseInt(e.target.dataset.id, 10);
+                    const targetItem = dataset.find(item => item._id === itemId);
+                    if (targetItem) {
+                        targetItem.assigned_subcategory = e.target.value;
                     }
-                }
+                });
             });
 
             const groupedCount = dataset.filter(item => item.assigned_group).length;
@@ -578,12 +558,7 @@
 
         function handleWheelZoom(e) {
             e.preventDefault();
-            const zoomFactor = 0.05;
-            if (e.deltaY < 0) {
-                adjustZoom(zoomFactor);
-            } else {
-                adjustZoom(-zoomFactor);
-            }
+            adjustZoom(e.deltaY < 0 ? 0.05 : -0.05);
         }
 
         function adjustZoom(amount) {
@@ -628,7 +603,8 @@
         function exportProcessedCSV() {
             if (dataset.length === 0) return;
 
-            const outputHeaders = [...headers, 'assigned_group'];
+            // Append both target variables to the final header output array
+            const outputHeaders = [...headers, 'assigned_group', 'assigned_subcategory'];
             const csvRows = [outputHeaders.join(',')];
 
             dataset.forEach(item => {
