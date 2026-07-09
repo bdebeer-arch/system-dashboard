@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Variable Grouper</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2e;
+            --panel-bg: #252538;
+            --text-color: #cdd6f4;
+            --accent-color: #89b4fa;
+            --border-color: #45475a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            z-index: 20;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        select, input[type="file"] {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #sidebar {
+            width: 300px;
+            background-color: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 15px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .category-creator {
+            display: flex;
+            gap: 8px;
+        }
+
+        .category-creator input {
+            flex: 1;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px;
+            border-radius: 4px;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .category-zone {
+            background-color: var(--bg-color);
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            min-height: 80px;
+            transition: all 0.2s ease;
+        }
+
+        .category-zone.drag-over {
+            border-color: var(--accent-color);
+            background-color: rgba(137, 180, 250, 0.05);
+        }
+
+        .category-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .category-count {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #181825;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        /* Zoom and pan target wrapper */
+        #canvas-stage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: 0 0;
+            transition: transform 0.05s linear;
+        }
+
+        .floating-node {
+            position: absolute;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 13px;
+            transition: border-color 0.2s, max-width 0.2s;
+            z-index: 5;
+            
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .floating-node:active {
+            cursor: grabbing;
+            border-color: var(--accent-color);
+        }
+
+        .floating-node.expanded {
+            max-width: 400px;
+            white-space: normal;
+            word-break: break-word;
+            border-radius: 12px;
+            border-color: var(--accent-color);
+            z-index: 10;
+        }
+
+        .stats-banner {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-left: auto;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 5px;
+            z-index: 15;
+            background-color: var(--panel-bg);
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .zoom-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .zoom-btn:hover {
+            border-color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <input type="file" id="csv-file" accept=".csv">
+        <div>
+            <label for="view-variable">Display Variable: </label>
+            <select id="view-variable" disabled><option>Upload CSV first</option></select>
+        </div>
+        <button class="btn btn-secondary" id="reshuffle-btn" disabled>Reshuffle Pool</button>
+        <button class="btn" id="export-btn" disabled>Export CSV</button>
+        <div class="stats-banner" id="stats-display">Remaining: 0 | Grouped: 0</div>
+    </header>
+
+    <div class="main-container">
+        <div id="sidebar">
+            <h3>Groups</h3>
+            <div class="category-creator">
+                <input type="text" id="new-group-name" placeholder="New group label...">
+                <button class="btn" id="add-group-btn">+</button>
+            </div>
+            <div class="category-list" id="category-list"></div>
+        </div>
+
+        <div id="canvas-container">
+            <div id="canvas-stage"></div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoom-out">-</button>
+                <button class="zoom-btn" id="zoom-reset">100%</button>
+                <button class="zoom-btn" id="zoom-in">+</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dataset = [];
+        let headers = [];
+        let floatingItems = [];
+        let displayVariable = '';
+        const POOL_SIZE = 20; 
+        const categories = new Set();
+
+        // Zoom State Parameters
+        let zoomScale = 1;
+        const MIN_ZOOM = 0.4;
+        const MAX_ZOOM = 2.0;
+
+        const fileInput = document.getElementById('csv-file');
+        const viewSelect = document.getElementById('view-variable');
+        const reshuffleBtn = document.getElementById('reshuffle-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvasStage = document.getElementById('canvas-stage');
+        const categoryList = document.getElementById('category-list');
+        const addGroupBtn = document.getElementById('add-group-btn');
+        const newGroupName = document.getElementById('new-group-name');
+        const statsDisplay = document.getElementById('stats-display');
+
+        const speedMultiplier = 0.4;
+
+        fileInput.addEventListener('change', handleFileUpload);
+        viewSelect.addEventListener('change', (e) => {
+            displayVariable = e.target.value;
+            updateFloatingNodeLabels();
+        });
+        reshuffleBtn.addEventListener('click', () => { clearFloatingPool(); populateFloatingPool(); });
+        addGroupBtn.addEventListener('click', generateCustomCategory);
+        exportBtn.addEventListener('click', exportProcessedCSV);
+
+        // Zoom Interaction Listeners
+        canvasContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
+        document.getElementById('zoom-in').addEventListener('click', () => adjustZoom(0.1));
+        document.getElementById('zoom-out').addEventListener('click', () => adjustZoom(-0.1));
+        document.getElementById('zoom-reset').addEventListener('click', () => { zoomScale = 1; applyZoomTransform(); });
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                processCSVData(event.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function processCSVData(text) {
+            const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+            if (rows.length < 2) return;
+
+            headers = rows[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim());
+            
+            dataset = rows.slice(1).map((row, index) => {
+                const values = row.split(',');
+                const item = { _id: index, assigned_group: '' };
+                headers.forEach((header, i) => {
+                    item[header] = values[i] ? values[i].replace(/^["']|["']$/g, '').trim() : '';
+                });
+                return item;
+            });
+
+            displayVariable = headers[0];
+            
+            viewSelect.innerHTML = '';
+            headers.forEach(header => {
+                const option = document.createElement('option');
+                option.value = header;
+                option.textContent = header;
+                viewSelect.appendChild(option);
+            });
+
+            viewSelect.disabled = false;
+            reshuffleBtn.disabled = false;
+            exportBtn.disabled = false;
+
+            clearFloatingPool();
+            populateFloatingPool();
+            updateUI();
+        }
+
+        function populateFloatingPool() {
+            const ungroupedItems = dataset.filter(item => !item.assigned_group && !floatingItems.some(f => f._id === item._id));
+            
+            while (floatingItems.length < POOL_SIZE && ungroupedItems.length > 0) {
+                const randomIndex = Math.floor(Math.random() * ungroupedItems.length);
+                const item = ungroupedItems.splice(randomIndex, 1)[0];
+                
+                // Account for the scale sizing inside the viewport bounds
+                item.x = Math.random() * ((canvasContainer.clientWidth / zoomScale) - 180);
+                item.y = Math.random() * ((canvasContainer.clientHeight / zoomScale) - 50);
+                item.vx = (Math.random() - 0.5) * 3 * speedMultiplier;
+                item.vy = (Math.random() - 0.5) * 3 * speedMultiplier;
+                
+                floatingItems.push(item);
+                createFloatingElementDOM(item);
+            }
+        }
+
+        function createFloatingElementDOM(item) {
+            const el = document.createElement('div');
+            el.className = 'floating-node';
+            el.id = `node-${item._id}`;
+            el.textContent = item[displayVariable] || '(Empty)';
+            el.draggable = true;
+
+            el.style.left = `${item.x}px`;
+            el.style.top = `${item.y}px`;
+
+            el.addEventListener('click', (e) => {
+                if (el.dataset.dragged === 'true') {
+                    el.dataset.dragged = 'false';
+                    return;
+                }
+                
+                const isExpanded = el.classList.contains('expanded');
+                
+                // Proactive Auto-Collapse Action
+                document.querySelectorAll('.floating-node').forEach(node => {
+                    node.classList.remove('expanded');
+                });
+
+                if (!isExpanded) {
+                    el.classList.add('expanded');
+                }
+            });
+
+            el.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item._id);
+                el.dataset.dragged = 'true';
+                setTimeout(() => el.style.opacity = '0.4', 0);
+            });
+
+            el.addEventListener('dragend', () => {
+                el.style.opacity = '1';
+            });
+
+            canvasStage.appendChild(el);
+            item.domElement = el;
+        }
+
+        function updateFloatingNodeLabels() {
+            floatingItems.forEach(item => {
+                if (item.domElement) {
+                    item.domElement.textContent = item[displayVariable] || '(Empty)';
+                }
+            });
+        }
+
+        function clearFloatingPool() {
+            floatingItems.forEach(item => {
+                if (item.domElement) item.domElement.remove();
+            });
+            floatingItems = [];
+        }
+
+        function generateCustomCategory() {
+            const name = newGroupName.value.trim();
+            if (!name || categories.has(name)) return;
+
+            categories.add(name);
+            newGroupName.value = '';
+
+            const zone = document.createElement('div');
+            zone.className = 'category-zone';
+            zone.dataset.groupName = name;
+            zone.innerHTML = `
+                <div class="category-title">
+                    <span>${name}</span>
+                    <span class="category-count" id="count-${CSS.escape(name)}">0</span>
+                </div>
+            `;
+
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const itemId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                assignItemToGroup(itemId, name);
+            });
+
+            categoryList.appendChild(zone);
+            updateUI();
+        }
+
+        function assignItemToGroup(itemId, groupName) {
+            const dataIndex = dataset.findIndex(item => item._id === itemId);
+            if (dataIndex === -1) return;
+
+            dataset[dataIndex].assigned_group = groupName;
+
+            const floatIndex = floatingItems.findIndex(item => item._id === itemId);
+            if (floatIndex !== -1) {
+                if (floatingItems[floatIndex].domElement) {
+                    floatingItems[floatIndex].domElement.remove();
+                }
+                floatingItems.splice(floatIndex, 1);
+            }
+
+            populateFloatingPool();
+            updateUI();
+        }
+
+        function updateUI() {
+            categories.forEach(groupName => {
+                const count = dataset.filter(item => item.assigned_group === groupName).length;
+                const counterEl = document.getElementById(`count-${groupName}`);
+                if (counterEl) counterEl.textContent = count;
+            });
+
+            const groupedCount = dataset.filter(item => item.assigned_group).length;
+            const remainingCount = dataset.length - groupedCount;
+            statsDisplay.textContent = `Remaining: ${remainingCount} | Grouped: ${groupedCount}`;
+        }
+
+        // Workspace Zoom Vector Calculations
+        function handleWheelZoom(e) {
+            e.preventDefault();
+            const zoomFactor = 0.05;
+            if (e.deltaY < 0) {
+                adjustZoom(zoomFactor);
+            } else {
+                adjustZoom(-zoomFactor);
+            }
+        }
+
+        function adjustZoom(amount) {
+            zoomScale = Math.min(Math.max(zoomScale + amount, MIN_ZOOM), MAX_ZOOM);
+            applyZoomTransform();
+        }
+
+        function applyZoomTransform() {
+            canvasStage.style.transform = `scale(${zoomScale})`;
+            document.getElementById('zoom-reset').textContent = `${Math.round(zoomScale * 100)}%`;
+        }
+
+        function physicsLoop() {
+            if (floatingItems.length > 0) {
+                // Bounds shrink or stretch relative to current zoom matrices
+                const width = canvasContainer.clientWidth / zoomScale;
+                const height = canvasContainer.clientHeight / zoomScale;
+
+                floatingItems.forEach(item => {
+                    if (!item.domElement) return;
+
+                    item.x += item.vx;
+                    item.y += item.vy;
+
+                    const rect = item.domElement.getBoundingClientRect();
+                    const elWidth = rect.width / zoomScale;
+                    const elHeight = rect.height / zoomScale;
+
+                    if (item.x <= 0) { item.x = 0; item.vx *= -1; }
+                    if (item.x + elWidth >= width) { item.x = width - elWidth; item.vx *= -1; }
+                    if (item.y <= 0) { item.y = 0; item.vy *= -1; }
+                    if (item.y + elHeight >= height) { item.y = height - elHeight; item.vy *= -1; }
+
+                    item.domElement.style.left = `${item.x}px`;
+                    item.domElement.style.top = `${item.y}px`;
+                });
+            }
+            requestAnimationFrame(physicsLoop);
+        }
+
+        requestAnimationFrame(physicsLoop);
+
+        function exportProcessedCSV() {
+            if (dataset.length === 0) return;
+
+            const outputHeaders = [...headers, 'assigned_group'];
+            const csvRows = [outputHeaders.join(',')];
+
+            dataset.forEach(item => {
+                const rowValues = outputHeaders.map(header => {
+                    const value = item[header] !== undefined ? item[header] : '';
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                });
+                csvRows.push(rowValues.join(','));
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "grouped_dataset_output.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
