@@ -41,6 +41,28 @@
             z-index: 20;
         }
 
+        .nav-home-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            transition: all 0.2s ease;
+        }
+
+        .nav-home-link:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .divider {
+            color: var(--border-color);
+            font-size: 18px;
+        }
+
         .btn {
             background-color: var(--accent-color);
             color: var(--bg-color);
@@ -270,6 +292,9 @@
 <body>
 
     <header>
+        <a href="index.html" class="nav-home-link">⌂ Home</a>
+        <span class="divider">|</span>
+        
         <button class="btn btn-secondary" id="back-to-root-btn" style="display:none;">← Back to Root</button>
         <span id="current-view-title" style="font-weight: bold; font-size: 16px;">Root Workspace</span>
         <input type="file" id="csv-file" accept=".csv">
@@ -321,10 +346,9 @@
         let displayVariable = '';
         const POOL_SIZE = 20;
         
-        // Navigation States
-        let currentWorkspace = 'root'; // Can be 'root' or a specific category string name
+        let currentWorkspace = 'root';
         const categories = new Set();
-        const subcategories = {}; // Map: parentCategory -> Set of subcategories
+        const subcategories = {};
 
         let zoomScale = 1;
         const MIN_ZOOM = 0.4;
@@ -400,10 +424,8 @@
             let poolSource = [];
             
             if (currentWorkspace === 'root') {
-                // Pull unassigned root components
                 poolSource = dataset.filter(item => !item.assigned_group && !floatingItems.some(f => f._id === item._id));
             } else {
-                // Pull elements mapped to this parent but lacking a subcategory assignment
                 poolSource = dataset.filter(item => item.assigned_group === currentWorkspace && !item.assigned_subcategory && !floatingItems.some(f => f._id === item._id));
             }
 
@@ -538,7 +560,6 @@
                     categoryList.appendChild(zone);
                 });
             } else {
-                // Subcategory sorting view UI context mapping
                 const subSet = subcategories[currentWorkspace] || new Set();
                 subSet.forEach(subName => {
                     const matchedSubItems = dataset.filter(item => item.assigned_group === currentWorkspace && item.assigned_subcategory === subName);
@@ -567,7 +588,7 @@
         }
 
         function toggleInspectCard(event, cardElement) {
-            event.stopPropagation(); // Prevents navigating workspace workspaces unintentionally
+            event.stopPropagation();
             cardElement.classList.toggle('expanded');
         }
 
