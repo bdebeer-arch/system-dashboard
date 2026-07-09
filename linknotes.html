@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Variable & Subcategory Grouper</title>
+    <title>Multi-Tier Spatial Variable Grouper</title>
     <style>
         :root {
             --bg-color: #1e1e2e;
             --panel-bg: #252538;
             --text-color: #cdd6f4;
             --accent-color: #89b4fa;
+            --sub-accent: #a6e3a1;
             --border-color: #45475a;
             --nested-bg: #181825;
         }
@@ -37,7 +38,6 @@
             display: flex;
             align-items: center;
             gap: 20px;
-            flex-wrap: wrap;
             z-index: 20;
         }
 
@@ -52,18 +52,17 @@
             font-size: 14px;
         }
 
-        .btn:hover {
-            opacity: 0.9;
-        }
-
+        .btn:hover { opacity: 0.9; }
+        
         .btn-secondary {
             background-color: transparent;
             color: var(--text-color);
             border: 1px solid var(--border-color);
         }
 
-        .btn-secondary:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+        .btn-navigation {
+            background-color: var(--sub-accent);
+            color: var(--bg-color);
         }
 
         select, input[type="file"] {
@@ -94,6 +93,14 @@
             z-index: 10;
         }
 
+        .creator-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
         .category-creator {
             display: flex;
             gap: 8px;
@@ -119,8 +126,13 @@
             border: 2px dashed var(--border-color);
             border-radius: 6px;
             padding: 12px;
-            min-height: 100px;
+            cursor: pointer;
             transition: all 0.2s ease;
+        }
+
+        .category-zone.active-view {
+            border-color: var(--sub-accent);
+            background-color: rgba(166, 227, 161, 0.05);
         }
 
         .category-zone.drag-over {
@@ -143,48 +155,39 @@
             opacity: 0.6;
         }
 
-        .grouped-items-container {
+        .inspect-container {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-top: 5px;
+            gap: 6px;
+            margin-top: 8px;
         }
 
-        .grouped-item-card {
+        .inspect-card {
             background-color: var(--nested-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 8px;
             font-size: 12px;
+            cursor: pointer;
+            transition: max-height 0.2s ease;
         }
 
-        .grouped-item-text {
+        .inspect-card-text {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            margin-bottom: 6px;
-            font-weight: 500;
         }
 
-        .subcategory-input-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .inspect-card.expanded .inspect-card-text {
+            white-space: normal;
+            word-break: break-word;
         }
 
-        .subcategory-input-wrapper label {
+        .inspect-card-subtag {
             font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .subcategory-input-wrapper input {
-            flex: 1;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 3px 6px;
-            border-radius: 3px;
-            font-size: 11px;
+            color: var(--sub-accent);
+            margin-top: 4px;
+            font-style: italic;
         }
 
         #canvas-container {
@@ -192,11 +195,6 @@
             position: relative;
             overflow: hidden;
             background-color: #181825;
-            cursor: grab;
-        }
-
-        #canvas-container:active {
-            cursor: grabbing;
         }
 
         #canvas-stage {
@@ -206,7 +204,6 @@
             width: 100%;
             height: 100%;
             transform-origin: 0 0;
-            transition: transform 0.05s linear;
         }
 
         .floating-node {
@@ -220,18 +217,15 @@
             user-select: none;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             font-size: 13px;
-            transition: border-color 0.2s, max-width 0.2s;
-            z-index: 5;
-            
             max-width: 180px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            z-index: 5;
         }
 
-        .floating-node:active {
-            cursor: grabbing;
-            border-color: var(--accent-color);
+        .floating-node.sub-node {
+            border-color: var(--sub-accent);
         }
 
         .floating-node.expanded {
@@ -239,7 +233,6 @@
             white-space: normal;
             word-break: break-word;
             border-radius: 12px;
-            border-color: var(--accent-color);
             z-index: 10;
         }
 
@@ -272,32 +265,42 @@
             cursor: pointer;
             font-weight: bold;
         }
-
-        .zoom-btn:hover {
-            border-color: var(--accent-color);
-        }
     </style>
 </head>
 <body>
 
     <header>
+        <button class="btn btn-secondary" id="back-to-root-btn" style="display:none;">← Back to Root</button>
+        <span id="current-view-title" style="font-weight: bold; font-size: 16px;">Root Workspace</span>
         <input type="file" id="csv-file" accept=".csv">
         <div>
-            <label for="view-variable">Display Variable: </label>
-            <select id="view-variable" disabled><option>Upload CSV first</option></select>
+            <select id="view-variable" disabled><option>Upload CSV</option></select>
         </div>
-        <button class="btn btn-secondary" id="reshuffle-btn" disabled>Reshuffle Pool</button>
+        <button class="btn btn-secondary" id="reshuffle-btn" disabled>Reshuffle</button>
         <button class="btn" id="export-btn" disabled>Export CSV</button>
         <div class="stats-banner" id="stats-display">Remaining: 0 | Grouped: 0</div>
     </header>
 
     <div class="main-container">
         <div id="sidebar">
-            <h3>Groups & Inspection</h3>
-            <div class="category-creator">
-                <input type="text" id="new-group-name" placeholder="New primary category...">
-                <button class="btn" id="add-group-btn">+</button>
+            <h3 id="sidebar-context-title">Primary Categories</h3>
+            
+            <div id="primary-creator-block">
+                <div class="creator-title">Add Primary Category</div>
+                <div class="category-creator">
+                    <input type="text" id="new-group-name" placeholder="Name...">
+                    <button class="btn" id="add-group-btn">+</button>
+                </div>
             </div>
+
+            <div id="subcategory-creator-block" style="display: none;">
+                <div class="creator-title">Add Subcategory Here</div>
+                <div class="category-creator">
+                    <input type="text" id="new-subgroup-name" placeholder="Subname...">
+                    <button class="btn btn-navigation" id="add-subgroup-btn">+</button>
+                </div>
+            </div>
+
             <div class="category-list" id="category-list"></div>
         </div>
 
@@ -316,8 +319,13 @@
         let headers = [];
         let floatingItems = [];
         let displayVariable = '';
-        const POOL_SIZE = 20; 
+        const POOL_SIZE = 20;
+        
+        // Navigation States
+        let currentWorkspace = 'root'; // Can be 'root' or a specific category string name
         const categories = new Set();
+        const subcategories = {}; // Map: parentCategory -> Set of subcategories
+
         let zoomScale = 1;
         const MIN_ZOOM = 0.4;
         const MAX_ZOOM = 2.0;
@@ -332,20 +340,22 @@
         const canvasStage = document.getElementById('canvas-stage');
         const categoryList = document.getElementById('category-list');
         const addGroupBtn = document.getElementById('add-group-btn');
+        const addSubgroupBtn = document.getElementById('add-subgroup-btn');
         const newGroupName = document.getElementById('new-group-name');
+        const newSubgroupName = document.getElementById('new-subgroup-name');
         const statsDisplay = document.getElementById('stats-display');
+        const backToRootBtn = document.getElementById('back-to-root-btn');
+        const currentViewTitle = document.getElementById('current-view-title');
 
         const speedMultiplier = 0.4;
 
         fileInput.addEventListener('change', handleFileUpload);
-        viewSelect.addEventListener('change', (e) => {
-            displayVariable = e.target.value;
-            updateFloatingNodeLabels();
-            updateUI(); // Refreshes text inside sidebar items to match current view variable
-        });
+        viewSelect.addEventListener('change', (e) => { displayVariable = e.target.value; updateFloatingLabels(); updateUI(); });
         reshuffleBtn.addEventListener('click', () => { clearFloatingPool(); populateFloatingPool(); });
-        addGroupBtn.addEventListener('click', generateCustomCategory);
+        addGroupBtn.addEventListener('click', generatePrimaryCategory);
+        addSubgroupBtn.addEventListener('click', generateSubcategory);
         exportBtn.addEventListener('click', exportProcessedCSV);
+        backToRootBtn.addEventListener('click', navigateToRoot);
 
         canvasContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
         document.getElementById('zoom-in').addEventListener('click', () => adjustZoom(0.1));
@@ -355,11 +365,8 @@
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(event) {
-                processCSVData(event.target.result);
-            };
+            reader.onload = (ev) => processCSVData(ev.target.result);
             reader.readAsText(file);
         }
 
@@ -368,44 +375,41 @@
             if (lines.length < 2) return;
 
             headers = lines[0].split(csvSplitter).map(h => h.replace(/^["']|["']$/g, '').trim());
-            
             dataset = lines.slice(1).map((row, index) => {
                 const values = row.split(csvSplitter);
-                // Initialize both custom structural target variables dynamically
                 const item = { _id: index, assigned_group: '', assigned_subcategory: '' };
                 headers.forEach((header, i) => {
                     let val = values[i] ? values[i].trim() : '';
-                    val = val.replace(/^["']|["']$/g, '').replace(/""/g, '"');
-                    item[header] = val;
+                    item[header] = val.replace(/^["']|["']$/g, '').replace(/""/g, '"');
                 });
                 return item;
             });
 
             displayVariable = headers[0];
-            
             viewSelect.innerHTML = '';
-            headers.forEach(header => {
-                const option = document.createElement('option');
-                option.value = header;
-                option.textContent = header;
-                viewSelect.appendChild(option);
+            headers.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h; opt.textContent = h; viewSelect.appendChild(opt);
             });
 
-            viewSelect.disabled = false;
-            reshuffleBtn.disabled = false;
-            exportBtn.disabled = false;
-
-            clearFloatingPool();
-            populateFloatingPool();
-            updateUI();
+            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = false;
+            navigateToRoot();
         }
 
         function populateFloatingPool() {
-            const ungroupedItems = dataset.filter(item => !item.assigned_group && !floatingItems.some(f => f._id === item._id));
+            let poolSource = [];
             
-            while (floatingItems.length < POOL_SIZE && ungroupedItems.length > 0) {
-                const randomIndex = Math.floor(Math.random() * ungroupedItems.length);
-                const item = ungroupedItems.splice(randomIndex, 1)[0];
+            if (currentWorkspace === 'root') {
+                // Pull unassigned root components
+                poolSource = dataset.filter(item => !item.assigned_group && !floatingItems.some(f => f._id === item._id));
+            } else {
+                // Pull elements mapped to this parent but lacking a subcategory assignment
+                poolSource = dataset.filter(item => item.assigned_group === currentWorkspace && !item.assigned_subcategory && !floatingItems.some(f => f._id === item._id));
+            }
+
+            while (floatingItems.length < POOL_SIZE && poolSource.length > 0) {
+                const randomIndex = Math.floor(Math.random() * poolSource.length);
+                const item = poolSource.splice(randomIndex, 1)[0];
                 
                 item.x = Math.random() * ((canvasContainer.clientWidth / zoomScale) - 180);
                 item.y = Math.random() * ((canvasContainer.clientHeight / zoomScale) - 50);
@@ -419,22 +423,18 @@
 
         function createFloatingElementDOM(item) {
             const el = document.createElement('div');
-            el.className = 'floating-node';
+            el.className = `floating-node ${currentWorkspace !== 'root' ? 'sub-node' : ''}`;
             el.id = `node-${item._id}`;
             el.textContent = item[displayVariable] || '(Empty)';
             el.draggable = true;
-
             el.style.left = `${item.x}px`;
             el.style.top = `${item.y}px`;
 
-            el.addEventListener('click', (e) => {
-                if (el.dataset.dragged === 'true') {
-                    el.dataset.dragged = 'false';
-                    return;
-                }
-                const isExpanded = el.classList.contains('expanded');
-                document.querySelectorAll('.floating-node').forEach(node => node.classList.remove('expanded'));
-                if (!isExpanded) el.classList.add('expanded');
+            el.addEventListener('click', () => {
+                if (el.dataset.dragged === 'true') { el.dataset.dragged = 'false'; return; }
+                const isExp = el.classList.contains('expanded');
+                document.querySelectorAll('.floating-node').forEach(n => n.classList.remove('expanded'));
+                if (!isExp) el.classList.add('expanded');
             });
 
             el.addEventListener('dragstart', (e) => {
@@ -444,128 +444,157 @@
             });
 
             el.addEventListener('dragend', () => el.style.opacity = '1');
-
             canvasStage.appendChild(el);
             item.domElement = el;
         }
 
-        function updateFloatingNodeLabels() {
-            floatingItems.forEach(item => {
-                if (item.domElement) item.domElement.textContent = item[displayVariable] || '(Empty)';
-            });
-        }
-
-        function clearFloatingPool() {
-            floatingItems.forEach(item => {
-                if (item.domElement) item.domElement.remove();
-            });
-            floatingItems = [];
-        }
-
-        function generateCustomCategory() {
+        function generatePrimaryCategory() {
             const name = newGroupName.value.trim();
             if (!name || categories.has(name)) return;
-
             categories.add(name);
+            subcategories[name] = new Set();
             newGroupName.value = '';
-
-            const zone = document.createElement('div');
-            zone.className = 'category-zone';
-            zone.id = `zone-${name}`;
-            zone.dataset.groupName = name;
-
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                zone.classList.add('drag-over');
-            });
-
-            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-            zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-                const itemId = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                assignItemToGroup(itemId, name);
-            });
-
-            categoryList.appendChild(zone);
             updateUI();
         }
 
-        function assignItemToGroup(itemId, groupName) {
+        function generateSubcategory() {
+            const subName = newSubgroupName.value.trim();
+            if (!subName || currentWorkspace === 'root' || subcategories[currentWorkspace].has(subName)) return;
+            subcategories[currentWorkspace].add(subName);
+            newSubgroupName.value = '';
+            updateUI();
+        }
+
+        function assignItemToZone(itemId, groupTargetName) {
             const dataIndex = dataset.findIndex(item => item._id === itemId);
             if (dataIndex === -1) return;
 
-            dataset[dataIndex].assigned_group = groupName;
+            if (currentWorkspace === 'root') {
+                dataset[dataIndex].assigned_group = groupTargetName;
+            } else {
+                dataset[dataIndex].assigned_subcategory = groupTargetName;
+            }
 
             const floatIndex = floatingItems.findIndex(item => item._id === itemId);
             if (floatIndex !== -1) {
                 if (floatingItems[floatIndex].domElement) floatingItems[floatIndex].domElement.remove();
                 floatingItems.splice(floatIndex, 1);
             }
+            populateFloatingPool();
+            updateUI();
+        }
 
+        function navigateToCategory(catName) {
+            currentWorkspace = catName;
+            backToRootBtn.style.display = 'inline-block';
+            currentViewTitle.textContent = `Category Workspace: ${catName}`;
+            document.getElementById('primary-creator-block').style.display = 'none';
+            document.getElementById('subcategory-creator-block').style.display = 'block';
+            document.getElementById('sidebar-context-title').textContent = "Subcategories Menu";
+            clearFloatingPool();
+            populateFloatingPool();
+            updateUI();
+        }
+
+        function navigateToRoot() {
+            currentWorkspace = 'root';
+            backToRootBtn.style.display = 'none';
+            currentViewTitle.textContent = "Root Workspace";
+            document.getElementById('primary-creator-block').style.display = 'block';
+            document.getElementById('subcategory-creator-block').style.display = 'none';
+            document.getElementById('sidebar-context-title').textContent = "Primary Categories";
+            clearFloatingPool();
             populateFloatingPool();
             updateUI();
         }
 
         function updateUI() {
-            categories.forEach(groupName => {
-                const zone = document.getElementById(`zone-${groupName}`);
-                if (!zone) return;
+            categoryList.innerHTML = '';
 
-                const matchedItems = dataset.filter(item => item.assigned_group === groupName);
-
-                // Re-render sub-elements container inside the target dropzone
-                zone.innerHTML = `
-                    <div class="category-title">
-                        <span>${groupName}</span>
-                        <span class="category-count">${matchedItems.length}</span>
-                    </div>
-                    <div class="grouped-items-container">
-                        ${matchedItems.map(item => `
-                            <div class="grouped-item-card">
-                                <div class="grouped-item-text" title="${String(item[displayVariable]).replace(/"/g, '&quot;')}">
-                                    ${item[displayVariable] || '(Empty)'}
+            if (currentWorkspace === 'root') {
+                categories.forEach(groupName => {
+                    const matchedItems = dataset.filter(item => item.assigned_group === groupName);
+                    const zone = document.createElement('div');
+                    zone.className = 'category-zone';
+                    zone.innerHTML = `
+                        <div class="category-title">
+                            <span>${groupName} ➔</span>
+                            <span class="category-count">${matchedItems.length}</span>
+                        </div>
+                        <div class="inspect-container">
+                            ${matchedItems.map(item => `
+                                <div class="inspect-card" onclick="toggleInspectCard(event, this)">
+                                    <div class="inspect-card-text">${item[displayVariable] || '(Empty)'}</div>
+                                    ${item.assigned_subcategory ? `<div class="inspect-card-subtag">Sub: ${item.assigned_subcategory}</div>` : ''}
                                 </div>
-                                <div class="subcategory-input-wrapper">
-                                    <label>Sub:</label>
-                                    <input type="text" 
-                                           class="subcat-input" 
-                                           data-id="${item._id}" 
-                                           value="${item.assigned_subcategory || ''}" 
-                                           placeholder="Type subcategory...">
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            });
-
-            // Bind change event listeners to all nested subcategory fields
-            document.querySelectorAll('.subcat-input').forEach(input => {
-                input.addEventListener('input', (e) => {
-                    const itemId = parseInt(e.target.dataset.id, 10);
-                    const targetItem = dataset.find(item => item._id === itemId);
-                    if (targetItem) {
-                        targetItem.assigned_subcategory = e.target.value;
-                    }
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    zone.addEventListener('click', (e) => {
+                        if (!e.target.closest('.inspect-card')) navigateToCategory(groupName);
+                    });
+                    setupDragDropEvents(zone, groupName);
+                    categoryList.appendChild(zone);
                 });
+            } else {
+                // Subcategory sorting view UI context mapping
+                const subSet = subcategories[currentWorkspace] || new Set();
+                subSet.forEach(subName => {
+                    const matchedSubItems = dataset.filter(item => item.assigned_group === currentWorkspace && item.assigned_subcategory === subName);
+                    const zone = document.createElement('div');
+                    zone.className = 'category-zone active-view';
+                    zone.innerHTML = `
+                        <div class="category-title">
+                            <span>${subName}</span>
+                            <span class="category-count">${matchedSubItems.length}</span>
+                        </div>
+                        <div class="inspect-container">
+                            ${matchedSubItems.map(item => `
+                                <div class="inspect-card" onclick="toggleInspectCard(event, this)">
+                                    <div class="inspect-card-text">${item[displayVariable] || '(Empty)'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    setupDragDropEvents(zone, subName);
+                    categoryList.appendChild(zone);
+                });
+            }
+
+            const totalGrouped = dataset.filter(item => item.assigned_group).length;
+            statsDisplay.textContent = `Remaining: ${dataset.length - totalGrouped} | Grouped: ${totalGrouped}`;
+        }
+
+        function toggleInspectCard(event, cardElement) {
+            event.stopPropagation(); // Prevents navigating workspace workspaces unintentionally
+            cardElement.classList.toggle('expanded');
+        }
+
+        function setupDragDropEvents(zone, targetName) {
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const itemId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                assignItemToZone(itemId, targetName);
             });
-
-            const groupedCount = dataset.filter(item => item.assigned_group).length;
-            const remainingCount = dataset.length - groupedCount;
-            statsDisplay.textContent = `Remaining: ${remainingCount} | Grouped: ${groupedCount}`;
         }
 
-        function handleWheelZoom(e) {
-            e.preventDefault();
-            adjustZoom(e.deltaY < 0 ? 0.05 : -0.05);
+        function updateFloatingLabels() {
+            floatingItems.forEach(item => {
+                if (item.domElement) item.domElement.textContent = item[displayVariable] || '(Empty)';
+            });
         }
 
-        function adjustZoom(amount) {
-            zoomScale = Math.min(Math.max(zoomScale + amount, MIN_ZOOM), MAX_ZOOM);
-            applyZoomTransform();
+        function clearFloatingPool() {
+            floatingItems.forEach(item => { if (item.domElement) item.domElement.remove(); });
+            floatingItems = [];
         }
 
+        function handleWheelZoom(e) { e.preventDefault(); adjustZoom(e.deltaY < 0 ? 0.05 : -0.05); }
+        function adjustZoom(amount) { zoomScale = Math.min(Math.max(zoomScale + amount, MIN_ZOOM), MAX_ZOOM); applyZoomTransform(); }
         function applyZoomTransform() {
             canvasStage.style.transform = `scale(${zoomScale})`;
             document.getElementById('zoom-reset').textContent = `${Math.round(zoomScale * 100)}%`;
@@ -575,38 +604,26 @@
             if (floatingItems.length > 0) {
                 const width = canvasContainer.clientWidth / zoomScale;
                 const height = canvasContainer.clientHeight / zoomScale;
-
                 floatingItems.forEach(item => {
                     if (!item.domElement) return;
-
-                    item.x += item.vx;
-                    item.y += item.vy;
-
-                    const rect = item.domElement.getBoundingClientRect();
-                    const elWidth = rect.width / zoomScale;
-                    const elHeight = rect.height / zoomScale;
-
+                    item.x += item.vx; item.y += item.vy;
+                    const r = item.domElement.getBoundingClientRect();
+                    const w = r.width / zoomScale; const h = r.height / zoomScale;
                     if (item.x <= 0) { item.x = 0; item.vx *= -1; }
-                    if (item.x + elWidth >= width) { item.x = width - elWidth; item.vx *= -1; }
+                    if (item.x + w >= width) { item.x = width - w; item.vx *= -1; }
                     if (item.y <= 0) { item.y = 0; item.vy *= -1; }
-                    if (item.y + elHeight >= height) { item.y = height - elHeight; item.vy *= -1; }
-
-                    item.domElement.style.left = `${item.x}px`;
-                    item.domElement.style.top = `${item.y}px`;
+                    if (item.y + h >= height) { item.y = height - h; item.vy *= -1; }
+                    item.domElement.style.left = `${item.x}px`; item.domElement.style.top = `${item.y}px`;
                 });
             }
             requestAnimationFrame(physicsLoop);
         }
-
         requestAnimationFrame(physicsLoop);
 
         function exportProcessedCSV() {
             if (dataset.length === 0) return;
-
-            // Append both target variables to the final header output array
             const outputHeaders = [...headers, 'assigned_group', 'assigned_subcategory'];
             const csvRows = [outputHeaders.join(',')];
-
             dataset.forEach(item => {
                 const rowValues = outputHeaders.map(header => {
                     const value = item[header] !== undefined ? item[header] : '';
@@ -614,13 +631,11 @@
                 });
                 csvRows.push(rowValues.join(','));
             });
-
-            const csvContent = csvRows.join("\n");
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", "grouped_dataset_output.csv");
+            link.setAttribute("download", "nested_grouped_output.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
