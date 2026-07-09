@@ -82,7 +82,7 @@
         }
 
         #sidebar {
-            width: 300px;
+            width: 350px; /* Slightly widened to accommodate review text */
             background-color: var(--panel-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
@@ -110,15 +110,15 @@
         .category-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
         .category-zone {
             background-color: var(--bg-color);
             border: 2px dashed var(--border-color);
             border-radius: 6px;
-            padding: 15px;
-            min-height: 80px;
+            padding: 12px;
+            min-height: 60px;
             transition: all 0.2s ease;
         }
 
@@ -129,15 +129,58 @@
 
         .category-title {
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             font-size: 14px;
             display: flex;
             justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category-title:hover {
+            color: var(--accent-color);
         }
 
         .category-count {
             font-size: 12px;
             opacity: 0.6;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* Review Items List Inside Group Container */
+        .category-contents {
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none; /* Hidden by default, toggled via JavaScript */
+            flex-direction: column;
+            gap: 6px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 8px;
+        }
+
+        .category-contents.visible {
+            display: flex;
+        }
+
+        .review-item {
+            font-size: 12px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 6px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: help;
+        }
+
+        .review-item:hover {
+            white-space: normal;
+            word-break: break-word;
+            background-color: rgba(255, 255, 255, 0.07);
         }
 
         #canvas-container {
@@ -152,7 +195,6 @@
             cursor: grabbing;
         }
 
-        /* Zoom and pan target wrapper */
         #canvas-stage {
             position: absolute;
             top: 0;
@@ -272,8 +314,8 @@
         let displayVariable = '';
         const POOL_SIZE = 20; 
         const categories = new Set();
+        const openCategories = new Set(); // Track expanded review panels
 
-        // Zoom State Parameters
         let zoomScale = 1;
         const MIN_ZOOM = 0.4;
         const MAX_ZOOM = 2.0;
@@ -295,12 +337,12 @@
         viewSelect.addEventListener('change', (e) => {
             displayVariable = e.target.value;
             updateFloatingNodeLabels();
+            updateUI(); // Refresh contents view to mirror variable switch
         });
         reshuffleBtn.addEventListener('click', () => { clearFloatingPool(); populateFloatingPool(); });
         addGroupBtn.addEventListener('click', generateCustomCategory);
         exportBtn.addEventListener('click', exportProcessedCSV);
 
-        // Zoom Interaction Listeners
         canvasContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
         document.getElementById('zoom-in').addEventListener('click', () => adjustZoom(0.1));
         document.getElementById('zoom-out').addEventListener('click', () => adjustZoom(-0.1));
@@ -318,16 +360,20 @@
         }
 
         function processCSVData(text) {
-            const rows = text.split('\n').map(row => row.trim()).filter(row => row.length > 0);
-            if (rows.length < 2) return;
+            const lines = text.split(/\r?\n/).map(row => row.trim()).filter(row => row.length > 0);
+            if (lines.length < 2) return;
 
-            headers = rows[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim());
+            const csvSplitter = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            headers = lines[0].split(csvSplitter).map(h => h.replace(/^["']|["']$/g, '').trim());
             
-            dataset = rows.slice(1).map((row, index) => {
-                const values = row.split(',');
+            dataset = lines.slice(1).map((row, index) => {
+                const values = row.split(csvSplitter);
                 const item = { _id: index, assigned_group: '' };
+                
                 headers.forEach((header, i) => {
-                    item[header] = values[i] ? values[i].replace(/^["']|["']$/g, '').trim() : '';
+                    let val = values[i] ? values[i].trim() : '';
+                    val = val.replace(/^["']|["']$/g, '').replace(/""/g, '"');
+                    item[header] = val;
                 });
                 return item;
             });
@@ -358,7 +404,6 @@
                 const randomIndex = Math.floor(Math.random() * ungroupedItems.length);
                 const item = ungroupedItems.splice(randomIndex, 1)[0];
                 
-                // Account for the scale sizing inside the viewport bounds
                 item.x = Math.random() * ((canvasContainer.clientWidth / zoomScale) - 180);
                 item.y = Math.random() * ((canvasContainer.clientHeight / zoomScale) - 50);
                 item.vx = (Math.random() - 0.5) * 3 * speedMultiplier;
@@ -386,8 +431,6 @@
                 }
                 
                 const isExpanded = el.classList.contains('expanded');
-                
-                // Proactive Auto-Collapse Action
                 document.querySelectorAll('.floating-node').forEach(node => {
                     node.classList.remove('expanded');
                 });
@@ -435,12 +478,16 @@
 
             const zone = document.createElement('div');
             zone.className = 'category-zone';
+            zone.id = `zone-container-${name}`;
             zone.dataset.groupName = name;
+            
+            // Structured title header bar + text payload array container
             zone.innerHTML = `
-                <div class="category-title">
+                <div class="category-title" onclick="toggleCategoryReview('${name}')">
                     <span>${name}</span>
-                    <span class="category-count" id="count-${CSS.escape(name)}">0</span>
+                    <span class="category-count" id="count-${name}">0</span>
                 </div>
+                <div class="category-contents" id="contents-${name}"></div>
             `;
 
             zone.addEventListener('dragover', (e) => {
@@ -463,6 +510,20 @@
             updateUI();
         }
 
+        // Toggle visibility state for auditing elements inside the sidebar panel
+        window.toggleCategoryReview = function(name) {
+            const contentPanel = document.getElementById(`contents-${name}`);
+            if (!contentPanel) return;
+
+            if (openCategories.has(name)) {
+                openCategories.delete(name);
+                contentPanel.classList.remove('visible');
+            } else {
+                openCategories.add(name);
+                contentPanel.classList.add('visible');
+            }
+        };
+
         function assignItemToGroup(itemId, groupName) {
             const dataIndex = dataset.findIndex(item => item._id === itemId);
             if (dataIndex === -1) return;
@@ -483,9 +544,31 @@
 
         function updateUI() {
             categories.forEach(groupName => {
-                const count = dataset.filter(item => item.assigned_group === groupName).length;
+                const groupedItems = dataset.filter(item => item.assigned_group === groupName);
+                
+                // Update Badge Counts
                 const counterEl = document.getElementById(`count-${groupName}`);
-                if (counterEl) counterEl.textContent = count;
+                if (counterEl) counterEl.textContent = groupedItems.length;
+
+                // Populate content inspector view
+                const contentsPanel = document.getElementById(`contents-${groupName}`);
+                if (contentsPanel) {
+                    contentsPanel.innerHTML = '';
+                    
+                    groupedItems.forEach(item => {
+                        const rowItem = document.createElement('div');
+                        rowItem.className = 'review-item';
+                        // Show current display variable text inside the list row block
+                        rowItem.textContent = item[displayVariable] || '(Empty Field)';
+                        rowItem.title = item[displayVariable] || ''; // Native hover tooltip fallback
+                        contentsPanel.appendChild(rowItem);
+                    });
+
+                    // Keep layout state expanded if users had it open during drops
+                    if (openCategories.has(groupName)) {
+                        contentsPanel.classList.add('visible');
+                    }
+                }
             });
 
             const groupedCount = dataset.filter(item => item.assigned_group).length;
@@ -493,7 +576,6 @@
             statsDisplay.textContent = `Remaining: ${remainingCount} | Grouped: ${groupedCount}`;
         }
 
-        // Workspace Zoom Vector Calculations
         function handleWheelZoom(e) {
             e.preventDefault();
             const zoomFactor = 0.05;
@@ -516,7 +598,6 @@
 
         function physicsLoop() {
             if (floatingItems.length > 0) {
-                // Bounds shrink or stretch relative to current zoom matrices
                 const width = canvasContainer.clientWidth / zoomScale;
                 const height = canvasContainer.clientHeight / zoomScale;
 
@@ -544,75 +625,30 @@
 
         requestAnimationFrame(physicsLoop);
 
-function processCSVData(text) {
-    // Regex to split lines while respecting newlines inside quotes if any exist
-    const lines = text.split(/\r?\n/).map(row => row.trim()).filter(row => row.length > 0);
-    if (lines.length < 2) return;
+        function exportProcessedCSV() {
+            if (dataset.length === 0) return;
 
-    // Robust CSV row splitter regex that ignores commas wrapped inside double quotes
-    const csvSplitter = /,(?=(?:(?:[^"]*"){2})*[^"]*$)/;
+            const outputHeaders = [...headers, 'assigned_group'];
+            const csvRows = [outputHeaders.join(',')];
 
-    // Parse headers cleanly
-    headers = lines[0].split(csvSplitter).map(h => h.replace(/^["']|["']$/g, '').trim());
-    
-    dataset = lines.slice(1).map((row, index) => {
-        const values = row.split(csvSplitter);
-        const item = { _id: index, assigned_group: '' };
-        
-        headers.forEach((header, i) => {
-            let val = values[i] ? values[i].trim() : '';
-            // Strip out surrounding structural quotes safely preserved by the parser
-            val = val.replace(/^["']|["']$/g, '').replace(/""/g, '"');
-            item[header] = val;
-        });
-        return item;
-    });
+            dataset.forEach(item => {
+                const rowValues = outputHeaders.map(header => {
+                    const value = item[header] !== undefined ? item[header] : '';
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                });
+                csvRows.push(rowValues.join(','));
+            });
 
-    displayVariable = headers[0];
-    
-    viewSelect.innerHTML = '';
-    headers.forEach(header => {
-        const option = document.createElement('option');
-        option.value = header;
-        option.textContent = header;
-        viewSelect.appendChild(option);
-    });
-
-    viewSelect.disabled = false;
-    reshuffleBtn.disabled = false;
-    exportBtn.disabled = false;
-
-    clearFloatingPool();
-    populateFloatingPool();
-    updateUI();
-}
-
-function exportProcessedCSV() {
-    if (dataset.length === 0) return;
-
-    const outputHeaders = [...headers, 'assigned_group'];
-    const csvRows = [outputHeaders.join(',')];
-
-    dataset.forEach(item => {
-        const rowValues = outputHeaders.map(header => {
-            const value = item[header] !== undefined ? item[header] : '';
-            // Safely wrap text in quotes and double-up existing quotes for Excel compliance
-            return `"${String(value).replace(/"/g, '""')}"`;
-        });
-        csvRows.push(rowValues.join(','));
-    });
-
-    // Use a robust Blob mechanism instead of an encoded URI to support large paragraphs and quotes cleanly
-    const csvContent = csvRows.join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "grouped_dataset_output.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
+            const csvContent = csvRows.join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "grouped_dataset_output.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
