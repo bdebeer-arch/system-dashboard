@@ -1,242 +1,536 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RE Web Portfolio</title>
-<style>
-:root {
---primary: #2c3e50;
---bg: #f0f2f5;
---card-bg: #ffffff;
---text-sub: #7f8c8d;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polymathic Academic Reader & Annotator</title>
+  <!-- Dependencies via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --panel-bg: #ffffff;
+      --accent-color: #005a9c;
+      --border-color: #d1d5db;
+      --highlight-color: rgba(255, 235, 59, 0.45);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      background-color: var(--bg-color);
+      color: #1f2937;
+    }
+    #sidebar {
+      width: 380px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      box-sizing: border-box;
+      gap: 1rem;
+      z-index: 10;
+    }
+    #main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #toolbar {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      z-index: 5;
+      flex-wrap: wrap;
+    }
+    #document-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    input[type="file"], input[type="text"], input[type="number"], button {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #004070; }
+    
+    .page-wrapper {
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      background: white;
+      margin-bottom: 1rem;
+    }
+    .textLayer {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      overflow: hidden;
+      opacity: 0.25;
+      line-height: 1;
+    }
+    .textLayer span {
+      color: transparent;
+      position: absolute;
+      white-space: pre;
+      cursor: text;
+      transform-origin: 0% 0%;
+    }
+    .highlight-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .highlight-rect {
+      position: absolute;
+      background-color: var(--highlight-color);
+      border-bottom: 1px solid #fbc02d;
+      pointer-events: auto;
+    }
+    .ocr-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .ocr-span {
+      position: absolute;
+      color: transparent;
+      cursor: text;
+      pointer-events: auto;
+      line-height: 1;
+    }
 
-body {
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-background-color: var(--bg);
-color: var(--primary);
-margin: 0;
-padding: 0;
-display: flex;
-flex-direction: column;
-align-items: center;
-min-height: 100vh;
-}
-
-header {
-background: var(--primary);
-color: white;
-width: 100%;
-padding: 50px 20px;
-text-align: center;
-box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-h1 { margin: 0; font-size: 2.8rem; letter-spacing: -1px; }
-p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; font-size: 1.1rem; letter-spacing: 1px; }
-
-.container {
-max-width: 1100px;
-width: 100%;
-padding: 60px 20px;
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-gap: 40px;
-justify-content: center;
-}
-
-.tool-card {
-background: var(--card-bg);
-border-radius: 16px;
-overflow: hidden;
-box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-transition: transform 0.2s ease, box-shadow 0.2s ease;
-text-decoration: none;
-color: inherit;
-display: flex;
-flex-direction: column;
-border: 1px solid rgba(0,0,0,0.05);
-}
-
-.tool-card:hover {
-transform: translateY(-8px);
-box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-}
-
-.card-hero {
-height: 120px;
-width: 100%;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-
-.icon-hero {
-font-size: 3rem; color: white; font-weight: bold;
-text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.card-body { padding: 35px; flex-grow: 1; display: flex; flex-direction: column; }
-
-h2 { margin: 0 0 15px 0; font-size: 1.8rem; color: var(--primary); }
-p.desc { color: var(--text-sub); line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
-
-.btn-launch {
-display: block;
-width: 100%;
-padding: 12px;
-text-align: center;
-background: #ecf0f1;
-color: var(--primary);
-border-radius: 8px;
-font-weight: bold;
-transition: background 0.2s;
-}
-
-.tool-card:hover .btn-launch { background: var(--primary); color: white; }
-
-footer {
-margin-top: auto;
-padding: 30px;
-color: var(--text-sub);
-font-size: 0.9rem;
-text-align: center;
-}
-
-</style>
+    #annotations-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .annotation-card {
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--accent-color);
+      padding: 0.75rem;
+      border-radius: 4px;
+      background: #fafafa;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-btn {
+      background: transparent;
+      color: #dc2626;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+    }
+    .delete-btn:hover { color: #991b1b; background: transparent; }
+    #status-indicator {
+      font-size: 0.85rem;
+      color: #4b5563;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
 
-<header>
-<h1>RE Web Portfolio</h1>
-<p class="role">JUST HAVING FUN</p>
-</header>
-
-<div class="container">
-
-<a href="pom.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #e67e22, #d35400, #fbcf33);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(230, 126, 34, 0.6); color: #fff;">&#x1F345;</div> 
+  <div id="sidebar">
+    <h2>Polymathic Reader</h2>
+    <div class="control-group">
+      <label for="file-input">Open PDF Document</label>
+      <input type="file" id="file-input" accept="application/pdf">
     </div>
-    <div class="card-body">
-        <h2>POM Focus Engine</h2>
-        <p class="desc">Systems-based productivity timer. Manage cognitive load with warm-ups, 'comma' wrap-ups, and active recovery.</p>
-        <span class="btn-launch">Launch Engine &rarr;</span>
+    <div class="control-group">
+      <button id="export-csv-btn">Export Annotations (CSV)</button>
+      <button id="clear-btn" style="background-color: #dc2626;">Clear Session</button>
     </div>
-</a>
+    <hr style="width:100%; border:0; border-top:1px solid var(--border-color);">
+    <h3>Annotations</h3>
+    <div id="annotations-list"></div>
+  </div>
 
-<a href="turner.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #5D4037, #8D6E63, #A1887F);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(93, 64, 55, 0.6); color: #fff;">&#x1F4D6;</div> 
+  <div id="main-container">
+    <div id="toolbar">
+      <div>
+        <label for="jump-page">Page:</label>
+        <input type="number" id="jump-page" min="1" style="width: 60px;">
+        <span id="page-count-display">/ 0</span>
+        <button id="jump-btn">Jump</button>
+      </div>
+      <div>
+        <label for="page-offset">Global Offset:</label>
+        <input type="number" id="page-offset" value="0" style="width: 60px;" title="Set offset to adjust all display page numbers (e.g. -10 or +5)">
+      </div>
+      <button id="ocr-btn" style="background-color: #2563eb;">OCR Active Viewport</button>
+      <span id="status-indicator">Ready</span>
     </div>
-    <div class="card-body">
-        <h2>Reader Pacer</h2>
-        <p class="desc">Optimise reading stamina by partitioning time into dedicated 'Read' and 'Reflect' phases.</p>
-        <span class="btn-launch">Launch Tool &rarr;</span>
-    </div>
-</a>    
 
-<a href="linknotes.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #4b3875, #6c5ce7, #a55eea);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(108, 92, 231, 0.6); color: #fff;">&#x2047;</div> 
-    </div>
-    <div class="card-body">
-        <h2>LinkNotes Categoriser</h2>
-        <p class="desc">Multi-tiered spatial sorting engine. Visualise data strings as floating nodes, map primary and subcategory variables, and inspect qualitative quotes inline.</p>
-        <span class="btn-launch">Launch Canvas &rarr;</span>
-    </div>
-</a>
-    
-<a href="sprint-reporter.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #2980b9, #3498db, #1abc9c);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(52, 152, 219, 0.6); color: #fff;">&#x1F3C3;</div> 
-    </div>
-    <div class="card-body">
-        <h2>Report Sprint</h2>
-        <p class="desc">High-velocity batch reporting engine. Cycle through sections to capture sections and progress rhythmically through timed sprints. Customisable sections.</p>
-        <span class="btn-launch">Launch Sprint &rarr;</span>
-    </div>
-</a>
+    <div id="document-viewport"></div>
+  </div>
 
-    <a href="diamond-match.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #1a1a2e, #ffffff);">
-<div class="icon-hero" style="text-shadow: 0 0 10px rgba(52, 152, 219, 0.5); color: #3498db;">&#x25C7;</div> 
-</div>
-<div class="card-body">
-<h2>Diamond Match</h2>
-<p class="desc">Interactive arena to pair stressors with strengths. Watch the darkness lift as Hauora balance is restored.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
-    
-<a href="hauora.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2980b9);">
-<div class="icon-hero">&#x25B2;</div> 
-</div>
-<div class="card-body">
-<h2>Te Whare Tapa Whā</h2>
-<p class="desc">Interactive wellbeing projection. Map the four walls of Hauora.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-<a href="gallery.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #f1c40f, #e67e22);">
-<div class="icon-hero">&#x1F4F7;</div> </div>
-<div class="card-body">
-<h2>Gallery Labeler</h2>
-<p class="desc">Interactive masonry grid for images. Curate, reorder, and identify resources with inline naming.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    let pdfDoc = null;
+    let annotations = [];
+    let currentPdfArrayBuffer = null;
+    let renderedPages = {};
+    let globalPageOffset = 0;
 
-<a href="game.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
-<div class="icon-hero">Aa</div>
-</div>
-<div class="card-body">
-<h2>Knowledge Cipher</h2>
-<p class="desc">A team-based vocabulary engine using seeded cryptography. Features 'Spymaster' mode for synchronous classroom play.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    const viewportEl = document.getElementById('document-viewport');
+    const statusEl = document.getElementById('status-indicator');
 
-<a href="hex.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #d35400, #e67e22);">
-<div class="icon-hero">&#x2B22;</div> </div>
-<div class="card-body">
-<h2>Systemic Pathfinder</h2>
-<p class="desc">Hexagonal competitive recall engine. Strategic territory capture via definition retrieval (Blockbusters logic).</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedData = await localforage.getItem('pdf_session');
+      if (savedData) {
+        currentPdfArrayBuffer = savedData.buffer;
+        annotations = savedData.annotations || [];
+        globalPageOffset = savedData.globalPageOffset || 0;
+        document.getElementById('page-offset').value = globalPageOffset;
+        loadPDFData(currentPdfArrayBuffer);
+      }
+    });
 
-<a href="tracker.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
-<div class="icon-hero">+</div> </div>
-<div class="card-body">
-<h2>Point Tracker</h2>
-<p class="desc">Individual scoring system. Keep track of student points, house merits, or participation metrics.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          currentPdfArrayBuffer = this.result;
+          annotations = [];
+          globalPageOffset = 0;
+          document.getElementById('page-offset').value = 0;
+          await saveSession();
+          loadPDFData(currentPdfArrayBuffer);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
 
-<a href="higmal.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #2980b9, #f39c12);">
-<div class="icon-hero">&#x25A6;</div> </div>
-<div class="card-body">
-<h2>HiGMaL</h2>
-<p class="desc">Strategic Cost-Benefit Analysis and Prioritisation Tool.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    document.getElementById('page-offset').addEventListener('change', (e) => {
+      globalPageOffset = parseInt(e.target.value, 10) || 0;
+      updateAllCustomPages();
+      saveSession();
+      renderSidebar();
+    });
 
-</div>
+    function updateAllCustomPages() {
+      annotations.forEach(item => {
+        item.customPage = (item.pdfPage + globalPageOffset).toString();
+      });
+    }
 
-<footer>
-System State: LIVE | Focus: Student Engagement
-</footer>
+    async function loadPDFData(arrayBuffer) {
+      statusEl.textContent = 'Loading Document...';
+      pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      document.getElementById('page-count-display').textContent = `/ ${pdfDoc.numPages}`;
+      document.getElementById('jump-page').max = pdfDoc.numPages;
+      
+      viewportEl.innerHTML = '';
+      renderedPages = {};
 
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        await renderPageContainer(pageNum);
+      }
+
+      renderSidebar();
+      statusEl.textContent = 'Document Loaded';
+    }
+
+    async function renderPageContainer(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      const pageWrapper = document.createElement('div');
+      pageWrapper.className = 'page-wrapper';
+      pageWrapper.id = `page-wrapper-${pageNum}`;
+      pageWrapper.dataset.pageNum = pageNum;
+      pageWrapper.style.width = `${viewport.width}px`;
+      pageWrapper.style.height = `${viewport.height}px`;
+
+      const canvas = document.createElement('canvas');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      const ctx = canvas.getContext('2d');
+
+      const textLayerDiv = document.createElement('div');
+      textLayerDiv.className = 'textLayer';
+
+      const highlightLayerDiv = document.createElement('div');
+      highlightLayerDiv.className = 'highlight-layer';
+
+      const ocrLayerDiv = document.createElement('div');
+      ocrLayerDiv.className = 'ocr-layer';
+
+      pageWrapper.appendChild(canvas);
+      pageWrapper.appendChild(textLayerDiv);
+      pageWrapper.appendChild(highlightLayerDiv);
+      pageWrapper.appendChild(ocrLayerDiv);
+      viewportEl.appendChild(pageWrapper);
+
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+      const textContent = await page.getTextContent();
+      await pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: textLayerDiv,
+        viewport: viewport,
+        textDivs: []
+      }).promise;
+
+      renderedPages[pageNum] = { pageWrapper, canvas, viewport, highlightLayerDiv, ocrLayerDiv };
+      renderHighlightsForPage(pageNum);
+    }
+
+    viewportEl.addEventListener('mouseup', () => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+
+      if (selectedText.length > 0 && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rects = Array.from(range.getClientRects());
+        
+        let node = range.startContainer;
+        while (node && !node.classList?.contains('page-wrapper')) {
+          node = node.parentNode;
+        }
+
+        if (node) {
+          const pageNum = Number(node.dataset.pageNum);
+          const wrapperRect = node.getBoundingClientRect();
+
+          const relativeRects = rects.map(r => ({
+            left: r.left - wrapperRect.left,
+            top: r.top - wrapperRect.top,
+            width: r.width,
+            height: r.height
+          }));
+
+          const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+          const newAnnotation = {
+            id: Date.now(),
+            pdfPage: pageNum,
+            customPage: (pageNum + globalPageOffset).toString(),
+            time: timestamp,
+            highlight: selectedText,
+            comment: "",
+            rects: relativeRects
+          };
+
+          annotations.push(newAnnotation);
+          saveSession();
+          renderHighlightsForPage(pageNum);
+          renderSidebar();
+          selection.removeAllRanges();
+        }
+      }
+    });
+
+    function renderHighlightsForPage(pageNum) {
+      const pageObj = renderedPages[pageNum];
+      if (!pageObj) return;
+
+      pageObj.highlightLayerDiv.innerHTML = '';
+      const pageAnnos = annotations.filter(a => a.pdfPage === pageNum);
+
+      pageAnnos.forEach(anno => {
+        if (anno.rects) {
+          anno.rects.forEach(r => {
+            const rectEl = document.createElement('div');
+            rectEl.className = 'highlight-rect';
+            rectEl.style.left = `${r.left}px`;
+            rectEl.style.top = `${r.top}px`;
+            rectEl.style.width = `${r.width}px`;
+            rectEl.style.height = `${r.height}px`;
+            pageObj.highlightLayerDiv.appendChild(rectEl);
+          });
+        }
+      });
+    }
+
+    function renderSidebar() {
+      const listEl = document.getElementById('annotations-list');
+      listEl.innerHTML = '';
+
+      annotations.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'annotation-card';
+        card.innerHTML = `
+          <div class="card-header">
+            <strong>PDF Pg ${item.pdfPage} (Disp: ${item.customPage})</strong>
+            <button class="delete-btn" title="Delete Annotation" data-id="${item.id}">&times;</button>
+          </div>
+          <div><em>"${item.highlight.substring(0, 60)}${item.highlight.length > 60 ? '...' : ''}"</em></div>
+          <div>
+            <label>Display Page #:</label>
+            <input type="text" value="${item.customPage}" data-index="${index}" class="page-input" style="width: 50px;">
+          </div>
+          <div>
+            <input type="text" placeholder="Add commentary..." value="${item.comment}" data-index="${index}" class="comment-input" style="width: 92%;">
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      document.querySelectorAll('.page-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = e.target.getAttribute('data-index');
+          annotations[idx].customPage = e.target.value;
+          saveSession();
+        });
+      });
+
+      document.querySelectorAll('.comment-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = e.target.getAttribute('data-index');
+          annotations[idx].comment = e.target.value;
+          saveSession();
+        });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = Number(e.target.getAttribute('data-id'));
+          deleteAnnotation(id);
+        });
+      });
+    }
+
+    function deleteAnnotation(id) {
+      const target = annotations.find(a => a.id === id);
+      annotations = annotations.filter(a => a.id !== id);
+      saveSession();
+      if (target) renderHighlightsForPage(target.pdfPage);
+      renderSidebar();
+    }
+
+    // Precise OCR Alignment with Canvas-to-DOM Scale Normalization
+    document.getElementById('ocr-btn').addEventListener('click', async () => {
+      const visibleWrapper = document.querySelector('.page-wrapper');
+      if (!visibleWrapper) return;
+
+      const pageNum = Number(visibleWrapper.dataset.pageNum);
+      const pageObj = renderedPages[pageNum];
+
+      statusEl.textContent = `Running OCR on Page ${pageNum}...`;
+
+      const worker = await Tesseract.createWorker('eng');
+      await worker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+      });
+
+      const { data } = await worker.recognize(pageObj.canvas);
+      
+      // Calculate precise scaling ratios between OCR Canvas dimensions and DOM Viewport
+      const scaleX = pageObj.viewport.width / pageObj.canvas.width;
+      const scaleY = pageObj.viewport.height / pageObj.canvas.height;
+
+      pageObj.ocrLayerDiv.innerHTML = '';
+      data.words.forEach(word => {
+        const span = document.createElement('span');
+        span.className = 'ocr-span';
+        span.textContent = word.text + ' ';
+        
+        // Exact scaling normalization prevents vertical offset bug
+        span.style.left = `${word.bbox.x0 * scaleX}px`;
+        span.style.top = `${word.bbox.y0 * scaleY}px`;
+        span.style.width = `${(word.bbox.x1 - word.bbox.x0) * scaleX}px`;
+        span.style.height = `${(word.bbox.y1 - word.bbox.y0) * scaleY}px`;
+        span.style.fontSize = `${(word.bbox.y1 - word.bbox.y0) * scaleY}px`;
+
+        pageObj.ocrLayerDiv.appendChild(span);
+      });
+
+      await worker.terminate();
+      statusEl.textContent = `OCR Complete for Page ${pageNum}`;
+    });
+
+    document.getElementById('jump-btn').addEventListener('click', () => {
+      const pageNum = document.getElementById('jump-page').value;
+      const targetEl = document.getElementById(`page-wrapper-${pageNum}`);
+      if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    async function saveSession() {
+      await localforage.setItem('pdf_session', {
+        buffer: currentPdfArrayBuffer,
+        annotations: annotations,
+        globalPageOffset: globalPageOffset
+      });
+    }
+
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+      if (annotations.length === 0) {
+        alert('No annotations available to export.');
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,Page number;Time;Comment/Highlight\n";
+
+      annotations.forEach(item => {
+        const cleanHighlight = `"${item.highlight.replace(/"/g, '""')}"`;
+        csvContent += `${item.customPage};${item.time};${cleanHighlight}\n`;
+
+        if (item.comment && item.comment.trim() !== "") {
+          const cleanComment = `"c: ${item.comment.replace(/"/g, '""')}"`;
+          csvContent += `${item.customPage};${item.time};${cleanComment}\n`;
+        }
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `study_highlights_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      if (confirm("Are you sure you wish to clear all session data?")) {
+        await localforage.removeItem('pdf_session');
+        location.reload();
+      }
+    });
+  </script>
 </body>
 </html>
