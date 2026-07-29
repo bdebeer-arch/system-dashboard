@@ -13,6 +13,7 @@
       --panel-bg: #ffffff;
       --accent-color: #005a9c;
       --border-color: #d1d5db;
+      --highlight-color: rgba(255, 235, 59, 0.45);
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -23,7 +24,7 @@
       color: #1f2937;
     }
     #sidebar {
-      width: 350px;
+      width: 360px;
       background: var(--panel-bg);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -64,10 +65,11 @@
       transition: background 0.2s;
     }
     button:hover { background-color: #004070; }
-    #canvas-container {
+    #canvas-wrapper {
       position: relative;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       background: white;
+      display: inline-block;
     }
     .textLayer {
       position: absolute;
@@ -83,6 +85,22 @@
       cursor: text;
       transform-origin: 0% 0%;
     }
+    #highlight-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .highlight-rect {
+      position: absolute;
+      background-color: var(--highlight-color);
+      border-bottom: 1px solid #fbc02d;
+      pointer-events: auto;
+      cursor: pointer;
+    }
     #annotations-list {
       flex: 1;
       overflow-y: auto;
@@ -93,38 +111,55 @@
     .annotation-card {
       border: 1px solid var(--border-color);
       border-left: 4px solid var(--accent-color);
-      padding: 0.5rem;
+      padding: 0.75rem;
       border-radius: 4px;
       background: #fafafa;
       font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
     }
-    .annotation-card input {
-      width: 60px;
-      margin-left: 0.5rem;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-btn {
+      background: transparent;
+      color: #dc2626;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+    }
+    .delete-btn:hover {
+      color: #991b1b;
+      background: transparent;
     }
   </style>
 </head>
 <body>
 
   <div id="sidebar">
-    <h2>PDF Annotator</h2>
+    <h2>Polymathic Reader</h2>
     <div class="control-group">
       <label for="file-input">Open PDF Document</label>
       <input type="file" id="file-input" accept="application/pdf">
     </div>
     <div class="control-group">
-      <button id="export-csv-btn">Export CSV</button>
-      <button id="clear-btn" style="background-color: #dc2626;">Clear Saved Session</button>
+      <button id="export-csv-btn">Export Annotations (CSV)</button>
+      <button id="clear-btn" style="background-color: #dc2626;">Clear All Session Data</button>
     </div>
     <hr style="width:100%; border:0; border-top:1px solid var(--border-color);">
-    <h3>Annotations</h3>
+    <h3>Active Annotations</h3>
     <div id="annotations-list"></div>
   </div>
 
   <div id="main-view">
-    <div id="canvas-container">
+    <div id="canvas-wrapper">
       <canvas id="pdf-render"></canvas>
       <div id="text-layer" class="textLayer"></div>
+      <div id="highlight-layer"></div>
     </div>
   </div>
 
@@ -139,8 +174,9 @@
     const canvas = document.getElementById('pdf-render');
     const ctx = canvas.getContext('2d');
     const textLayerDiv = document.getElementById('text-layer');
+    const highlightLayerDiv = document.getElementById('highlight-layer');
 
-    // Initialize LocalForage Persistence
+    // Initialize LocalForage Storage Session
     window.addEventListener('DOMContentLoaded', async () => {
       const savedData = await localforage.getItem('pdf_session');
       if (savedData) {
@@ -179,30 +215,41 @@
       const renderContext = { canvasContext: ctx, viewport: viewport };
       await page.render(renderContext).promise;
 
-      // Render Text Layer for Selection
+      // Render Interactive Text Layer
       const textContent = await page.getTextContent();
       textLayerDiv.innerHTML = '';
-      textLayerDiv.style.left = canvas.offsetLeft + 'px';
-      textLayerDiv.style.top = canvas.offsetTop + 'px';
       textLayerDiv.style.height = canvas.height + 'px';
       textLayerDiv.style.width = canvas.width + 'px';
 
-      pdfjsLib.renderTextLayer({
+      await pdfjsLib.renderTextLayer({
         textContentSource: textContent,
         container: textLayerDiv,
         viewport: viewport,
         textDivs: []
-      });
+      }).promise;
 
+      renderHighlights(viewport);
       renderSidebar();
     }
 
-    // Capture Text Selection for Highlighting
+    // Capture User Selection and Store Bounding Box Coordinates
     document.getElementById('main-view').addEventListener('mouseup', () => {
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
       
-      if (selectedText.length > 0) {
+      if (selectedText.length > 0 && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rects = Array.from(range.getClientRects());
+        const wrapperRect = document.getElementById('canvas-wrapper').getBoundingClientRect();
+
+        // Convert DOM coordinates relative to canvas container
+        const relativeRects = rects.map(r => ({
+          left: r.left - wrapperRect.left,
+          top: r.top - wrapperRect.top,
+          width: r.width,
+          height: r.height
+        }));
+
         const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
         const newAnnotation = {
           id: Date.now(),
@@ -210,15 +257,39 @@
           customPage: pageNum.toString(),
           time: timestamp,
           highlight: selectedText,
-          comment: ""
+          comment: "",
+          rects: relativeRects
         };
+
         annotations.push(newAnnotation);
         saveSession();
-        renderSidebar();
+        renderPage(pageNum);
         selection.removeAllRanges();
       }
     });
 
+    // Render Highlights Overlay on Top of Page
+    function renderHighlights(viewport) {
+      highlightLayerDiv.innerHTML = '';
+      const currentPageAnnotations = annotations.filter(a => a.pdfPage === pageNum);
+
+      currentPageAnnotations.forEach(anno => {
+        if (anno.rects) {
+          anno.rects.forEach(r => {
+            const rectEl = document.createElement('div');
+            rectEl.className = 'highlight-rect';
+            rectEl.style.left = `${r.left}px`;
+            rectEl.style.top = `${r.top}px`;
+            rectEl.style.width = `${r.width}px`;
+            rectEl.style.height = `${r.height}px`;
+            rectEl.title = anno.comment ? `Comment: ${anno.comment}` : 'Highlight';
+            highlightLayerDiv.appendChild(rectEl);
+          });
+        }
+      });
+    }
+
+    // Render Sidebar Controls with Deletion Functionality
     function renderSidebar() {
       const listEl = document.getElementById('annotations-list');
       listEl.innerHTML = '';
@@ -227,19 +298,23 @@
         const card = document.createElement('div');
         card.className = 'annotation-card';
         card.innerHTML = `
-          <div><strong>Text:</strong> "${item.highlight.substring(0, 50)}..."</div>
-          <div style="margin-top:0.3rem;">
-            <label>Display Page:</label>
-            <input type="text" value="${item.customPage}" data-index="${index}" class="page-input">
+          <div class="card-header">
+            <strong>Page ${item.customPage}</strong>
+            <button class="delete-btn" title="Delete Annotation" data-id="${item.id}">&times;</button>
           </div>
-          <div style="margin-top:0.3rem;">
-            <input type="text" placeholder="Add comment..." value="${item.comment}" data-index="${index}" class="comment-input" style="width:90%;">
+          <div><em>"${item.highlight.substring(0, 70)}${item.highlight.length > 70 ? '...' : ''}"</em></div>
+          <div>
+            <label>Custom Page #:</label>
+            <input type="text" value="${item.customPage}" data-index="${index}" class="page-input" style="width: 50px;">
+          </div>
+          <div>
+            <input type="text" placeholder="Add commentary..." value="${item.comment}" data-index="${index}" class="comment-input" style="width: 92%;">
           </div>
         `;
         listEl.appendChild(card);
       });
 
-      // Bind input events
+      // Bind Field Update Events
       document.querySelectorAll('.page-input').forEach(input => {
         input.addEventListener('change', (e) => {
           const idx = e.target.getAttribute('data-index');
@@ -255,6 +330,20 @@
           saveSession();
         });
       });
+
+      // Bind Deletion Events
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idToDelete = Number(e.target.getAttribute('data-id'));
+          deleteAnnotation(idToDelete);
+        });
+      });
+    }
+
+    function deleteAnnotation(id) {
+      annotations = annotations.filter(a => a.id !== id);
+      saveSession();
+      renderPage(pageNum);
     }
 
     async function saveSession() {
@@ -264,7 +353,7 @@
       });
     }
 
-    // Export CSV Logic
+    // Export CSV According to Schema
     document.getElementById('export-csv-btn').addEventListener('click', () => {
       if (annotations.length === 0) {
         alert('No annotations available to export.');
@@ -274,7 +363,6 @@
       let csvContent = "data:text/csv;charset=utf-8,Page number;Time;Comment/Highlight\n";
 
       annotations.forEach(item => {
-        // Sanitize string entries for CSV formatting
         const cleanHighlight = `"${item.highlight.replace(/"/g, '""')}"`;
         csvContent += `${item.customPage};${item.time};${cleanHighlight}\n`;
 
@@ -287,15 +375,17 @@
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `annotations_export_${Date.now()}.csv`);
+      link.setAttribute("download", `study_highlights_${Date.now()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     });
 
     document.getElementById('clear-btn').addEventListener('click', async () => {
-      await localforage.removeItem('pdf_session');
-      location.reload();
+      if (confirm("Are you sure you wish to clear all saved session data?")) {
+        await localforage.removeItem('pdf_session');
+        location.reload();
+      }
     });
   </script>
 </body>
