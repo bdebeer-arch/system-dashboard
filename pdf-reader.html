@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polymathic Reader & Annotator</title>
+  <!-- Dependencies via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --panel-bg: #ffffff;
+      --accent-color: #005a9c;
+      --border-color: #d1d5db;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      background-color: var(--bg-color);
+      color: #1f2937;
+    }
+    #sidebar {
+      width: 350px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      box-sizing: border-box;
+      gap: 1rem;
+    }
+    #main-view {
+      flex: 1;
+      overflow: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    input[type="file"], input[type="text"], button {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #004070; }
+    #canvas-container {
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+    .textLayer {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      overflow: hidden;
+      opacity: 0.2;
+      line-height: 1;
+    }
+    .textLayer span {
+      color: transparent;
+      position: absolute;
+      white-space: pre;
+      cursor: text;
+      transform-origin: 0% 0%;
+    }
+    #annotations-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .annotation-card {
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--accent-color);
+      padding: 0.5rem;
+      border-radius: 4px;
+      background: #fafafa;
+      font-size: 0.85rem;
+    }
+    .annotation-card input {
+      width: 60px;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h2>PDF Annotator</h2>
+    <div class="control-group">
+      <label for="file-input">Open PDF Document</label>
+      <input type="file" id="file-input" accept="application/pdf">
+    </div>
+    <div class="control-group">
+      <button id="export-csv-btn">Export CSV</button>
+      <button id="clear-btn" style="background-color: #dc2626;">Clear Saved Session</button>
+    </div>
+    <hr style="width:100%; border:0; border-top:1px solid var(--border-color);">
+    <h3>Annotations</h3>
+    <div id="annotations-list"></div>
+  </div>
+
+  <div id="main-view">
+    <div id="canvas-container">
+      <canvas id="pdf-render"></canvas>
+      <div id="text-layer" class="textLayer"></div>
+    </div>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    let pdfDoc = null;
+    let pageNum = 1;
+    let annotations = [];
+    let currentPdfArrayBuffer = null;
+
+    const canvas = document.getElementById('pdf-render');
+    const ctx = canvas.getContext('2d');
+    const textLayerDiv = document.getElementById('text-layer');
+
+    // Initialize LocalForage Persistence
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedData = await localforage.getItem('pdf_session');
+      if (savedData) {
+        currentPdfArrayBuffer = savedData.buffer;
+        annotations = savedData.annotations || [];
+        loadPDFData(currentPdfArrayBuffer);
+      }
+    });
+
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          currentPdfArrayBuffer = this.result;
+          annotations = [];
+          await saveSession();
+          loadPDFData(currentPdfArrayBuffer);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+
+    async function loadPDFData(arrayBuffer) {
+      pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      renderPage(pageNum);
+    }
+
+    async function renderPage(num) {
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: 1.5 });
+      
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = { canvasContext: ctx, viewport: viewport };
+      await page.render(renderContext).promise;
+
+      // Render Text Layer for Selection
+      const textContent = await page.getTextContent();
+      textLayerDiv.innerHTML = '';
+      textLayerDiv.style.left = canvas.offsetLeft + 'px';
+      textLayerDiv.style.top = canvas.offsetTop + 'px';
+      textLayerDiv.style.height = canvas.height + 'px';
+      textLayerDiv.style.width = canvas.width + 'px';
+
+      pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: textLayerDiv,
+        viewport: viewport,
+        textDivs: []
+      });
+
+      renderSidebar();
+    }
+
+    // Capture Text Selection for Highlighting
+    document.getElementById('main-view').addEventListener('mouseup', () => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+      
+      if (selectedText.length > 0) {
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const newAnnotation = {
+          id: Date.now(),
+          pdfPage: pageNum,
+          customPage: pageNum.toString(),
+          time: timestamp,
+          highlight: selectedText,
+          comment: ""
+        };
+        annotations.push(newAnnotation);
+        saveSession();
+        renderSidebar();
+        selection.removeAllRanges();
+      }
+    });
+
+    function renderSidebar() {
+      const listEl = document.getElementById('annotations-list');
+      listEl.innerHTML = '';
+
+      annotations.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'annotation-card';
+        card.innerHTML = `
+          <div><strong>Text:</strong> "${item.highlight.substring(0, 50)}..."</div>
+          <div style="margin-top:0.3rem;">
+            <label>Display Page:</label>
+            <input type="text" value="${item.customPage}" data-index="${index}" class="page-input">
+          </div>
+          <div style="margin-top:0.3rem;">
+            <input type="text" placeholder="Add comment..." value="${item.comment}" data-index="${index}" class="comment-input" style="width:90%;">
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      // Bind input events
+      document.querySelectorAll('.page-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = e.target.getAttribute('data-index');
+          annotations[idx].customPage = e.target.value;
+          saveSession();
+        });
+      });
+
+      document.querySelectorAll('.comment-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = e.target.getAttribute('data-index');
+          annotations[idx].comment = e.target.value;
+          saveSession();
+        });
+      });
+    }
+
+    async function saveSession() {
+      await localforage.setItem('pdf_session', {
+        buffer: currentPdfArrayBuffer,
+        annotations: annotations
+      });
+    }
+
+    // Export CSV Logic
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+      if (annotations.length === 0) {
+        alert('No annotations available to export.');
+        return;
+      }
+
+      let csvContent = "data:text/csv;charset=utf-8,Page number;Time;Comment/Highlight\n";
+
+      annotations.forEach(item => {
+        // Sanitize string entries for CSV formatting
+        const cleanHighlight = `"${item.highlight.replace(/"/g, '""')}"`;
+        csvContent += `${item.customPage};${item.time};${cleanHighlight}\n`;
+
+        if (item.comment && item.comment.trim() !== "") {
+          const cleanComment = `"c: ${item.comment.replace(/"/g, '""')}"`;
+          csvContent += `${item.customPage};${item.time};${cleanComment}\n`;
+        }
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `annotations_export_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      await localforage.removeItem('pdf_session');
+      location.reload();
+    });
+  </script>
+</body>
+</html>
