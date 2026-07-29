@@ -50,6 +50,7 @@
       align-items: center;
       gap: 1.5rem;
       z-index: 5;
+      flex-wrap: wrap;
     }
     #document-viewport {
       flex: 1;
@@ -84,9 +85,7 @@
       transition: background 0.2s;
     }
     button:hover { background-color: #004070; }
-    button:disabled { background-color: #9ca3af; cursor: not-allowed; }
     
-    /* Page Rendering Elements */
     .page-wrapper {
       position: relative;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -130,6 +129,7 @@
       color: transparent;
       cursor: text;
       pointer-events: auto;
+      line-height: 1;
     }
 
     #annotations-list {
@@ -191,10 +191,14 @@
   <div id="main-container">
     <div id="toolbar">
       <div>
-        <label for="jump-page">Go to PDF Page:</label>
+        <label for="jump-page">Page:</label>
         <input type="number" id="jump-page" min="1" style="width: 60px;">
         <span id="page-count-display">/ 0</span>
         <button id="jump-btn">Jump</button>
+      </div>
+      <div>
+        <label for="page-offset">Global Offset:</label>
+        <input type="number" id="page-offset" value="0" style="width: 60px;" title="Set offset to adjust all display page numbers (e.g. -10 or +5)">
       </div>
       <button id="ocr-btn" style="background-color: #2563eb;">OCR Active Viewport</button>
       <span id="status-indicator">Ready</span>
@@ -210,16 +214,18 @@
     let annotations = [];
     let currentPdfArrayBuffer = null;
     let renderedPages = {};
+    let globalPageOffset = 0;
 
     const viewportEl = document.getElementById('document-viewport');
     const statusEl = document.getElementById('status-indicator');
 
-    // Initialize LocalForage Session
     window.addEventListener('DOMContentLoaded', async () => {
       const savedData = await localforage.getItem('pdf_session');
       if (savedData) {
         currentPdfArrayBuffer = savedData.buffer;
         annotations = savedData.annotations || [];
+        globalPageOffset = savedData.globalPageOffset || 0;
+        document.getElementById('page-offset').value = globalPageOffset;
         loadPDFData(currentPdfArrayBuffer);
       }
     });
@@ -231,12 +237,27 @@
         reader.onload = async function() {
           currentPdfArrayBuffer = this.result;
           annotations = [];
+          globalPageOffset = 0;
+          document.getElementById('page-offset').value = 0;
           await saveSession();
           loadPDFData(currentPdfArrayBuffer);
         };
         reader.readAsArrayBuffer(file);
       }
     });
+
+    document.getElementById('page-offset').addEventListener('change', (e) => {
+      globalPageOffset = parseInt(e.target.value, 10) || 0;
+      updateAllCustomPages();
+      saveSession();
+      renderSidebar();
+    });
+
+    function updateAllCustomPages() {
+      annotations.forEach(item => {
+        item.customPage = (item.pdfPage + globalPageOffset).toString();
+      });
+    }
 
     async function loadPDFData(arrayBuffer) {
       statusEl.textContent = 'Loading Document...';
@@ -300,7 +321,6 @@
       renderHighlightsForPage(pageNum);
     }
 
-    // Capture Text Selection across pages
     viewportEl.addEventListener('mouseup', () => {
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
@@ -309,7 +329,6 @@
         const range = selection.getRangeAt(0);
         const rects = Array.from(range.getClientRects());
         
-        // Determine parent page wrapper
         let node = range.startContainer;
         while (node && !node.classList?.contains('page-wrapper')) {
           node = node.parentNode;
@@ -330,7 +349,7 @@
           const newAnnotation = {
             id: Date.now(),
             pdfPage: pageNum,
-            customPage: pageNum.toString(),
+            customPage: (pageNum + globalPageOffset).toString(),
             time: timestamp,
             highlight: selectedText,
             comment: "",
@@ -382,7 +401,7 @@
           </div>
           <div><em>"${item.highlight.substring(0, 60)}${item.highlight.length > 60 ? '...' : ''}"</em></div>
           <div>
-            <label>Custom Page #:</label>
+            <label>Display Page #:</label>
             <input type="text" value="${item.customPage}" data-index="${index}" class="page-input" style="width: 50px;">
           </div>
           <div>
@@ -424,9 +443,8 @@
       renderSidebar();
     }
 
-    // Client-Side OCR Execution (Multi-Column Layout Aware)
+    // Precise OCR Alignment with Canvas-to-DOM Scale Normalization
     document.getElementById('ocr-btn').addEventListener('click', async () => {
-      // Locate page in center of viewport
       const visibleWrapper = document.querySelector('.page-wrapper');
       if (!visibleWrapper) return;
 
@@ -437,20 +455,28 @@
 
       const worker = await Tesseract.createWorker('eng');
       await worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.AUTO, // Multi-column layout analysis
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
       });
 
       const { data } = await worker.recognize(pageObj.canvas);
       
+      // Calculate precise scaling ratios between OCR Canvas dimensions and DOM Viewport
+      const scaleX = pageObj.viewport.width / pageObj.canvas.width;
+      const scaleY = pageObj.viewport.height / pageObj.canvas.height;
+
       pageObj.ocrLayerDiv.innerHTML = '';
       data.words.forEach(word => {
         const span = document.createElement('span');
         span.className = 'ocr-span';
         span.textContent = word.text + ' ';
-        span.style.left = `${word.bbox.x0 / 1.5}px`;
-        span.style.top = `${word.bbox.y0 / 1.5}px`;
-        span.style.width = `${(word.bbox.x1 - word.bbox.x0) / 1.5}px`;
-        span.style.height = `${(word.bbox.y1 - word.bbox.y0) / 1.5}px`;
+        
+        // Exact scaling normalization prevents vertical offset bug
+        span.style.left = `${word.bbox.x0 * scaleX}px`;
+        span.style.top = `${word.bbox.y0 * scaleY}px`;
+        span.style.width = `${(word.bbox.x1 - word.bbox.x0) * scaleX}px`;
+        span.style.height = `${(word.bbox.y1 - word.bbox.y0) * scaleY}px`;
+        span.style.fontSize = `${(word.bbox.y1 - word.bbox.y0) * scaleY}px`;
+
         pageObj.ocrLayerDiv.appendChild(span);
       });
 
@@ -458,21 +484,20 @@
       statusEl.textContent = `OCR Complete for Page ${pageNum}`;
     });
 
-    // Navigation Jump Control
     document.getElementById('jump-btn').addEventListener('click', () => {
       const pageNum = document.getElementById('jump-page').value;
       const targetEl = document.getElementById(`page-wrapper-${pageNum}`);
-      if (targetEl) targetEl.scrollIntoView({ behaviour: 'smooth' });
+      if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
     });
 
     async function saveSession() {
       await localforage.setItem('pdf_session', {
         buffer: currentPdfArrayBuffer,
-        annotations: annotations
+        annotations: annotations,
+        globalPageOffset: globalPageOffset
       });
     }
 
-    // CSV Export Logic
     document.getElementById('export-csv-btn').addEventListener('click', () => {
       if (annotations.length === 0) {
         alert('No annotations available to export.');
