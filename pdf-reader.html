@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Polymathic Reader & Annotator</title>
+  <title>Polymathic Academic Reader & Annotator</title>
   <!-- Dependencies via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg-color: #f4f6f8;
@@ -24,7 +25,7 @@
       color: #1f2937;
     }
     #sidebar {
-      width: 360px;
+      width: 380px;
       background: var(--panel-bg);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -32,14 +33,32 @@
       padding: 1rem;
       box-sizing: border-box;
       gap: 1rem;
+      z-index: 10;
     }
-    #main-view {
+    #main-container {
       flex: 1;
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #toolbar {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      z-index: 5;
+    }
+    #document-viewport {
+      flex: 1;
+      overflow-y: auto;
       padding: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 2rem;
     }
     .control-group {
       display: flex;
@@ -50,7 +69,7 @@
       font-weight: 600;
       font-size: 0.85rem;
     }
-    input[type="file"], input[type="text"], button {
+    input[type="file"], input[type="text"], input[type="number"], button {
       padding: 0.5rem;
       border: 1px solid var(--border-color);
       border-radius: 4px;
@@ -65,17 +84,20 @@
       transition: background 0.2s;
     }
     button:hover { background-color: #004070; }
-    #canvas-wrapper {
+    button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+    
+    /* Page Rendering Elements */
+    .page-wrapper {
       position: relative;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       background: white;
-      display: inline-block;
+      margin-bottom: 1rem;
     }
     .textLayer {
       position: absolute;
       left: 0; top: 0; right: 0; bottom: 0;
       overflow: hidden;
-      opacity: 0.2;
+      opacity: 0.25;
       line-height: 1;
     }
     .textLayer span {
@@ -85,12 +107,9 @@
       cursor: text;
       transform-origin: 0% 0%;
     }
-    #highlight-layer {
+    .highlight-layer {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
       z-index: 2;
     }
@@ -99,8 +118,20 @@
       background-color: var(--highlight-color);
       border-bottom: 1px solid #fbc02d;
       pointer-events: auto;
-      cursor: pointer;
     }
+    .ocr-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .ocr-span {
+      position: absolute;
+      color: transparent;
+      cursor: text;
+      pointer-events: auto;
+    }
+
     #annotations-list {
       flex: 1;
       overflow-y: auto;
@@ -132,9 +163,11 @@
       cursor: pointer;
       padding: 0 0.25rem;
     }
-    .delete-btn:hover {
-      color: #991b1b;
-      background: transparent;
+    .delete-btn:hover { color: #991b1b; background: transparent; }
+    #status-indicator {
+      font-size: 0.85rem;
+      color: #4b5563;
+      font-style: italic;
     }
   </style>
 </head>
@@ -148,35 +181,40 @@
     </div>
     <div class="control-group">
       <button id="export-csv-btn">Export Annotations (CSV)</button>
-      <button id="clear-btn" style="background-color: #dc2626;">Clear All Session Data</button>
+      <button id="clear-btn" style="background-color: #dc2626;">Clear Session</button>
     </div>
     <hr style="width:100%; border:0; border-top:1px solid var(--border-color);">
-    <h3>Active Annotations</h3>
+    <h3>Annotations</h3>
     <div id="annotations-list"></div>
   </div>
 
-  <div id="main-view">
-    <div id="canvas-wrapper">
-      <canvas id="pdf-render"></canvas>
-      <div id="text-layer" class="textLayer"></div>
-      <div id="highlight-layer"></div>
+  <div id="main-container">
+    <div id="toolbar">
+      <div>
+        <label for="jump-page">Go to PDF Page:</label>
+        <input type="number" id="jump-page" min="1" style="width: 60px;">
+        <span id="page-count-display">/ 0</span>
+        <button id="jump-btn">Jump</button>
+      </div>
+      <button id="ocr-btn" style="background-color: #2563eb;">OCR Active Viewport</button>
+      <span id="status-indicator">Ready</span>
     </div>
+
+    <div id="document-viewport"></div>
   </div>
 
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     let pdfDoc = null;
-    let pageNum = 1;
     let annotations = [];
     let currentPdfArrayBuffer = null;
+    let renderedPages = {};
 
-    const canvas = document.getElementById('pdf-render');
-    const ctx = canvas.getContext('2d');
-    const textLayerDiv = document.getElementById('text-layer');
-    const highlightLayerDiv = document.getElementById('highlight-layer');
+    const viewportEl = document.getElementById('document-viewport');
+    const statusEl = document.getElementById('status-indicator');
 
-    // Initialize LocalForage Storage Session
+    // Initialize LocalForage Session
     window.addEventListener('DOMContentLoaded', async () => {
       const savedData = await localforage.getItem('pdf_session');
       if (savedData) {
@@ -201,26 +239,56 @@
     });
 
     async function loadPDFData(arrayBuffer) {
+      statusEl.textContent = 'Loading Document...';
       pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      renderPage(pageNum);
+      document.getElementById('page-count-display').textContent = `/ ${pdfDoc.numPages}`;
+      document.getElementById('jump-page').max = pdfDoc.numPages;
+      
+      viewportEl.innerHTML = '';
+      renderedPages = {};
+
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        await renderPageContainer(pageNum);
+      }
+
+      renderSidebar();
+      statusEl.textContent = 'Document Loaded';
     }
 
-    async function renderPage(num) {
-      const page = await pdfDoc.getPage(num);
+    async function renderPageContainer(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1.5 });
-      
+
+      const pageWrapper = document.createElement('div');
+      pageWrapper.className = 'page-wrapper';
+      pageWrapper.id = `page-wrapper-${pageNum}`;
+      pageWrapper.dataset.pageNum = pageNum;
+      pageWrapper.style.width = `${viewport.width}px`;
+      pageWrapper.style.height = `${viewport.height}px`;
+
+      const canvas = document.createElement('canvas');
       canvas.height = viewport.height;
       canvas.width = viewport.width;
+      const ctx = canvas.getContext('2d');
 
-      const renderContext = { canvasContext: ctx, viewport: viewport };
-      await page.render(renderContext).promise;
+      const textLayerDiv = document.createElement('div');
+      textLayerDiv.className = 'textLayer';
 
-      // Render Interactive Text Layer
+      const highlightLayerDiv = document.createElement('div');
+      highlightLayerDiv.className = 'highlight-layer';
+
+      const ocrLayerDiv = document.createElement('div');
+      ocrLayerDiv.className = 'ocr-layer';
+
+      pageWrapper.appendChild(canvas);
+      pageWrapper.appendChild(textLayerDiv);
+      pageWrapper.appendChild(highlightLayerDiv);
+      pageWrapper.appendChild(ocrLayerDiv);
+      viewportEl.appendChild(pageWrapper);
+
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
       const textContent = await page.getTextContent();
-      textLayerDiv.innerHTML = '';
-      textLayerDiv.style.height = canvas.height + 'px';
-      textLayerDiv.style.width = canvas.width + 'px';
-
       await pdfjsLib.renderTextLayer({
         textContentSource: textContent,
         container: textLayerDiv,
@@ -228,52 +296,64 @@
         textDivs: []
       }).promise;
 
-      renderHighlights(viewport);
-      renderSidebar();
+      renderedPages[pageNum] = { pageWrapper, canvas, viewport, highlightLayerDiv, ocrLayerDiv };
+      renderHighlightsForPage(pageNum);
     }
 
-    // Capture User Selection and Store Bounding Box Coordinates
-    document.getElementById('main-view').addEventListener('mouseup', () => {
+    // Capture Text Selection across pages
+    viewportEl.addEventListener('mouseup', () => {
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
-      
+
       if (selectedText.length > 0 && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         const rects = Array.from(range.getClientRects());
-        const wrapperRect = document.getElementById('canvas-wrapper').getBoundingClientRect();
+        
+        // Determine parent page wrapper
+        let node = range.startContainer;
+        while (node && !node.classList?.contains('page-wrapper')) {
+          node = node.parentNode;
+        }
 
-        // Convert DOM coordinates relative to canvas container
-        const relativeRects = rects.map(r => ({
-          left: r.left - wrapperRect.left,
-          top: r.top - wrapperRect.top,
-          width: r.width,
-          height: r.height
-        }));
+        if (node) {
+          const pageNum = Number(node.dataset.pageNum);
+          const wrapperRect = node.getBoundingClientRect();
 
-        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
-        const newAnnotation = {
-          id: Date.now(),
-          pdfPage: pageNum,
-          customPage: pageNum.toString(),
-          time: timestamp,
-          highlight: selectedText,
-          comment: "",
-          rects: relativeRects
-        };
+          const relativeRects = rects.map(r => ({
+            left: r.left - wrapperRect.left,
+            top: r.top - wrapperRect.top,
+            width: r.width,
+            height: r.height
+          }));
 
-        annotations.push(newAnnotation);
-        saveSession();
-        renderPage(pageNum);
-        selection.removeAllRanges();
+          const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+          const newAnnotation = {
+            id: Date.now(),
+            pdfPage: pageNum,
+            customPage: pageNum.toString(),
+            time: timestamp,
+            highlight: selectedText,
+            comment: "",
+            rects: relativeRects
+          };
+
+          annotations.push(newAnnotation);
+          saveSession();
+          renderHighlightsForPage(pageNum);
+          renderSidebar();
+          selection.removeAllRanges();
+        }
       }
     });
 
-    // Render Highlights Overlay on Top of Page
-    function renderHighlights(viewport) {
-      highlightLayerDiv.innerHTML = '';
-      const currentPageAnnotations = annotations.filter(a => a.pdfPage === pageNum);
+    function renderHighlightsForPage(pageNum) {
+      const pageObj = renderedPages[pageNum];
+      if (!pageObj) return;
 
-      currentPageAnnotations.forEach(anno => {
+      pageObj.highlightLayerDiv.innerHTML = '';
+      const pageAnnos = annotations.filter(a => a.pdfPage === pageNum);
+
+      pageAnnos.forEach(anno => {
         if (anno.rects) {
           anno.rects.forEach(r => {
             const rectEl = document.createElement('div');
@@ -282,14 +362,12 @@
             rectEl.style.top = `${r.top}px`;
             rectEl.style.width = `${r.width}px`;
             rectEl.style.height = `${r.height}px`;
-            rectEl.title = anno.comment ? `Comment: ${anno.comment}` : 'Highlight';
-            highlightLayerDiv.appendChild(rectEl);
+            pageObj.highlightLayerDiv.appendChild(rectEl);
           });
         }
       });
     }
 
-    // Render Sidebar Controls with Deletion Functionality
     function renderSidebar() {
       const listEl = document.getElementById('annotations-list');
       listEl.innerHTML = '';
@@ -299,10 +377,10 @@
         card.className = 'annotation-card';
         card.innerHTML = `
           <div class="card-header">
-            <strong>Page ${item.customPage}</strong>
+            <strong>PDF Pg ${item.pdfPage} (Disp: ${item.customPage})</strong>
             <button class="delete-btn" title="Delete Annotation" data-id="${item.id}">&times;</button>
           </div>
-          <div><em>"${item.highlight.substring(0, 70)}${item.highlight.length > 70 ? '...' : ''}"</em></div>
+          <div><em>"${item.highlight.substring(0, 60)}${item.highlight.length > 60 ? '...' : ''}"</em></div>
           <div>
             <label>Custom Page #:</label>
             <input type="text" value="${item.customPage}" data-index="${index}" class="page-input" style="width: 50px;">
@@ -314,7 +392,6 @@
         listEl.appendChild(card);
       });
 
-      // Bind Field Update Events
       document.querySelectorAll('.page-input').forEach(input => {
         input.addEventListener('change', (e) => {
           const idx = e.target.getAttribute('data-index');
@@ -331,20 +408,62 @@
         });
       });
 
-      // Bind Deletion Events
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          const idToDelete = Number(e.target.getAttribute('data-id'));
-          deleteAnnotation(idToDelete);
+          const id = Number(e.target.getAttribute('data-id'));
+          deleteAnnotation(id);
         });
       });
     }
 
     function deleteAnnotation(id) {
+      const target = annotations.find(a => a.id === id);
       annotations = annotations.filter(a => a.id !== id);
       saveSession();
-      renderPage(pageNum);
+      if (target) renderHighlightsForPage(target.pdfPage);
+      renderSidebar();
     }
+
+    // Client-Side OCR Execution (Multi-Column Layout Aware)
+    document.getElementById('ocr-btn').addEventListener('click', async () => {
+      // Locate page in center of viewport
+      const visibleWrapper = document.querySelector('.page-wrapper');
+      if (!visibleWrapper) return;
+
+      const pageNum = Number(visibleWrapper.dataset.pageNum);
+      const pageObj = renderedPages[pageNum];
+
+      statusEl.textContent = `Running OCR on Page ${pageNum}...`;
+
+      const worker = await Tesseract.createWorker('eng');
+      await worker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO, // Multi-column layout analysis
+      });
+
+      const { data } = await worker.recognize(pageObj.canvas);
+      
+      pageObj.ocrLayerDiv.innerHTML = '';
+      data.words.forEach(word => {
+        const span = document.createElement('span');
+        span.className = 'ocr-span';
+        span.textContent = word.text + ' ';
+        span.style.left = `${word.bbox.x0 / 1.5}px`;
+        span.style.top = `${word.bbox.y0 / 1.5}px`;
+        span.style.width = `${(word.bbox.x1 - word.bbox.x0) / 1.5}px`;
+        span.style.height = `${(word.bbox.y1 - word.bbox.y0) / 1.5}px`;
+        pageObj.ocrLayerDiv.appendChild(span);
+      });
+
+      await worker.terminate();
+      statusEl.textContent = `OCR Complete for Page ${pageNum}`;
+    });
+
+    // Navigation Jump Control
+    document.getElementById('jump-btn').addEventListener('click', () => {
+      const pageNum = document.getElementById('jump-page').value;
+      const targetEl = document.getElementById(`page-wrapper-${pageNum}`);
+      if (targetEl) targetEl.scrollIntoView({ behaviour: 'smooth' });
+    });
 
     async function saveSession() {
       await localforage.setItem('pdf_session', {
@@ -353,7 +472,7 @@
       });
     }
 
-    // Export CSV According to Schema
+    // CSV Export Logic
     document.getElementById('export-csv-btn').addEventListener('click', () => {
       if (annotations.length === 0) {
         alert('No annotations available to export.');
@@ -382,7 +501,7 @@
     });
 
     document.getElementById('clear-btn').addEventListener('click', async () => {
-      if (confirm("Are you sure you wish to clear all saved session data?")) {
+      if (confirm("Are you sure you wish to clear all session data?")) {
         await localforage.removeItem('pdf_session');
         location.reload();
       }
