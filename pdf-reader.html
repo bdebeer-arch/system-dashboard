@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Polymathic Academic Reader & Annotator</title>
+  <title>Reader & Annotator</title>
   <!-- Dependencies via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
@@ -498,32 +498,49 @@
       });
     }
 
-    document.getElementById('export-csv-btn').addEventListener('click', () => {
-      if (annotations.length === 0) {
-        alert('No annotations available to export.');
-        return;
-      }
+   // Clean CSV Export Logic - Eliminates embedded newline record breakage
+document.getElementById('export-csv-btn').addEventListener('click', () => {
+  if (annotations.length === 0) {
+    alert('No annotations available to export.');
+    return;
+  }
 
-      let csvContent = "data:text/csv;charset=utf-8,Page number;Time;Comment/Highlight\n";
+  // Header Definition
+  let csvContent = "data:text/csv;charset=utf-8,Page number;Time;Comment/Highlight\n";
 
-      annotations.forEach(item => {
-        const cleanHighlight = `"${item.highlight.replace(/"/g, '""')}"`;
-        csvContent += `${item.customPage};${item.time};${cleanHighlight}\n`;
+  annotations.forEach(item => {
+    // 1. Sanitize Highlight Text: Remove line breaks, carriage returns, and collapse multiple spaces
+    const cleanHighlightText = item.highlight
+      .replace(/[\r\n]+/g, ' ')       // Replace newlines (Char 10 / Char 13) with spaces
+      .replace(/\s+/g, ' ')           // Collapse consecutive spaces
+      .replace(/"/g, '""')            // Escape internal double quotes per CSV standard
+      .trim();
 
-        if (item.comment && item.comment.trim() !== "") {
-          const cleanComment = `"c: ${item.comment.replace(/"/g, '""')}"`;
-          csvContent += `${item.customPage};${item.time};${cleanComment}\n`;
-        }
-      });
+    const formattedHighlight = `"${cleanHighlightText}"`;
+    csvContent += `${item.customPage};${item.time};${formattedHighlight}\n`;
 
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `study_highlights_${Date.now()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
+    // 2. Sanitize Comment Text if present
+    if (item.comment && item.comment.trim() !== "") {
+      const cleanCommentText = item.comment
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/"/g, '""')
+        .trim();
+
+      const formattedComment = `"c: ${cleanCommentText}"`;
+      csvContent += `${item.customPage};${item.time};${formattedComment}\n`;
+    }
+  });
+
+  // Download Trigger
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `study_highlights_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
 
     document.getElementById('clear-btn').addEventListener('click', async () => {
       if (confirm("Are you sure you wish to clear all session data?")) {
