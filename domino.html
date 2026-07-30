@@ -17,19 +17,19 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:      #f5f2ed;
-    --panel:   #ffffff;
-    --dark:    #1e1e2e;
-    --accent:  #2d6a4f;
-    --accent2: #b5451b;
-    --mid:     #5a5a72;
-    --light:   #eae6de;
-    --border:  #d4cec2;
-    --q-bg:    #e8f0fb;
-    --q-fg:    #1a3a6b;
-    --a-bg:    #e8f5ec;
-    --a-fg:    #1a5c2e;
-    --shadow:  0 3px 18px rgba(0,0,0,0.09);
+    --bg:       #f5f2ed;
+    --panel:    #ffffff;
+    --dark:     #1e1e2e;
+    --accent:   #2d6a4f;
+    --accent2:  #b5451b;
+    --mid:      #5a5a72;
+    --light:    #eae6de;
+    --border:   #d4cec2;
+    --q-bg:     #e8f0fb;
+    --q-fg:     #1a3a6b;
+    --a-bg:     #e8f5ec;
+    --a-fg:     #1a5c2e;
+    --shadow:   0 3px 18px rgba(0,0,0,0.09);
   }
 
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
@@ -57,7 +57,7 @@
   }
 
   /* ── LAYOUT ── */
-  .app { display: grid; grid-template-columns: 360px 1fr; height: calc(100vh - 57px); }
+  .app { display: grid; grid-template-columns: 380px 1fr; height: calc(100vh - 57px); }
 
   /* ── SIDEBAR ── */
   .sidebar {
@@ -166,26 +166,23 @@
     transition: opacity 0.15s;
   }
   .img-thumb:hover { opacity: 1; border-color: var(--accent2); }
-  /* Image inside a card */
+  
   .card-img {
     max-width: 92%;
-    max-height: 80px;     /* thumbnail on screen */
+    max-height: 80px;
     object-fit: contain;
     display: block;
     margin: 4px auto 0;
   }
-  /* At print time, give images more room */
   @media print {
     .card-img { max-height: 180px; }
   }
-  /* Text label above image inside a card */
   .cell-text {
     text-align: center;
     line-height: 1.3;
     font-size: 0.78rem;
     margin-bottom: 2px;
   }
-  /* Image in answer key table */
   .ak-img {
     display: block;
     max-height: 60px;
@@ -267,8 +264,8 @@
   /* ── THE PUZZLE SHEET ── */
   #sheet {
     background: white;
-    width: 100%;          /* fluid on screen — fills the preview pane */
-    max-width: 960px;     /* don't go crazy wide */
+    width: 100%;
+    max-width: 960px;
     border-radius: 10px;
     box-shadow: var(--shadow);
     padding: 28px 28px 24px;
@@ -306,8 +303,7 @@
   }
 
   .domino {
-    /* width + height both set dynamically by equaliseAndPaginate() */
-    width: 210px;  /* initial measurement width — overwritten by JS */
+    width: 210px;
     min-height: 80px;
     display: flex;
     border-radius: 7px;
@@ -316,9 +312,7 @@
     position: relative;
     page-break-inside: avoid;
   }
-  .domino.sized {
-    overflow: hidden;
-  }
+  .domino.sized { overflow: hidden; }
   .dom-half {
     flex: 1;
     display: flex;
@@ -342,7 +336,6 @@
   .dom-a { background: var(--a-bg); color: var(--a-fg); }
   .dom-special { background: #f0f0f0; color: #888; font-size: 0.72rem; font-style: italic; }
 
-  /* Dividing line between halves */
   .dom-divider {
     position: absolute;
     left: 50%; top: 8%; bottom: 8%;
@@ -350,7 +343,6 @@
     background: #c8c0b0;
     pointer-events: none;
   }
-  /* Small card label */
   .dom-label {
     position: absolute;
     bottom: 2px; right: 5px;
@@ -360,7 +352,6 @@
     pointer-events: none;
   }
 
-  /* Cut lines */
   .cut-line {
     width: 100%;
     border: none;
@@ -376,7 +367,6 @@
     text-transform: uppercase;
   }
 
-  /* Answer key */
   .answer-key {
     margin-top: 28px;
     border-top: 2px dashed #ccc;
@@ -392,7 +382,6 @@
     margin-bottom: 12px;
   }
 
-  /* Chain sequence row */
   .ak-chain {
     background: #f8f6f2;
     border: 1px solid var(--border);
@@ -435,7 +424,6 @@
     line-height: 1;
   }
 
-  /* Detail table */
   .ak-table-wrap { overflow-x: auto; }
   .ak-table {
     width: 100%;
@@ -458,8 +446,6 @@
   .ak-q { color: var(--q-fg); }
   .ak-a { color: var(--a-fg); font-weight: 500; }
 
-  /* ── PRINT PAGES ── */
-  /* Each .print-page is one A4 sheet of cards */
   .print-page {
     page-break-after: always;
     break-after: page;
@@ -468,7 +454,6 @@
     page-break-after: avoid;
     break-after: avoid;
   }
-  /* Continuation header shown on pages 2+ */
   .page-cont-header {
     display: flex;
     justify-content: space-between;
@@ -482,22 +467,12 @@
   .page-cont-header strong { color: var(--dark); font-family: 'Lora', serif; font-size: 1rem; }
   .page-num { font-size: 0.72rem; color: #aaa; }
 
-  /* Answer key always on its own page */
-  .answer-key {
-    page-break-before: always;
-    break-before: page;
-  }
-
-  /* ── PRINT MEDIA ── */
   @media print {
-    /* Hide all chrome */
     body { background: white; }
     header, .sidebar, .status-bar, .main > *:not(#sheet) { display: none !important; }
 
-    /* Kill scrollbars — but NOT on domino cards (they need overflow:hidden for rounded corners) */
     *:not(.domino):not(.dom-half) { overflow: visible !important; }
 
-    /* Layout */
     .app  { display: block; }
     .main { padding: 0; overflow: visible !important; }
     #sheet {
@@ -509,12 +484,10 @@
       overflow: visible !important;
     }
 
-    /* ── Black & white cards ── */
     .dom-q, .dom-a, .dom-special {
       background: white !important;
       color: black !important;
     }
-    /* Dividing line — use border rather than background so it always prints */
     .dom-divider {
       background: none !important;
       border-left: 1.5px solid #000 !important;
@@ -522,19 +495,16 @@
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    /* Card: solid black border, rounded corners preserved, overflow clipped to shape */
     .domino {
       border: 1.5px solid #000 !important;
       border-radius: 7px !important;
       overflow: hidden !important;
     }
 
-    /* Answer key text black */
     .ak-q, .ak-a, .ak-table td, .ak-table th { color: black !important; }
     .ak-card-lbl { background: #000 !important; color: white !important; }
     .ak-chain { background: white !important; border: 1px solid #ccc !important; }
 
-    /* Controlled by printCards() / printKey() via body classes */
     body.print-cards-only .answer-key { display: none !important; }
     body.print-key-only   .print-page  { display: none !important; }
     body.print-key-only   .sheet-title-row,
@@ -574,6 +544,18 @@
       <div style="display:flex; align-items:center; gap:8px; margin-top:7px;">
         <input type="checkbox" id="cfg-shuffle" checked onchange="markDirty()" style="width:auto; accent-color: var(--accent);">
         <label for="cfg-shuffle" style="font-size:0.8rem; font-weight:500; cursor:pointer; user-select:none;">Shuffle card order before printing</label>
+      </div>
+    </div>
+
+    <!-- BULK IMPORT SECTION -->
+    <div class="sb-section">
+      <h3>Bulk Load (CSV / TSV / Excel)</h3>
+      <div class="field">
+        <textarea id="cfg-bulk" rows="3" placeholder="Paste columns from Excel/CSV here...&#10;Question [Tab/Comma] Answer"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" style="flex:2; font-size:0.75rem;" onclick="importBulkData()">📥 Load Bulk Data</button>
+        <button class="btn btn-ghost" style="flex:1; font-size:0.75rem; color:var(--accent2);" onclick="clearAllPairs()">Clear All</button>
       </div>
     </div>
 
@@ -618,23 +600,18 @@
 <script>
 // ─── Default pairs ────────────────────────────────────────────────────────
 let pairs = [
-  { q: "$2^4$",                                     a: "$16$"                  },
-  { q: "$3^{-2}$",                                  a: "$\\frac{1}{9}$"        },
-  { q: "$\\log_2 32$",                              a: "$5$"                   },
-  { q: "$\\log_{10} 0.001$",                        a: "$-3$"                  },
-  { q: "$e^0$",                                     a: "$1$"                   },
-  { q: "$\\sqrt[3]{27}$",                           a: "$3$"                   },
-  { q: "$5^0$",                                     a: "$1$"                   },
-  { q: "$\\log_3 81$",                              a: "$4$"                   },
+  { q: "$2^4$",                          a: "$16$"                  },
+  { q: "$3^{-2}$",                       a: "$\\frac{1}{9}$"        },
+  { q: "$\\log_2 32$",                   a: "$5$"                   },
+  { q: "$\\log_{10} 0.001$",             a: "$-3$"                  },
+  { q: "$e^0$",                          a: "$1$"                   },
+  { q: "$\\sqrt[3]{27}$",                a: "$3$"                   },
+  { q: "$5^0$",                          a: "$1$"                   },
+  { q: "$\\log_3 81$",                   a: "$4$"                   },
 ];
 
-// ─── Dirty flag ───────────────────────────────────────────────────────────
-// True whenever pairs/settings have changed since last generatePuzzle() call.
-// Print buttons check this to avoid reshuffling unnecessarily.
-let puzzleDirty = true;  // start dirty so first Generate works
-let lastPairsSnapshot = '';  // JSON snapshot of pairs+settings at last generate
-
-// images[i] = { q: dataURL|null, a: dataURL|null }
+let puzzleDirty = true;
+let lastPairsSnapshot = '';
 const images = {};
 
 function markDirty() { puzzleDirty = true; }
@@ -648,6 +625,54 @@ function settingsSnapshot() {
     key:   document.getElementById('cfg-key')?.checked,
     shuf:  document.getElementById('cfg-shuffle')?.checked,
   });
+}
+
+// ─── Bulk Load Parsing ────────────────────────────────────────────────────
+function importBulkData() {
+  const raw = document.getElementById('cfg-bulk').value.trim();
+  if (!raw) return;
+
+  const lines = raw.split(/\r?\n/);
+  const newPairs = [];
+
+  lines.forEach(line => {
+    if (!line.trim()) return;
+
+    let parts = line.split('\t');
+    if (parts.length < 2) {
+      // Regex CSV split ignoring commas inside double quotes
+      parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+    }
+
+    if (parts.length >= 2) {
+      const q = parts[0].trim().replace(/^"|"$/g, '');
+      const a = parts[1].trim().replace(/^"|"$/g, '');
+      if (q || a) {
+        newPairs.push({ q, a });
+      }
+    }
+  });
+
+  if (newPairs.length > 0) {
+    pairs = newPairs;
+    // Clear existing uploaded images as indices change completely
+    Object.keys(images).forEach(k => delete images[k]);
+    renderSidebar();
+    markDirty();
+    document.getElementById('cfg-bulk').value = '';
+    document.getElementById('status').innerHTML = `Successfully imported ${newPairs.length} pairs. Click <strong>Generate ▶</strong> to render.`;
+  } else {
+    alert('Could not detect valid tab-separated or comma-separated pairs.');
+  }
+}
+
+function clearAllPairs() {
+  if (confirm('Are you sure you want to clear all question/answer pairs?')) {
+    pairs = [];
+    Object.keys(images).forEach(k => delete images[k]);
+    renderSidebar();
+    markDirty();
+  }
 }
 
 // ─── Sidebar rendering ────────────────────────────────────────────────────
@@ -691,7 +716,7 @@ function esc(s) {
 }
 
 function addPair() {
-  pairs.push({ q: '', a: '', qi: null, ai: null });
+  pairs.push({ q: '', a: '' });
   renderSidebar();
   markDirty();
 }
@@ -699,7 +724,6 @@ function addPair() {
 function delPair(i) {
   pairs.splice(i, 1);
   delete images[i];
-  // Re-key images above i
   const newImages = {};
   Object.keys(images).forEach(k => {
     const ki = parseInt(k);
@@ -731,33 +755,11 @@ function clearImage(i, side) {
 }
 
 // ─── Chain construction ───────────────────────────────────────────────────
-//
-//  Given pairs [ (Q0,A0), (Q1,A1), ..., (Qn-1,An-1) ]
-//
-//  The chain works like this:
-//    Card 0:  [START]  |  Q_perm[0]
-//    Card 1:  A_perm[0]  |  Q_perm[1]
-//    Card 2:  A_perm[1]  |  Q_perm[2]
-//    ...
-//    Card n:  A_perm[n-1]  |  [END]
-//
-//  Each card[k] (k=1..n-1) has LEFT = A_perm[k-1], RIGHT = Q_perm[k]
-//  i.e. the answer from one pair, the question from another.
-//
-//  We then SHUFFLE the cards before display so students must reconstruct.
-//  Each card stores its chainPosition so we can map print-labels back to
-//  chain order for the answer key.
-
 function buildChain(pairsIn) {
   const n = pairsIn.length;
-  // Create a random permutation of pair indices
   const perm = shuffle([...Array(n).keys()]);
-
-  // Build ordered cards (chain order — NOT the printed order)
-  // Each pairsIn entry carries its original index so we can look up images
   const ordered = [];
 
-  // Card 0: START label | first question
   const p0 = pairsIn[perm[0]];
   ordered.push({
     left: null, leftImg: null,
@@ -765,7 +767,6 @@ function buildChain(pairsIn) {
     isStart: true, isEnd: false, chainPosition: 0
   });
 
-  // Middle cards: answer[k-1] | question[k]
   for (let k = 1; k < n; k++) {
     const prev = pairsIn[perm[k-1]];
     const curr = pairsIn[perm[k]];
@@ -778,7 +779,6 @@ function buildChain(pairsIn) {
     });
   }
 
-  // Final card: last answer | END label
   const pLast = pairsIn[perm[n-1]];
   ordered.push({
     left: pLast.a,
@@ -787,7 +787,7 @@ function buildChain(pairsIn) {
     isStart: false, isEnd: true, chainPosition: n
   });
 
-  return ordered; // length = n+1
+  return ordered;
 }
 
 function shuffle(arr) {
@@ -816,35 +816,21 @@ async function generatePuzzle() {
   const showKey  = document.getElementById('cfg-key').checked;
   const doShuffle = document.getElementById('cfg-shuffle').checked;
 
-  // Build the chain
   const orderedCards = buildChain(valid);
 
-  // Optionally shuffle for printing
-  let printCards = [...orderedCards];
+  let printCardsArr = [...orderedCards];
   if (doShuffle) {
-    printCards = shuffle(printCards);
+    printCardsArr = shuffle(printCardsArr);
   }
 
-  // Assign print labels (A, B, C…) and record which label each chain-position got
   const labelByChainPos = {};
-  printCards.forEach((card, idx) => {
+  printCardsArr.forEach((card, idx) => {
     card.printLabel = String.fromCharCode(65 + idx);
     labelByChainPos[card.chainPosition] = card.printLabel;
   });
 
-  // ── Build sheet HTML ──
   const sheet = document.getElementById('sheet');
-
   const today = new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'long', year:'numeric' });
-
-  // ── Cards per page calculation ──
-  // Sheet width 648px (720 - 2*36px padding), card width 320px, gap 10px
-  // 2 cards per row = 2*320 + 1*10 = 650 ≈ fits
-  // Page 1 loses header + instructions ≈ 160px; subsequent pages lose cont-header ≈ 40px
-  // Card height unknown yet — recalculated in equaliseAndPaginate() after render.
-  const CARDS_PER_ROW = 2;
-  // Temporarily use 12 cards/page as initial layout; equaliseAndPaginate() will fix it.
-  const CARDS_PER_PAGE_INITIAL = 12;
 
   let html = `
     <div class="print-page" id="page-1">
@@ -854,7 +840,7 @@ async function generatePuzzle() {
           <div class="sheet-sub">${subtitle}</div>
         </div>
         <div class="sheet-meta">
-          ${valid.length} pairs &nbsp;·&nbsp; ${printCards.length} cards<br>
+          ${valid.length} pairs &nbsp;·&nbsp; ${printCardsArr.length} cards<br>
           ${today}
         </div>
       </div>
@@ -862,14 +848,13 @@ async function generatePuzzle() {
       <div class="cards-grid">
   `;
 
-  printCards.forEach((card, idx) => {
+  printCardsArr.forEach((card) => {
     const leftClass  = card.isStart ? 'dom-half dom-special' : 'dom-half dom-a';
     const rightClass = card.isEnd   ? 'dom-half dom-special' : 'dom-half dom-q';
 
     function cellHTML(text, imgSrc, isStart, isEnd, startLabel, endLabel) {
       if (isStart) return `<em style="color:#aaa;font-size:0.72rem">${startLabel}</em>`;
       if (isEnd)   return `<em style="color:#aaa;font-size:0.72rem">${endLabel}</em>`;
-      // Show text and/or image — both if both are present
       let out = '';
       if (text && text.trim()) out += `<div class="cell-text">${text}</div>`;
       if (imgSrc) out += `<img src="${imgSrc}" class="card-img" alt="">`;
@@ -889,15 +874,12 @@ async function generatePuzzle() {
     `;
   });
 
-  // Close initial single page — equaliseAndPaginate() will redistribute
   html += `</div>
       <hr class="cut-line">
       <div class="cut-label">✂ Cut along dashed line — shuffle before distributing</div>
     </div>`;
 
-  // Answer key — shows the correct chain order by card label
   if (showKey) {
-    // Build chain sequence: positions 0,1,2,...,n in order
     const totalPositions = orderedCards.length;
     const chainSequence = [];
     for (let pos = 0; pos < totalPositions; pos++) {
@@ -921,7 +903,6 @@ async function generatePuzzle() {
             <thead><tr><th>Card</th><th>Left side (Answer)</th><th>Right side (Question)</th></tr></thead>
             <tbody>
     `;
-    // List each card in chain order with its label
     for (let pos = 0; pos < totalPositions; pos++) {
       const card = orderedCards[pos];
       const lbl  = labelByChainPos[pos];
@@ -948,18 +929,16 @@ async function generatePuzzle() {
 
   sheet.innerHTML = html;
 
-  // Typeset all MathJax, then equalise all card heights
   if (window.MathJax?.typesetPromise) {
     await MathJax.typesetPromise([sheet]);
   }
   equaliseAndPaginate();
 
   const status = doShuffle
-    ? `Cards are <strong>shuffled</strong> — students must reconstruct the chain. ${printCards.length} cards from ${valid.length} pairs.`
-    : `Cards shown in chain order (unshuffled). ${printCards.length} cards from ${valid.length} pairs.`;
+    ? `Cards are <strong>shuffled</strong> — students must reconstruct the chain. ${printCardsArr.length} cards from ${valid.length} pairs.`
+    : `Cards shown in chain order (unshuffled). ${printCardsArr.length} cards from ${valid.length} pairs.`;
   document.getElementById('status').innerHTML = status;
 
-  // Mark puzzle as clean — print buttons won't regenerate until something changes
   puzzleDirty = false;
   lastPairsSnapshot = settingsSnapshot();
 }
@@ -991,43 +970,29 @@ async function printKey() {
 }
 
 // ─── Equalise heights + paginate ─────────────────────────────────────────
-// 1. Measure each card's natural scrollHeight
-// 2. Set all cards to the same max height
-// 3. Work out how many cards fit per printed A4 page
-// 4. Redistribute cards into separate .print-page divs
-
 function equaliseAndPaginate() {
   const sheet = document.getElementById('sheet');
   const allCards = Array.from(sheet.querySelectorAll('.domino'));
   if (!allCards.length) return;
 
-  const NARROW_W = 210;  // 3 per row  (3×210 + 2×10gap = 650px — fits in fluid sheet)
-  const WIDE_W   = 320;  // 2 per row  (2×320 + 1×10gap = 650px — same footprint)
+  const NARROW_W = 210;
+  const WIDE_W   = 320;
 
-  // ── Step 1: detect whether wide layout is needed ──
-  // Strategy: measure each card's inner .dom-half divs at a very wide width
-  // (where nothing wraps), then again at NARROW_W. If height increases at
-  // narrow width, the content is wrapping → needs wide layout.
-  // Images always need wide layout.
   const hasImages = !!sheet.querySelector('.card-img');
-
   let needsWide = hasImages;
 
   if (!needsWide) {
-    // Measure at unconstrained width
     allCards.forEach(c => {
       c.style.width  = '800px';
       c.style.height = '';
       c.classList.remove('sized');
     });
     void sheet.offsetHeight;
-    // Record natural (unwrapped) height of each half
     const naturalHeights = allCards.map(c => {
       const halves = c.querySelectorAll('.dom-half');
       return Math.max(...Array.from(halves).map(h => h.scrollHeight));
     });
 
-    // Now measure at narrow width
     allCards.forEach(c => { c.style.width = NARROW_W + 'px'; });
     void sheet.offsetHeight;
     const narrowHeights = allCards.map(c => {
@@ -1035,14 +1000,12 @@ function equaliseAndPaginate() {
       return Math.max(...Array.from(halves).map(h => h.scrollHeight));
     });
 
-    // If any card's half is taller at narrow width → content wrapped
     needsWide = narrowHeights.some((h, i) => h > naturalHeights[i] + 4);
   }
 
   const CARD_W        = needsWide ? WIDE_W   : NARROW_W;
   const CARDS_PER_ROW = needsWide ? 2        : 3;
 
-  // Set final width and reset height for clean measurement
   allCards.forEach(c => {
     c.style.width  = CARD_W + 'px';
     c.style.height = '';
@@ -1050,37 +1013,27 @@ function equaliseAndPaginate() {
   });
   void sheet.offsetHeight;
 
-  // ── Step 2: equalise heights ──
   const heightFloor = hasImages ? 200 : (needsWide ? 100 : 80);
   let maxH = heightFloor;
   allCards.forEach(c => { maxH = Math.max(maxH, c.scrollHeight); });
-  const cardH = maxH + 2; // +2 for border
 
   allCards.forEach(c => { c.style.height = maxH + 'px'; c.classList.add('sized'); });
 
-  // ── Step 3: cards per page ──
-  const PAGE_H       = 1050;  // conservative usable print height in px
-  const PAGE1_HEADER = 165;   // title + instructions + cut-line area
-  const CONT_HEADER  = 50;    // continuation page mini-header
-  const ROW_H        = cardH + 10;
+  const PAGE_H       = 1050;
+  const PAGE1_HEADER = 165;
+  const CONT_HEADER  = 50;
+  const ROW_H        = maxH + 12;
 
   const rowsPage1 = Math.max(1, Math.floor((PAGE_H - PAGE1_HEADER) / ROW_H));
   const rowsCont  = Math.max(1, Math.floor((PAGE_H - CONT_HEADER)  / ROW_H));
   const cardsPage1 = rowsPage1 * CARDS_PER_ROW;
   const cardsCont  = rowsCont  * CARDS_PER_ROW;
 
-  // ── Step 4: redistribute into pages ──
-  // Collect card elements in order
   const cardEls = [...allCards];
-  const totalCards = cardEls.length;
-
-  // Build page chunks
   const chunks = [];
   let remaining = [...cardEls];
 
-  // Page 1
   chunks.push(remaining.splice(0, cardsPage1));
-  // Subsequent pages
   while (remaining.length > 0) {
     chunks.push(remaining.splice(0, cardsCont));
   }
@@ -1088,18 +1041,12 @@ function equaliseAndPaginate() {
   const totalPages = chunks.length;
   const titleEl   = sheet.querySelector('.sheet-title')?.textContent || '';
 
-  // Rebuild sheet HTML structure around existing card elements
-  // We'll detach cards, rebuild page wrappers, then re-attach
-
-  // Save answer key HTML (if present) — we'll reattach it after
   const akEl = sheet.querySelector('.answer-key');
   const akHTML = akEl ? akEl.outerHTML : '';
   if (akEl) akEl.remove();
 
-  // Remove all existing .print-page wrappers but keep cards detached
   sheet.querySelectorAll('.print-page').forEach(p => p.remove());
 
-  // Rebuild pages
   chunks.forEach((chunkCards, pageIdx) => {
     const pageNum = pageIdx + 1;
     const pageDiv = document.createElement('div');
@@ -1107,26 +1054,22 @@ function equaliseAndPaginate() {
     pageDiv.id = `page-${pageNum}`;
 
     if (pageIdx === 0) {
-      // Page 1 keeps the original header & instructions
       const titleRow = sheet.querySelector('.sheet-title-row');
       const instrEl  = sheet.querySelector('.sheet-instructions');
       if (titleRow) pageDiv.appendChild(titleRow.cloneNode(true));
       if (instrEl)  pageDiv.appendChild(instrEl.cloneNode(true));
     } else {
-      // Continuation pages get a slim header
       const contH = document.createElement('div');
       contH.className = 'page-cont-header';
       contH.innerHTML = `<strong>${titleEl}</strong><span class="page-num">Page ${pageNum} of ${totalPages}</span>`;
       pageDiv.appendChild(contH);
     }
 
-    // Card grid
     const grid = document.createElement('div');
     grid.className = 'cards-grid';
     chunkCards.forEach(c => grid.appendChild(c));
     pageDiv.appendChild(grid);
 
-    // Cut line on every card page
     pageDiv.insertAdjacentHTML('beforeend', `
       <hr class="cut-line" style="margin-top:14px">
       <div class="cut-label">✂ Cut along dashed line — shuffle before distributing</div>
@@ -1135,10 +1078,8 @@ function equaliseAndPaginate() {
     sheet.appendChild(pageDiv);
   });
 
-  // Remove stale header/instructions from sheet root (now inside page-1)
   sheet.querySelectorAll(':scope > .sheet-title-row, :scope > .sheet-instructions').forEach(e => e.remove());
 
-  // Re-attach answer key
   if (akHTML) sheet.insertAdjacentHTML('beforeend', akHTML);
 }
 
