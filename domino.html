@@ -547,16 +547,17 @@
       </div>
     </div>
 
-    <!-- BULK IMPORT SECTION -->
+    <!-- BULK LOAD SECTION -->
     <div class="sb-section">
       <h3>Bulk Load (CSV / TSV / Excel)</h3>
       <div class="field">
         <textarea id="cfg-bulk" rows="3" placeholder="Paste columns from Excel/CSV here...&#10;Question [Tab/Comma] Answer"></textarea>
       </div>
-      <div class="btn-row">
+      <div class="btn-row" style="margin-bottom: 6px;">
         <button class="btn btn-ghost" style="flex:2; font-size:0.75rem;" onclick="importBulkData()">📥 Load Bulk Data</button>
         <button class="btn btn-ghost" style="flex:1; font-size:0.75rem; color:var(--accent2);" onclick="clearAllPairs()">Clear All</button>
       </div>
+      <button class="btn btn-ghost" style="width:100%; font-size:0.75rem; color:var(--dark);" onclick="copyAIPrompt()" title="Copy prompt to generate matched pairs via AI">📋 Copy AI Generator Prompt</button>
     </div>
 
     <!-- Column headers -->
@@ -627,6 +628,33 @@ function settingsSnapshot() {
   });
 }
 
+// ─── AI Prompt Copy Function ─────────────────────────────────────────────
+function copyAIPrompt() {
+  const title = document.getElementById('cfg-title')?.value || 'Class Revision';
+  const sub = document.getElementById('cfg-sub')?.value || 'Mathematics';
+
+  const promptText = `Please act as an expert educational content generator. I need a set of 10-12 accurate question-and-answer pairs for a revision puzzle on the topic of "${title} - ${sub}".
+
+STRICT OUTPUT FORMAT INSTRUCTIONS:
+1. Output ONLY raw text in a two-column Tab-Separated Value (TSV) format.
+2. Each line must consist of: Question [TAB] Answer
+3. Do NOT include any intro, outro, explanations, markdown code blocks (e.g. no \`\`\`tsv), bullet points, or header rows.
+4. Enclose ALL mathematical equations, variables, fractions, and numerical expressions in single dollar signs for MathJax rendering (e.g., $x^2 + 3x$, $\\frac{a}{b}$, $\\log_2 8$, $16$).
+5. Ensure LaTeX backslashes are preserved intact (use single backslashes like \\frac and \\log).
+
+EXAMPLE FORMAT:
+$2^3$	$8$
+$\\log_2 16$	$4$
+Solve $2x = 10$	$x = 5$`;
+
+  navigator.clipboard.writeText(promptText).then(() => {
+    const status = document.getElementById('status');
+    status.innerHTML = `<strong>AI Prompt copied to clipboard!</strong> Paste it into ChatGPT/Claude to generate TSV pairs directly.`;
+  }).catch(err => {
+    alert('Failed to copy prompt to clipboard. Please allow clipboard permissions.');
+  });
+}
+
 // ─── Bulk Load Parsing ────────────────────────────────────────────────────
 function importBulkData() {
   const raw = document.getElementById('cfg-bulk').value.trim();
@@ -640,7 +668,6 @@ function importBulkData() {
 
     let parts = line.split('\t');
     if (parts.length < 2) {
-      // Regex CSV split ignoring commas inside double quotes
       parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
     }
 
@@ -655,7 +682,6 @@ function importBulkData() {
 
   if (newPairs.length > 0) {
     pairs = newPairs;
-    // Clear existing uploaded images as indices change completely
     Object.keys(images).forEach(k => delete images[k]);
     renderSidebar();
     markDirty();
