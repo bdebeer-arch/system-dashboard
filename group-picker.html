@@ -38,8 +38,13 @@
     padding: 18px 32px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
     box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
   header .logo {
     font-family: 'DM Serif Display', serif;
@@ -53,6 +58,24 @@
     font-weight: 500;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+  .btn-back {
+    color: var(--amber);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border: 1.5px solid rgba(232, 160, 32, 0.4);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-back:hover {
+    background: rgba(232, 160, 32, 0.15);
+    border-color: var(--amber);
+    transform: translateX(-2px);
   }
 
   /* ── LAYOUT ── */
@@ -506,10 +529,13 @@
 <body>
 
 <header>
-  <div>
-    <div class="logo">Group <span>Allocator</span></div>
-    <div class="subtitle">Random group generator for classrooms</div>
+  <div class="header-brand">
+    <div>
+      <div class="logo">Group <span>Allocator</span></div>
+      <div class="subtitle">Does what it says</div>
+    </div>
   </div>
+  <a href="index.html" class="btn-back" title="Return to Index">&larr; Back to Index</a>
 </header>
 
 <!-- Sidebar toggle tab -->
@@ -661,11 +687,62 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── STORAGE CONSTANT ──
+const STORAGE_KEY = 'group_allocator_state_v1';
+
 // ── STATE ──
 let names = [];
 let currentGroups = [];
 let unallocated = [];
 let revealState = {}; // groupIdx -> set of revealed indices
+
+// ── LOCAL STORAGE ENGINE ──
+function saveState() {
+  const state = {
+    names,
+    currentGroups,
+    unallocated,
+    settings: getSettings()
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const state = JSON.parse(raw);
+    if (Array.isArray(state.names)) names = state.names;
+    if (Array.isArray(state.currentGroups)) currentGroups = state.currentGroups;
+    if (Array.isArray(state.unallocated)) unallocated = state.unallocated;
+
+    if (state.settings) {
+      if (state.settings.groupSize) document.getElementById('groupSize').value = state.settings.groupSize;
+      if (state.settings.numGroups !== null && state.settings.numGroups !== undefined) {
+        document.getElementById('numGroups').value = state.settings.numGroups;
+      }
+      if (state.settings.remainder) {
+        const rad = document.querySelector(`input[name="remainder"][value="${state.settings.remainder}"]`);
+        if (rad) {
+          rad.checked = true;
+          selectRadio(rad);
+        }
+      }
+      if (typeof state.settings.revealMode === 'boolean') {
+        document.getElementById('revealToggle').checked = state.settings.revealMode;
+      }
+    }
+
+    renderPills();
+    updatePreview();
+
+    if (currentGroups.length > 0) {
+      renderGroups(getSettings().revealMode);
+    }
+  } catch (e) {
+    console.error('Failed to load state from localStorage:', e);
+  }
+}
 
 // ── NAME MANAGEMENT ──
 function addName(n) {
@@ -675,18 +752,26 @@ function addName(n) {
   names.push(n);
   renderPills();
   updatePreview();
+  saveState();
 }
 
 function removeName(n) {
   names = names.filter(x => x !== n);
   renderPills();
   updatePreview();
+  saveState();
 }
 
 function clearNames() {
   names = [];
+  currentGroups = [];
+  unallocated = [];
   renderPills();
   updatePreview();
+  document.getElementById('resultsArea').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  saveState();
+  showToast('Cleared all data');
 }
 
 function addNameFromInput() {
@@ -702,7 +787,6 @@ document.getElementById('nameInput').addEventListener('keydown', e => {
 
 function renderPills() {
   const row = document.getElementById('pillRow');
-  const ph  = document.getElementById('pillPlaceholder');
   const cnt = document.getElementById('nameCount');
   row.innerHTML = '';
   if (names.length === 0) {
@@ -736,6 +820,7 @@ function loadSample() {
   names = [...sample];
   renderPills();
   updatePreview();
+  saveState();
   showToast('Sample class loaded');
 }
 
@@ -747,12 +832,12 @@ function handleCSV(event) {
   reader.onload = e => {
     const text = e.target.result;
     const parsed = text.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
-    // Skip header-like first row if it contains "name" (case-insensitive)
     const filtered = parsed[0]?.toLowerCase().includes('name') ? parsed.slice(1) : parsed;
     let added = 0;
     filtered.forEach(n => { if (!names.includes(n)) { names.push(n); added++; } });
     renderPills();
     updatePreview();
+    saveState();
     showToast(`${added} name${added !== 1 ? 's' : ''} imported`);
   };
   reader.readAsText(file);
@@ -771,14 +856,16 @@ csvDrop.addEventListener('drop', e => {
 });
 
 // ── SETTINGS ──
-document.getElementById('groupSize').addEventListener('input', updatePreview);
-document.getElementById('numGroups').addEventListener('input', updatePreview);
+document.getElementById('groupSize').addEventListener('input', () => { updatePreview(); saveState(); });
+document.getElementById('numGroups').addEventListener('input', () => { updatePreview(); saveState(); });
+document.getElementById('revealToggle').addEventListener('change', saveState);
 
 function getSettings() {
   const groupSize = parseInt(document.getElementById('groupSize').value) || 3;
   const numGroupsRaw = document.getElementById('numGroups').value;
   const numGroups = numGroupsRaw ? parseInt(numGroupsRaw) : null;
-  const remainder = document.querySelector('input[name="remainder"]:checked').value;
+  const remainderEl = document.querySelector('input[name="remainder"]:checked');
+  const remainder = remainderEl ? remainderEl.value : 'spread';
   const revealMode = document.getElementById('revealToggle').checked;
   return { groupSize, numGroups, remainder, revealMode };
 }
@@ -802,6 +889,7 @@ function updatePreview() {
 function selectRadio(el) {
   document.querySelectorAll('.radio-opt').forEach(opt => opt.classList.remove('selected'));
   el.closest('.radio-opt').classList.add('selected');
+  saveState();
 }
 
 // ── ALLOCATION ──
@@ -823,7 +911,6 @@ function allocate() {
   let leftover = [];
 
   if (numGroups) {
-    // Fixed number of groups
     const base = Math.floor(shuffled.length / numGroups);
     const extra = shuffled.length % numGroups;
     let idx = 0;
@@ -833,7 +920,6 @@ function allocate() {
       idx += size;
     }
   } else {
-    // Fixed group size
     let idx = 0;
     while (idx + groupSize <= shuffled.length) {
       groups.push(shuffled.slice(idx, idx + groupSize));
@@ -843,7 +929,6 @@ function allocate() {
 
     if (leftover.length > 0) {
       if (remainder === 'spread') {
-        // Distribute remainder into existing groups
         leftover.forEach((name, i) => {
           if (groups[i % groups.length]) groups[i % groups.length].push(name);
         });
@@ -852,20 +937,19 @@ function allocate() {
         groups.push(leftover);
         leftover = [];
       }
-      // else 'drop' — leftover stays as-is
     }
   }
 
   currentGroups = groups;
   unallocated = leftover;
 
-  // Init reveal state
   revealState = {};
   if (revealMode) {
     groups.forEach((_, gi) => { revealState[gi] = new Set(); });
   }
 
   renderGroups(revealMode);
+  saveState();
 }
 
 function renderGroups(revealMode) {
@@ -918,11 +1002,9 @@ function renderGroups(revealMode) {
     grid.appendChild(card);
   });
 
-  // Reveal hint
   const hint = document.getElementById('revealHint');
   hint.style.display = revealMode ? 'block' : 'none';
 
-  // Unallocated
   const uArea = document.getElementById('unallocatedArea');
   const uList = document.getElementById('unallocatedList');
   if (unallocated.length > 0) {
@@ -942,7 +1024,7 @@ function renderGroups(revealMode) {
 
 function revealOne(item, gi, mi, name) {
   if (!revealState[gi]) revealState[gi] = new Set();
-  if (revealState[gi].has(mi)) return; // already revealed
+  if (revealState[gi].has(mi)) return;
   revealState[gi].add(mi);
   item.classList.remove('hidden');
   item.classList.add('revealed');
@@ -985,7 +1067,7 @@ function toggleSidebar() {
 }
 
 // ── INIT ──
-updatePreview();
+loadState();
 </script>
 </body>
 </html>
