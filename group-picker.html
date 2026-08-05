@@ -554,7 +554,7 @@
     <div>
       <div class="section-label">1 · Add Names</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input type="text" id="nameInput" placeholder="Type a name, press Enter…" style="flex:1;" />
+        <input type="text" id="nameInput" placeholder="Type or paste names, press Enter…" style="flex:1;" />
         <button class="btn btn-outline" onclick="addNameFromInput()" style="white-space:nowrap;padding:8px 12px;">Add</button>
       </div>
       <div class="pill-row" id="pillRow">
@@ -696,6 +696,15 @@ let currentGroups = [];
 let unallocated = [];
 let revealState = {}; // groupIdx -> set of revealed indices
 
+// ── SANITISATION HELPER ──
+function cleanName(raw) {
+  if (!raw) return '';
+  return raw
+    .replace(/\s*\([^)]*\)/g, '')          // Strip parenthetical formal names e.g. (Xavier-Leigh)
+    .replace(/^([^,]+),\s*(.+)$/, '$2 $1')  // Swap "Surname, First" to "First Surname"
+    .trim();
+}
+
 // ── LOCAL STORAGE ENGINE ──
 function saveState() {
   const state = {
@@ -725,7 +734,7 @@ function loadState() {
         const rad = document.querySelector(`input[name="remainder"][value="${state.settings.remainder}"]`);
         if (rad) {
           rad.checked = true;
-          selectRadio(rad);
+          selectRadio(rad, false);
         }
       }
       if (typeof state.settings.revealMode === 'boolean') {
@@ -746,10 +755,10 @@ function loadState() {
 
 // ── NAME MANAGEMENT ──
 function addName(n) {
-  n = n.trim();
-  if (!n) return;
-  if (names.includes(n)) { showToast(`"${n}" already added`); return; }
-  names.push(n);
+  const cleaned = cleanName(n);
+  if (!cleaned) return;
+  if (names.includes(cleaned)) { showToast(`"${cleaned}" already added`); return; }
+  names.push(cleaned);
   renderPills();
   updatePreview();
   saveState();
@@ -776,7 +785,32 @@ function clearNames() {
 
 function addNameFromInput() {
   const el = document.getElementById('nameInput');
-  addName(el.value);
+  const rawVal = el.value;
+  if (!rawVal.trim()) return;
+
+  // Handle multiline or individual paste/entry
+  const lines = rawVal.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  let addedCount = 0;
+
+  lines.forEach(item => {
+    const cleaned = cleanName(item);
+    if (cleaned && !names.includes(cleaned)) {
+      names.push(cleaned);
+      addedCount++;
+    }
+  });
+
+  if (addedCount > 0) {
+    renderPills();
+    updatePreview();
+    saveState();
+    if (lines.length > 1) {
+      showToast(`${addedCount} names added`);
+    }
+  } else if (lines.length === 1 && names.includes(cleanName(lines[0]))) {
+    showToast(`"${cleanName(lines[0])}" already added`);
+  }
+
   el.value = '';
   el.focus();
 }
@@ -831,10 +865,17 @@ function handleCSV(event) {
   const reader = new FileReader();
   reader.onload = e => {
     const text = e.target.result;
-    const parsed = text.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
-    const filtered = parsed[0]?.toLowerCase().includes('name') ? parsed.slice(1) : parsed;
+    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const filtered = lines[0]?.toLowerCase().includes('name') ? lines.slice(1) : lines;
+    
     let added = 0;
-    filtered.forEach(n => { if (!names.includes(n)) { names.push(n); added++; } });
+    filtered.forEach(rawLine => {
+      const cleaned = cleanName(rawLine);
+      if (cleaned && !names.includes(cleaned)) {
+        names.push(cleaned);
+        added++;
+      }
+    });
     renderPills();
     updatePreview();
     saveState();
@@ -886,10 +927,10 @@ function updatePreview() {
   }
 }
 
-function selectRadio(el) {
+function selectRadio(el, shouldSave = true) {
   document.querySelectorAll('.radio-opt').forEach(opt => opt.classList.remove('selected'));
   el.closest('.radio-opt').classList.add('selected');
-  saveState();
+  if (shouldSave) saveState();
 }
 
 // ── ALLOCATION ──
