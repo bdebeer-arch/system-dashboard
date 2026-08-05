@@ -700,6 +700,7 @@ let revealState = {}; // groupIdx -> set of revealed indices
 function cleanName(raw) {
   if (!raw) return '';
   return raw
+    .replace(/["'“”]/g, '')                // Strip all standard & curly quotation marks
     .replace(/\s*\([^)]*\)/g, '')          // Strip parenthetical formal names e.g. (Xavier-Leigh)
     .replace(/^([^,]+),\s*(.+)$/, '$2 $1')  // Swap "Surname, First" to "First Surname"
     .trim();
@@ -788,7 +789,6 @@ function addNameFromInput() {
   const rawVal = el.value;
   if (!rawVal.trim()) return;
 
-  // Handle multiline or individual paste/entry
   const lines = rawVal.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   let addedCount = 0;
 
