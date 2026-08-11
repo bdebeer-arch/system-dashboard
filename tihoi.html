@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Two-Step Subject Line Optimiser</title>
+  <title>Schola Matrix — Interactive Timetable & Line Optimiser</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -81,7 +81,7 @@
       font-weight: 700; font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;
     }
 
-    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
 
     .third-card {
       background: #f8fafc; border: 1px solid var(--border-color);
@@ -90,15 +90,15 @@
 
     .third-card h3 { margin: 0 0 12px 0; color: #2b6cb0; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
 
-    .subject-pill {
-      display: flex; justify-content: space-between; align-items: center;
-      background: white; border: 1px solid #e2e8f0; padding: 8px 12px;
-      border-radius: 6px; margin-bottom: 8px; font-size: 0.88rem;
-    }
+    /* Visual Chart Styling for Step 1 */
+    .chart-row { margin-bottom: 12px; }
+    .chart-label { font-size: 0.85rem; font-weight: 600; color: #4a5568; display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .chart-bar-bg { background: #e2e8f0; height: 16px; border-radius: 8px; overflow: hidden; position: relative; }
+    .chart-bar-fill { background: linear-gradient(90deg, #4299e1, #3182ce); height: 100%; border-radius: 8px; transition: width 0.4s ease; }
+    .chart-bar-tihoi { background: linear-gradient(90deg, #ed8936, #dd6b20); }
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
     .badge-tihoi { background: #feebc8; color: #744210; }
-    .badge-count { background: #ebf8ff; color: #2b6cb0; }
 
     .line-box {
       background: white; border: 1px solid #e2e8f0; border-radius: 6px;
@@ -141,16 +141,16 @@ Lucas Martin, Tihoi 1, Ent1, Mus1, Tec1, Art1
 Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Demand Matrix (Pre-Sort)</button>
+      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Demand Chart (Pre-Sort)</button>
       <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Sorting & Line Allocation</button>
     </div>
   </div>
 
   <!-- Step 1 Display -->
   <div class="card" id="step1Card" style="display:none;">
-    <div class="step-header">STEP 1: SUBJECT SELECTION DEMAND BY THIRD (EXCLUDING TIHOI LOCKOUTS)</div>
+    <div class="step-header">STEP 1: SUBJECT SELECTION DEMAND CHARTS BY THIRD (EXCLUDING TIHOI LOCKOUTS)</div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Tihoi students are locked into Line 1 & Line 2 in their assigned Third. The table below displays elective choice distribution across the remaining open Thirds.
+      Tihoi students are locked into Line 1 & Line 2 in their assigned Third. The bar charts below display elective demand across the available open Thirds.
     </p>
     <div id="demandOutput" class="third-grid"></div>
   </div>
@@ -159,7 +159,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
   <div class="card" id="step2Card" style="display:none;">
     <div class="step-header">STEP 2: OPTIMISED CLASS LISTS & LINE SCHEDULE</div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Final cohort distributions per Line (2 Lines per Third). Target class size: 16 (Bounds: 6–21).
+      Final cohort distributions per Line (2 Lines per Third). Strictly 1 class per student per line. Target class size: 16 (Bounds: 6–21).
     </p>
     <div id="allocationOutput"></div>
   </div>
@@ -168,11 +168,11 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 <script>
   // Save input locally
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v2', this.value);
+    localStorage.setItem('schola_csv_v3', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v2');
+    const saved = localStorage.getItem('schola_csv_v3');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix(); // Load Step 1 automatically on open
   });
@@ -184,7 +184,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
     });
   }
 
-  // STEP 1: Calculate raw demand per third (Tihoi excluded)
+  // STEP 1: Calculate raw demand and render bar charts
   function generateDemandMatrix() {
     const students = parseCSV(document.getElementById('csvInput').value);
     const demand = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
@@ -204,10 +204,10 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
       });
     });
 
-    renderStep1(demand, tihoiCounts);
+    renderStep1Charts(demand, tihoiCounts, students.length);
   }
 
-  function renderStep1(demand, tihoiCounts) {
+  function renderStep1Charts(demand, tihoiCounts, totalStudents) {
     const out = document.getElementById('demandOutput');
     let html = '';
 
@@ -215,23 +215,41 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
       const tKey = `Third ${t}`;
       html += `<div class="third-card"><h3>${tKey}</h3>`;
       
-      // Tihoi lockout badge
-      html += `<div class="subject-pill" style="background:#fffaf0;">
-        <span><span class="badge badge-tihoi">Tihoi ${t}</span> <em>(Locked: Line 1 & 2)</em></span>
-        <span class="badge badge-count">${tihoiCounts[tKey]} Students</span>
-      </div>`;
+      // Tihoi Bar Chart Row
+      const tihoiCount = tihoiCounts[tKey];
+      const tihoiPct = Math.min(100, Math.round((tihoiCount / (totalStudents || 1)) * 100));
+      html += `
+        <div class="chart-row">
+          <div class="chart-label">
+            <span><span class="badge badge-tihoi">Tihoi ${t}</span> <em>(Locked L1 & L2)</em></span>
+            <span>${tihoiCount} Students</span>
+          </div>
+          <div class="chart-bar-bg">
+            <div class="chart-bar-fill chart-bar-tihoi" style="width: ${tihoiPct}%;"></div>
+          </div>
+        </div>`;
 
-      // Electives demand
+      // Electives Bar Chart Rows
       const sortedSubjs = Object.keys(demand[tKey]).sort();
       if (sortedSubjs.length === 0) {
         html += `<p style="font-size:0.8rem; color:var(--text-muted);">No elective demands allocated.</p>`;
       } else {
+        // Find max count for relative bar scaling
+        const maxCount = Math.max(...Object.values(demand[tKey]).map(arr => arr.length), 1);
+
         sortedSubjs.forEach(s => {
           const count = demand[tKey][s].length;
-          html += `<div class="subject-pill">
-            <span><strong>${s}</strong></span>
-            <span class="badge badge-count">${count} Requests</span>
-          </div>`;
+          const barPct = Math.round((count / maxCount) * 100);
+          html += `
+            <div class="chart-row">
+              <div class="chart-label">
+                <span><strong>${s}</strong></span>
+                <span>${count} Requests</span>
+              </div>
+              <div class="chart-bar-bg">
+                <div class="chart-bar-fill" style="width: ${barPct}%;"></div>
+              </div>
+            </div>`;
         });
       }
       html += `</div>`;
@@ -241,7 +259,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
     document.getElementById('step1Card').style.display = 'block';
   }
 
-  // STEP 2: Execute Sorting & Line Allocation
+  // STEP 2: Execute Sorting & Line Allocation (Enforcing Strict 1-Subject-Per-Line)
   function executeLineSorting() {
     const students = parseCSV(document.getElementById('csvInput').value);
     const schedule = {
@@ -254,7 +272,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
       const tNum = st.tihoi.replace(/\D/g, '') || "1";
       const tihoiThird = `Third ${tNum}`;
 
-      // Lock Tihoi in both lines
+      // Lock Tihoi in both Line 1 and Line 2 of designated third
       if (!schedule[tihoiThird]["Line 1"]["Tihoi"]) schedule[tihoiThird]["Line 1"]["Tihoi"] = [];
       if (!schedule[tihoiThird]["Line 2"]["Tihoi"]) schedule[tihoiThird]["Line 2"]["Tihoi"] = [];
       schedule[tihoiThird]["Line 1"]["Tihoi"].push(st.id);
@@ -262,12 +280,26 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      st.subjects.forEach((subj, idx) => {
-        const targetThird = availThirds[idx % availThirds.length];
-        const targetLine = (idx % 2 === 0) ? "Line 1" : "Line 2";
+      // STRICT SLOT MAPPER:
+      // Subject 0 -> Third A, Line 1
+      // Subject 1 -> Third A, Line 2
+      // Subject 2 -> Third B, Line 1
+      // Subject 3 -> Third B, Line 2
+      const slotMap = [
+        { third: availThirds[0], line: "Line 1" },
+        { third: availThirds[0], line: "Line 2" },
+        { third: availThirds[1], line: "Line 1" },
+        { third: availThirds[1], line: "Line 2" }
+      ];
 
-        if (!schedule[targetThird][targetLine][subj]) schedule[targetThird][targetLine][subj] = [];
-        schedule[targetThird][targetLine][subj].push(st.id);
+      st.subjects.forEach((subj, idx) => {
+        if (idx < 4) {
+          const slot = slotMap[idx];
+          if (!schedule[slot.third][slot.line][subj]) {
+            schedule[slot.third][slot.line][subj] = [];
+          }
+          schedule[slot.third][slot.line][subj].push(st.id);
+        }
       });
     });
 
@@ -294,7 +326,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
           let count = roster.length;
           let metric = (count >= 6 && count <= 21) 
             ? `<span class="metric-pill metric-good">${count} Enrolled</span>`
-            : `<span class="metric-pill metric-warn">${count} Needs Review</span>`;
+            : `<span class="metric-pill metric-warn">${count} Review Size</span>`;
 
           html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
           html += `<div><span class="${badgeStyle}">${subj}</span> ${metric}</div>`;
