@@ -75,10 +75,13 @@
     .btn-step1:hover { background: #2c7a7b; }
     .btn-step2 { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3); }
     .btn-step2:hover { background: #2c5282; }
+    .btn-export { background: #38a169; color: white; box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3); }
+    .btn-export:hover { background: #2f855a; }
 
     .step-header {
       background: #edf2f7; padding: 8px 14px; border-radius: 6px;
       font-weight: 700; font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;
+      display: flex; justify-content: space-between; align-items: center;
     }
 
     .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
@@ -148,33 +151,39 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 
   <!-- Step 1 Display -->
   <div class="card" id="step1Card" style="display:none;">
-    <div class="step-header">STEP 1: SUBJECT SELECTION DEMAND CHARTS BY THIRD (EXCLUDING TIHOI LOCKOUTS)</div>
+    <div class="step-header">
+      <span>STEP 1: PRE-SORT ELECTIVE DEMAND BY THIRD (2× LINE CAPACITY CAPACITY FACTOR)</span>
+    </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Tihoi students are locked into Line 1 & Line 2 in their assigned Third. The bar charts below display elective demand across the available open Thirds.
+      Tihoi cohorts are locked into both lines of their designated Third. Demand shown reflects the combined two-line elective load for on-campus students prior to line sorting.
     </p>
     <div id="demandOutput" class="third-grid"></div>
   </div>
 
   <!-- Step 2 Display -->
   <div class="card" id="step2Card" style="display:none;">
-    <div class="step-header">STEP 2: OPTIMISED CLASS LISTS & LINE SCHEDULE</div>
+    <div class="step-header">
+      <span>STEP 2: OPTIMISED CLASS LISTS & LINE SCHEDULE</span>
+      <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
+    </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Final cohort distributions per Line (2 Lines per Third). Strictly 1 class per student per line. Target class size: 16 (Bounds: 6–21).
+      Final cohort distributions per Line (2 Lines per Third). Strictly 1 class per student per line. Target class size: 16 (Bounds: 6–21). Tihoi cohort names are suppressed.
     </p>
     <div id="allocationOutput"></div>
   </div>
 </div>
 
 <script>
-  // Save input locally
+  let currentSchedule = null;
+
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v3', this.value);
+    localStorage.setItem('schola_csv_v4', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v3');
+    const saved = localStorage.getItem('schola_csv_v4');
     if (saved) document.getElementById('csvInput').value = saved;
-    generateDemandMatrix(); // Load Step 1 automatically on open
+    generateDemandMatrix();
   });
 
   function parseCSV(text) {
@@ -184,7 +193,6 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
     });
   }
 
-  // STEP 1: Calculate raw demand and render bar charts
   function generateDemandMatrix() {
     const students = parseCSV(document.getElementById('csvInput').value);
     const demand = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
@@ -215,13 +223,12 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
       const tKey = `Third ${t}`;
       html += `<div class="third-card"><h3>${tKey}</h3>`;
       
-      // Tihoi Bar Chart Row
       const tihoiCount = tihoiCounts[tKey];
       const tihoiPct = Math.min(100, Math.round((tihoiCount / (totalStudents || 1)) * 100));
       html += `
         <div class="chart-row">
           <div class="chart-label">
-            <span><span class="badge badge-tihoi">Tihoi ${t}</span> <em>(Locked L1 & L2)</em></span>
+            <span><span class="badge badge-tihoi">Tihoi Intake ${t}</span> <em>(Locked L1 & L2)</em></span>
             <span>${tihoiCount} Students</span>
           </div>
           <div class="chart-bar-bg">
@@ -229,12 +236,10 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
           </div>
         </div>`;
 
-      // Electives Bar Chart Rows
       const sortedSubjs = Object.keys(demand[tKey]).sort();
       if (sortedSubjs.length === 0) {
         html += `<p style="font-size:0.8rem; color:var(--text-muted);">No elective demands allocated.</p>`;
       } else {
-        // Find max count for relative bar scaling
         const maxCount = Math.max(...Object.values(demand[tKey]).map(arr => arr.length), 1);
 
         sortedSubjs.forEach(s => {
@@ -244,7 +249,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
             <div class="chart-row">
               <div class="chart-label">
                 <span><strong>${s}</strong></span>
-                <span>${count} Requests</span>
+                <span>${count} Choice Requests</span>
               </div>
               <div class="chart-bar-bg">
                 <div class="chart-bar-fill" style="width: ${barPct}%;"></div>
@@ -259,7 +264,6 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
     document.getElementById('step1Card').style.display = 'block';
   }
 
-  // STEP 2: Execute Sorting & Line Allocation (Enforcing Strict 1-Subject-Per-Line)
   function executeLineSorting() {
     const students = parseCSV(document.getElementById('csvInput').value);
     const schedule = {
@@ -272,7 +276,6 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
       const tNum = st.tihoi.replace(/\D/g, '') || "1";
       const tihoiThird = `Third ${tNum}`;
 
-      // Lock Tihoi in both Line 1 and Line 2 of designated third
       if (!schedule[tihoiThird]["Line 1"]["Tihoi"]) schedule[tihoiThird]["Line 1"]["Tihoi"] = [];
       if (!schedule[tihoiThird]["Line 2"]["Tihoi"]) schedule[tihoiThird]["Line 2"]["Tihoi"] = [];
       schedule[tihoiThird]["Line 1"]["Tihoi"].push(st.id);
@@ -280,11 +283,6 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      // STRICT SLOT MAPPER:
-      // Subject 0 -> Third A, Line 1
-      // Subject 1 -> Third A, Line 2
-      // Subject 2 -> Third B, Line 1
-      // Subject 3 -> Third B, Line 2
       const slotMap = [
         { third: availThirds[0], line: "Line 1" },
         { third: availThirds[0], line: "Line 2" },
@@ -303,6 +301,7 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
       });
     });
 
+    currentSchedule = schedule;
     renderStep2(schedule);
   }
 
@@ -321,7 +320,8 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 
         for (const [subj, roster] of Object.entries(classes)) {
           let badgeStyle = "badge";
-          if (subj === "Tihoi") badgeStyle += " badge-tihoi";
+          const isTihoi = subj === "Tihoi";
+          if (isTihoi) badgeStyle += " badge-tihoi";
           
           let count = roster.length;
           let metric = (count >= 6 && count <= 21) 
@@ -331,7 +331,13 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
           html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
           html += `<div><span class="${badgeStyle}">${subj}</span> ${metric}</div>`;
           html += `<div style="margin-top:4px;">`;
-          roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
+          
+          if (isTihoi) {
+            html += `<em style="font-size:0.8rem; color:var(--text-muted);">Names suppressed (${count} students locked)</em>`;
+          } else {
+            roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
+          }
+          
           html += `</div></div>`;
         }
 
@@ -342,6 +348,34 @@ Sophia Anderson, Tihoi 2, Ent1, Sci1, His1, ATD1</textarea>
 
     out.innerHTML = html;
     document.getElementById('step2Card').style.display = 'block';
+  }
+
+  function exportToCSV() {
+    if (!currentSchedule) return;
+
+    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject,Student ID/Name\n";
+
+    for (const [thirdName, lines] of Object.entries(currentSchedule)) {
+      for (const [lineName, classes] of Object.entries(lines)) {
+        for (const [subj, roster] of Object.entries(classes)) {
+          if (subj === "Tihoi") {
+            csvContent += `"${thirdName}","${lineName}","Tihoi","[Cohort Group - ${roster.length} Students]"\n`;
+          } else {
+            roster.forEach(studentId => {
+              csvContent += `"${thirdName}","${lineName}","${subj}","${studentId}"\n`;
+            });
+          }
+        }
+      }
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Schola_Matrix_Class_Rosters.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 </script>
 
