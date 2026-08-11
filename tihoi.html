@@ -101,15 +101,6 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-
-    .third-card {
-      background: #f8fafc; border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 16px;
-    }
-
-    .third-card h3 { margin: 0 0 12px 0; color: #2b6cb0; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
-
     .chart-row { margin-bottom: 12px; }
     .chart-label { font-size: 0.85rem; font-weight: 600; color: #4a5568; display: flex; justify-content: space-between; margin-bottom: 3px; }
     .chart-bar-bg { background: #e2e8f0; height: 16px; border-radius: 8px; overflow: hidden; position: relative; }
@@ -117,6 +108,8 @@
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
     .badge-ent { background: #e9d8fd; color: #44337a; }
+
+    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
     .line-box {
       background: white; border: 1px solid #e2e8f0; border-radius: 6px;
@@ -181,21 +174,21 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     </div>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Demand by Third (Pre-Sort)</button>
-      <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Sorting & Line Allocation</button>
+      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Total On-Campus Demand</button>
+      <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Sorting & Third Allocation</button>
     </div>
   </div>
 
   <!-- Step 1 Display -->
   <div class="card" id="step1Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 1: PRE-SORT ELECTIVE DEMAND CHARTS BY THIRD</span>
+      <span>STEP 1: PRE-SORT ELECTIVE DEMAND (ALL ON-CAMPUS CHOICES)</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Displays choice demand for on-campus students per Third (Tihoi cohorts excluded). Step 2 will split these choices into Line 1 and Line 2.
+      Displays the total un-sorted subject choice demand across all students while on campus (Tihoi term choices excluded). Step 2 will sort these choices across Thirds 1–3 and Lines 1–2.
     </p>
 
-    <div id="demandOutput" class="third-grid"></div>
+    <div id="viabilityOutput"></div>
   </div>
 
   <!-- Step 2 Display -->
@@ -209,28 +202,17 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     </p>
     <div id="allocationOutput"></div>
   </div>
-
-  <!-- Concluding Summary Card -->
-  <div class="card" id="summaryCard" style="display:none;">
-    <div class="step-header">
-      <span>ANNUAL SUBJECT VIABILITY & OPERATIONAL SUMMARY</span>
-    </div>
-    <p style="font-size:0.88rem; color: var(--text-muted);">
-      Overview of full-year subject viability based on total cohort demand against your minimum threshold (<span id="minThresholdLabel">6</span> students).
-    </p>
-    <div id="viabilityOutput"></div>
-  </div>
 </div>
 
 <script>
   let currentSchedule = null;
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v10', this.value);
+    localStorage.setItem('schola_csv_v11', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v10');
+    const saved = localStorage.getItem('schola_csv_v11');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix();
   });
@@ -250,96 +232,49 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     });
   }
 
-  // STEP 1: PRE-SORT DEMAND BY THIRD
+  // STEP 1: UNIFIED ON-CAMPUS DEMAND
   function generateDemandMatrix() {
     const bounds = getBounds();
-    document.getElementById('minThresholdLabel').textContent = bounds.min;
     const students = parseCSV(document.getElementById('csvInput').value);
     
-    const demandPerThird = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
-    const totalYearDemand = {};
+    const totalSubjectDemand = {};
 
     students.forEach(st => {
-      const tNum = st.tihoi.replace(/\D/g, '') || "1";
-      const tihoiThird = `Third ${tNum}`;
-      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
-
-      // Distribute student's 4 electives across their 2 active on-campus Thirds
-      st.subjects.forEach((subj, idx) => {
+      st.subjects.forEach(subj => {
         if (subj.toLowerCase() !== "tihoi") {
-          const targetThird = availThirds[idx % availThirds.length];
-          
-          if (!demandPerThird[targetThird][subj]) demandPerThird[targetThird][subj] = 0;
-          demandPerThird[targetThird][subj]++;
-
-          totalYearDemand[subj] = (totalYearDemand[subj] || 0) + 1;
+          totalSubjectDemand[subj] = (totalSubjectDemand[subj] || 0) + 1;
         }
       });
     });
 
-    renderStep1Charts(demandPerThird);
-    renderViabilitySummary(totalYearDemand, bounds);
+    renderStep1Heatmap(totalSubjectDemand, bounds);
   }
 
-  function renderStep1Charts(demand) {
-    const out = document.getElementById('demandOutput');
-    let html = '';
-
-    for (let t = 1; t <= 3; t++) {
-      const tKey = `Third ${t}`;
-      html += `<div class="third-card"><h3>${tKey}</h3>`;
-
-      const sortedSubjs = Object.keys(demand[tKey]).sort();
-      if (sortedSubjs.length === 0) {
-        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active choices allocated for on-campus students.</p>`;
-      } else {
-        const maxCount = Math.max(...Object.values(demand[tKey]), 1);
-
-        sortedSubjs.forEach(s => {
-          const count = demand[tKey][s];
-          const barPct = Math.round((count / maxCount) * 100);
-          const isEnt = s.toLowerCase().includes("ent");
-          
-          html += `
-            <div class="chart-row">
-              <div class="chart-label">
-                <span><strong>${s}</strong> ${isEnt ? '<span class="badge badge-ent">Anchored L1 & L2</span>' : ''}</span>
-                <span>${count} Choice Requests</span>
-              </div>
-              <div class="chart-bar-bg">
-                <div class="chart-bar-fill" style="width: ${barPct}%; ${isEnt ? 'background: linear-gradient(90deg, #9f7aea, #805ad5);' : ''}"></div>
-              </div>
-            </div>`;
-        });
-      }
-      html += `</div>`;
-    }
-
-    out.innerHTML = html;
-    document.getElementById('step1Card').style.display = 'block';
-  }
-
-  function renderViabilitySummary(totalDemand, bounds) {
+  function renderStep1Heatmap(totalDemand, bounds) {
     const out = document.getElementById('viabilityOutput');
     let html = `
       <table class="viability-table">
         <thead>
           <tr>
             <th>Subject</th>
-            <th>Total Year Demand</th>
-            <th>Min Threshold for 3 Thirds (${bounds.min * 3})</th>
+            <th>Total On-Campus Requests</th>
+            <th>Demand Chart</th>
             <th>Operational Viability Assessment</th>
           </tr>
         </thead>
         <tbody>`;
 
+    const sortedSubjs = Object.keys(totalDemand).sort();
+    const maxCount = Math.max(...Object.values(totalDemand), 1);
     const minFor3Thirds = bounds.min * 3;
 
-    Object.keys(totalDemand).sort().forEach(subj => {
+    sortedSubjs.forEach(subj => {
       const count = totalDemand[subj];
+      const barPct = Math.round((count / maxCount) * 100);
+      const isEnt = subj.toLowerCase().includes("ent");
+
       let statusBadge = '';
-      
-      if (subj.toLowerCase().includes("ent")) {
+      if (isEnt) {
         statusBadge = `<span class="badge badge-ent">Compulsory Universal Anchor (Operates All 3 Thirds)</span>`;
       } else if (count >= minFor3Thirds) {
         statusBadge = `<span class="badge" style="background:var(--success-bg); color:var(--success-text);">Full Year (Operates All 3 Thirds)</span>`;
@@ -352,19 +287,23 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
 
       html += `
         <tr>
-          <td><strong>${subj}</strong></td>
-          <td>${count} choices</td>
-          <td>${subj.toLowerCase().includes("ent") ? 'N/A' : minFor3Thirds + ' choices'}</td>
-          <td>${statusBadge}</td>
+          <td style="width:15%;"><strong>${subj}</strong></td>
+          <td style="width:18%;">${count} requests</td>
+          <td style="width:37%;">
+            <div class="chart-bar-bg">
+              <div class="chart-bar-fill" style="width: ${barPct}%; ${isEnt ? 'background: linear-gradient(90deg, #9f7aea, #805ad5);' : ''}"></div>
+            </div>
+          </td>
+          <td style="width:30%;">${statusBadge}</td>
         </tr>`;
     });
 
     html += `</tbody></table>`;
     out.innerHTML = html;
-    document.getElementById('summaryCard').style.display = 'block';
+    document.getElementById('step1Card').style.display = 'block';
   }
 
-  // STEP 2: LINE ALLOCATION & SORTING
+  // STEP 2: LINE ALLOCATION & BALANCED SORTING
   function executeLineSorting() {
     const bounds = getBounds();
     const students = parseCSV(document.getElementById('csvInput').value);
@@ -383,7 +322,7 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
       const entSubject = st.subjects.find(s => s.toLowerCase().includes("ent")) || "Ent1";
       const electives = st.subjects.filter(s => !s.toLowerCase().includes("ent"));
 
-      // Balanced ENT1 Assignment
+      // Balanced ENT1 Assignment across available Thirds & Lines
       const entCandidates = [
         { third: availThirds[0], line: "Line 1" },
         { third: availThirds[0], line: "Line 2" },
@@ -470,7 +409,7 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
 
         html += `</div>`;
       }
-      html += `</div> destruction</div>`;
+      html += `</div></div>`;
     }
 
     out.innerHTML = html;
