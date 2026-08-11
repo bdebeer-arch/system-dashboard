@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Timetable & Line Placement Solver</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; color: #333; line-height: 1.5; }
+    h1, h2, h3 { color: #1a365d; }
+    .card { background: #f7fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    textarea { width: 100%; height: 100px; font-family: monospace; }
+    button { background: #2b6cb0; color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #2c5282; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #cbd5e0; padding: 8px 12px; text-align: left; }
+    th { background: #edf2f7; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; font-weight: bold; background: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+  <h1>Student Placement & Line Generator</h1>
+
+  <div class="card">
+    <h2>1. Input CSV Data</h2>
+    <p>Paste CSV data (Format: <code>Name/ID, Tihoi Term, Subject 1, Subject 2, Subject 3, Subject 4</code>):</p>
+    <textarea id="csvInput">Joe Grigg, Tihoi 1, Ent1, Tec1, ATD1, Mus1
+Aria Smith, Tihoi 2, Ent1, Art1, Mat1, Sci1
+Liam Patel, Tihoi 3, Ent1, Tec1, His1, Mus1
+Emma Brown, Tihoi 1, Ent1, Mat1, Sci1, His1</textarea>
+    <br><br>
+    <button onclick="runSolver()">Sort & Optimise Timetable</button>
+  </div>
+
+  <div class="card" id="resultsCard" style="display:none;">
+    <h2>2. Class Lists by Third</h2>
+    <div id="classLists"></div>
+
+    <h2>3. Class Schedule by Line</h2>
+    <div id="lineSchedule"></div>
+  </div>
+
+  <script>
+    function parseCSV(text) {
+      return text.trim().split('\n').map(line => {
+        const parts = line.split(',').map(s => s.trim());
+        return {
+          id: parts[0],
+          tihoi: parts[1], // e.g. "Tihoi 1"
+          subjects: parts.slice(2)
+        };
+      });
+    }
+
+    function runSolver() {
+      const rawData = document.getElementById('csvInput').value;
+      const students = parseCSV(rawData);
+      
+      // Simple local search placeholder algorithm structure
+      const results = executeLocalSearch(students);
+
+      renderResults(results);
+      document.getElementById('resultsCard').style.display = 'block';
+    }
+
+    function executeLocalSearch(students) {
+      // Data structures for Thirds (1, 2, 3) and Subject Lines (Line 1, Line 2)
+      let thirds = {
+        "Third 1": { "Line 1": [], "Line 2": [] },
+        "Third 2": { "Line 1": [], "Line 2": [] },
+        "Third 3": { "Line 1": [], "Line 2": [] }
+      };
+
+      students.forEach(student => {
+        const tNum = student.tihoi.replace(/\D/g, ''); // Extract third number
+        const tihoiThird = `Third ${tNum}`;
+        
+        // Lock Tihoi into both lines of its designated third
+        thirds[tihoiThird]["Line 1"].push({ student: student.id, subject: "Tihoi" });
+        thirds[tihoiThird]["Line 2"].push({ student: student.id, subject: "Tihoi" });
+
+        // Distribute remaining subjects into available thirds
+        let availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+        
+        student.subjects.forEach((subj, idx) => {
+          let targetThird = availThirds[idx % availThirds.length];
+          let targetLine = (idx < 2) ? "Line 1" : "Line 2";
+          thirds[targetThird][targetLine].push({ student: student.id, subject: subj });
+        });
+      });
+
+      return thirds;
+    }
+
+    function renderResults(data) {
+      let classHTML = '';
+      let lineHTML = '<table><tr><th>Third</th><th>Line</th><th>Enrolled Students / Subjects</th></tr>';
+
+      for (const [third, lines] of Object.entries(data)) {
+        classHTML += `<h3>${third}</h3>`;
+        for (const [line, enrollments] of Object.entries(lines)) {
+          lineHTML += `<tr><td>${third}</td><td>${line}</td><td>${enrollments.map(e => e.student + ' (' + e.subject + ')').join(', ')}</td></tr>`;
+          
+          classHTML += `<strong>${line}</strong><ul>`;
+          enrollments.forEach(e => {
+            classHTML += `<li>${e.student} - <span class="badge">${e.subject}</span></li>`;
+          });
+          classHTML += `</ul>`;
+        }
+      }
+
+      lineHTML += '</table>';
+      document.getElementById('classLists').innerHTML = classHTML;
+      document.getElementById('lineSchedule').innerHTML = lineHTML;
+    }
+  </script>
+</body>
+</html>
