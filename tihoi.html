@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Timetable & Cohort Line Optimiser</title>
+  <title>Schola Matrix — Timetable & Cohort Line Optimiser</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -101,7 +101,7 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
     .third-card {
       background: #f8fafc; border: 1px solid var(--border-color);
@@ -151,6 +151,7 @@
     <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Local Browser Storage</span>
   </header>
 
+  <!-- Input & Controls Section -->
   <div class="card">
     <h2>1. Cohort Data & Parameters</h2>
     <textarea id="csvInput">Joe Grigg, Tihoi 1, Ent1, Tec1, ATD1, Mus1
@@ -180,23 +181,24 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     </div>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Total Pre-Sort Demand</button>
-      <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Sorting & Third Allocation</button>
+      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Demand by Third (Pre-Sort)</button>
+      <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Sorting & Line Allocation</button>
     </div>
   </div>
 
+  <!-- Step 1 Display -->
   <div class="card" id="step1Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 1: UN-SORTED ELECTIVE DEMAND (ALL 4 CHOICES PER ON-CAMPUS STUDENT)</span>
+      <span>STEP 1: PRE-SORT ELECTIVE DEMAND CHARTS BY THIRD</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      This chart aggregates all 4 choices for every student on campus. Tihoi selections are excluded. Step 2 will separate these choices into specific Thirds and Lines.
+      Displays choice demand for on-campus students per Third (Tihoi cohorts excluded). Step 2 will split these choices into Line 1 and Line 2.
     </p>
 
-    <h3>Full-Year Subject Viability & Demand Heatmap</h3>
-    <div id="viabilityOutput"></div>
+    <div id="demandOutput" class="third-grid"></div>
   </div>
 
+  <!-- Step 2 Display -->
   <div class="card" id="step2Card" style="display:none;">
     <div class="step-header">
       <span>STEP 2: OPTIMISED CLASS LISTS & LINE SCHEDULE BY THIRD</span>
@@ -207,17 +209,28 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     </p>
     <div id="allocationOutput"></div>
   </div>
+
+  <!-- Concluding Summary Card -->
+  <div class="card" id="summaryCard" style="display:none;">
+    <div class="step-header">
+      <span>ANNUAL SUBJECT VIABILITY & OPERATIONAL SUMMARY</span>
+    </div>
+    <p style="font-size:0.88rem; color: var(--text-muted);">
+      Overview of full-year subject viability based on total cohort demand against your minimum threshold (<span id="minThresholdLabel">6</span> students).
+    </p>
+    <div id="viabilityOutput"></div>
+  </div>
 </div>
 
 <script>
   let currentSchedule = null;
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v9', this.value);
+    localStorage.setItem('schola_csv_v10', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v9');
+    const saved = localStorage.getItem('schola_csv_v10');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix();
   });
@@ -237,54 +250,99 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     });
   }
 
-  // STEP 1: PURE UN-SORTED DEMAND (All 4 choices per student)
+  // STEP 1: PRE-SORT DEMAND BY THIRD
   function generateDemandMatrix() {
     const bounds = getBounds();
+    document.getElementById('minThresholdLabel').textContent = bounds.min;
     const students = parseCSV(document.getElementById('csvInput').value);
     
-    const totalSubjectDemand = {};
-    let totalOnCampusStudents = students.length;
+    const demandPerThird = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
+    const totalYearDemand = {};
 
     students.forEach(st => {
-      // Gather all 4 choices, ignoring Tihoi
-      st.subjects.forEach(subj => {
+      const tNum = st.tihoi.replace(/\D/g, '') || "1";
+      const tihoiThird = `Third ${tNum}`;
+      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+
+      // Distribute student's 4 electives across their 2 active on-campus Thirds
+      st.subjects.forEach((subj, idx) => {
         if (subj.toLowerCase() !== "tihoi") {
-          totalSubjectDemand[subj] = (totalSubjectDemand[subj] || 0) + 1;
+          const targetThird = availThirds[idx % availThirds.length];
+          
+          if (!demandPerThird[targetThird][subj]) demandPerThird[targetThird][subj] = 0;
+          demandPerThird[targetThird][subj]++;
+
+          totalYearDemand[subj] = (totalYearDemand[subj] || 0) + 1;
         }
       });
     });
 
-    renderStep1Heatmap(totalSubjectDemand, bounds, totalOnCampusStudents);
+    renderStep1Charts(demandPerThird);
+    renderViabilitySummary(totalYearDemand, bounds);
   }
 
-  function renderStep1Heatmap(totalDemand, bounds, totalStudents) {
+  function renderStep1Charts(demand) {
+    const out = document.getElementById('demandOutput');
+    let html = '';
+
+    for (let t = 1; t <= 3; t++) {
+      const tKey = `Third ${t}`;
+      html += `<div class="third-card"><h3>${tKey}</h3>`;
+
+      const sortedSubjs = Object.keys(demand[tKey]).sort();
+      if (sortedSubjs.length === 0) {
+        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active choices allocated for on-campus students.</p>`;
+      } else {
+        const maxCount = Math.max(...Object.values(demand[tKey]), 1);
+
+        sortedSubjs.forEach(s => {
+          const count = demand[tKey][s];
+          const barPct = Math.round((count / maxCount) * 100);
+          const isEnt = s.toLowerCase().includes("ent");
+          
+          html += `
+            <div class="chart-row">
+              <div class="chart-label">
+                <span><strong>${s}</strong> ${isEnt ? '<span class="badge badge-ent">Anchored L1 & L2</span>' : ''}</span>
+                <span>${count} Choice Requests</span>
+              </div>
+              <div class="chart-bar-bg">
+                <div class="chart-bar-fill" style="width: ${barPct}%; ${isEnt ? 'background: linear-gradient(90deg, #9f7aea, #805ad5);' : ''}"></div>
+              </div>
+            </div>`;
+        });
+      }
+      html += `</div>`;
+    }
+
+    out.innerHTML = html;
+    document.getElementById('step1Card').style.display = 'block';
+  }
+
+  function renderViabilitySummary(totalDemand, bounds) {
     const out = document.getElementById('viabilityOutput');
     let html = `
-      <table class="viability-table" style="margin-bottom:20px;">
+      <table class="viability-table">
         <thead>
           <tr>
             <th>Subject</th>
-            <th>Total Choice Demand</th>
-            <th>Demand Chart</th>
-            <th>Viability Assessment</th>
+            <th>Total Year Demand</th>
+            <th>Min Threshold for 3 Thirds (${bounds.min * 3})</th>
+            <th>Operational Viability Assessment</th>
           </tr>
         </thead>
         <tbody>`;
 
-    const sortedSubjs = Object.keys(totalDemand).sort();
-    const maxCount = Math.max(...Object.values(totalDemand), 1);
     const minFor3Thirds = bounds.min * 3;
 
-    sortedSubjs.forEach(subj => {
+    Object.keys(totalDemand).sort().forEach(subj => {
       const count = totalDemand[subj];
-      const barPct = Math.round((count / maxCount) * 100);
-      const isEnt = subj.toLowerCase().includes("ent");
-
       let statusBadge = '';
-      if (isEnt) {
-        statusBadge = `<span class="badge badge-ent">Compulsory Anchor</span>`;
+      
+      if (subj.toLowerCase().includes("ent")) {
+        statusBadge = `<span class="badge badge-ent">Compulsory Universal Anchor (Operates All 3 Thirds)</span>`;
       } else if (count >= minFor3Thirds) {
-        statusBadge = `<span class="badge" style="background:var(--success-bg); color:var(--success-text);">Viable Full Year (3 Thirds)</span>`;
+        statusBadge = `<span class="badge" style="background:var(--success-bg); color:var(--success-text);">Full Year (Operates All 3 Thirds)</span>`;
       } else if (count >= bounds.min) {
         const possibleThirds = Math.floor(count / bounds.min);
         statusBadge = `<span class="badge" style="background:var(--warning-bg); color:var(--warning-text);">Partial Year (${possibleThirds} Third${possibleThirds > 1 ? 's' : ''})</span>`;
@@ -294,23 +352,19 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
 
       html += `
         <tr>
-          <td style="width:15%;"><strong>${subj}</strong></td>
-          <td style="width:15%;">${count} choices</td>
-          <td style="width:40%;">
-            <div class="chart-bar-bg">
-              <div class="chart-bar-fill" style="width: ${barPct}%; ${isEnt ? 'background: linear-gradient(90deg, #9f7aea, #805ad5);' : ''}"></div>
-            </div>
-          </td>
-          <td style="width:30%;">${statusBadge}</td>
+          <td><strong>${subj}</strong></td>
+          <td>${count} choices</td>
+          <td>${subj.toLowerCase().includes("ent") ? 'N/A' : minFor3Thirds + ' choices'}</td>
+          <td>${statusBadge}</td>
         </tr>`;
     });
 
     html += `</tbody></table>`;
     out.innerHTML = html;
-    document.getElementById('step1Card').style.display = 'block';
+    document.getElementById('summaryCard').style.display = 'block';
   }
 
-  // STEP 2: LOCAL NEIGHBOURHOOD SEARCH & LINE ALLOCATION
+  // STEP 2: LINE ALLOCATION & SORTING
   function executeLineSorting() {
     const bounds = getBounds();
     const students = parseCSV(document.getElementById('csvInput').value);
@@ -416,7 +470,7 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
 
         html += `</div>`;
       }
-      html += `</div></div>`;
+      html += `</div> destruction</div>`;
     }
 
     out.innerHTML = html;
