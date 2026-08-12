@@ -1,264 +1,524 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RE Web Portfolio</title>
-<style>
-:root {
---primary: #2c3e50;
---bg: #f0f2f5;
---card-bg: #ffffff;
---text-sub: #7f8c8d;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schola Matrix — Interactive Line & Capacity Planner</title>
+  <style>
+    :root {
+      --bg-main: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #2b6cb0;
+      --primary-dark: #2c5282;
+      --accent: #ed8936;
+      --text-main: #2d3748;
+      --text-muted: #718096;
+      --border-color: #e2e8f0;
+      --success-bg: #c6f6d5;
+      --success-text: #22543d;
+      --warning-bg: #feebc8;
+      --warning-text: #744210;
+      --danger-bg: #fed7d7;
+      --danger-text: #9b2c2c;
+      --radius: 12px;
+      --shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
 
-body {
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-background-color: var(--bg);
-color: var(--primary);
-margin: 0;
-padding: 0;
-display: flex;
-flex-direction: column;
-align-items: center;
-min-height: 100vh;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      margin: 0;
+      padding: 30px;
+      line-height: 1.6;
+    }
 
-header {
-background: var(--primary);
-color: white;
-width: 100%;
-padding: 50px 20px;
-text-align: center;
-box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
+    .container { max-width: 1200px; margin: 0 auto; }
 
-h1 { margin: 0; font-size: 2.8rem; letter-spacing: -1px; }
-p.role { margin-top: 10px; font-weight: 300; opacity: 0.9; font-size: 1.1rem; letter-spacing: 1px; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px dashed var(--border-color);
+    }
 
-.container {
-max-width: 1100px;
-width: 100%;
-padding: 60px 20px;
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-gap: 40px;
-justify-content: center;
-}
+    h1 { font-size: 1.8rem; color: #1a202c; margin: 0; display: flex; align-items: center; gap: 10px; }
+    .sparkle { color: var(--accent); font-size: 1.4rem; }
+    .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
 
-.tool-card {
-background: var(--card-bg);
-border-radius: 16px;
-overflow: hidden;
-box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-transition: transform 0.2s ease, box-shadow 0.2s ease;
-text-decoration: none;
-color: inherit;
-display: flex;
-flex-direction: column;
-border: 1px solid rgba(0,0,0,0.05);
-}
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 25px;
+    }
 
-.tool-card:hover {
-transform: translateY(-8px);
-box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-}
+    .card h2 { margin-top: 0; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
 
-.card-hero {
-height: 120px;
-width: 100%;
-display: flex;
-align-items: center;
-justify-content: center;
-}
+    textarea {
+      width: 100%; height: 160px; box-sizing: border-box;
+      border: 1px solid var(--border-color); border-radius: 8px;
+      padding: 12px; font-family: monospace; font-size: 0.85rem;
+      background: #faf5ff; color: #4a5568; resize: vertical;
+    }
 
-.icon-hero {
-font-size: 3rem; color: white; font-weight: bold;
-text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
 
-.card-body { padding: 35px; flex-grow: 1; display: flex; flex-direction: column; }
+    .config-item { display: flex; flex-direction: column; gap: 4px; }
+    .config-item label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .config-item input { padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; }
 
-h2 { margin: 0 0 15px 0; font-size: 1.8rem; color: var(--primary); }
-p.desc { color: var(--text-sub); line-height: 1.6; margin-bottom: 25px; flex-grow: 1; }
+    .btn-group { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
 
-.btn-launch {
-display: block;
-width: 100%;
-padding: 12px;
-text-align: center;
-background: #ecf0f1;
-color: var(--primary);
-border-radius: 8px;
-font-weight: bold;
-transition: background 0.2s;
-}
+    button {
+      border: none; padding: 10px 20px; border-radius: 8px;
+      font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+    }
 
-.tool-card:hover .btn-launch { background: var(--primary); color: white; }
+    .btn-step1 { background: #319795; color: white; box-shadow: 0 2px 8px rgba(49, 151, 149, 0.3); }
+    .btn-step1:hover { background: #2c7a7b; }
+    .btn-step2 { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3); }
+    .btn-step2:hover { background: #2c5282; }
+    .btn-export { background: #38a169; color: white; box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3); }
+    .btn-export:hover { background: #2f855a; }
 
-footer {
-margin-top: auto;
-padding: 30px;
-color: var(--text-sub);
-font-size: 0.9rem;
-text-align: center;
-}
+    .step-header {
+      background: #edf2f7; padding: 8px 14px; border-radius: 6px;
+      font-weight: 700; font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
 
-</style>
+    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+
+    .line-box {
+      background: white; border: 1px solid #e2e8f0; border-radius: 6px;
+      padding: 12px; margin-bottom: 12px;
+    }
+
+    .line-box h4 { margin: 0 0 8px 0; font-size: 0.9rem; color: #4a5568; }
+
+    .student-tag {
+      display: inline-block; background: #edf2f7; border: 1px solid #cbd5e0;
+      padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 0.8rem;
+    }
+
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
+
+    .metric-pill { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; float: right; font-weight: 600; }
+    .metric-good { background: var(--success-bg); color: var(--success-text); }
+    .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
+    .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
+
+    table.lock-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
+    table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
+    table.lock-table th { background: #edf2f7; color: #2d3748; }
+    
+    .toggle-btn {
+      padding: 5px 10px; margin-right: 4px; border-radius: 6px; border: 1px solid #cbd5e0;
+      background: #edf2f7; color: #4a5568; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
+    .toggle-btn.advised { border: 2px solid var(--accent); }
+
+    .projection-pill { display: inline-block; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; }
+    .proj-balanced { background: var(--success-bg); color: var(--success-text); }
+    .proj-spillover { background: var(--danger-bg); color: var(--danger-text); }
+    .proj-overcap { background: var(--warning-bg); color: var(--warning-text); }
+  </style>
 </head>
 <body>
 
-<header>
-<h1>RE Web Portfolio</h1>
-<p class="role">JUST HAVING FUN</p>
-</header>
-
 <div class="container">
+  <header>
+    <div>
+      <h1><span class="sparkle">✦</span> Schola Matrix</h1>
+      <div class="subtitle">Interactive 2-Line Capacity Planner & Cohort Optimiser</div>
+    </div>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict 2-Line Cap Active</span>
+  </header>
 
-<a href="pdf-reader.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #005a9c, #1f2937, #2563eb);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(0, 90, 156, 0.6); color: #fff;">&#x1F50D;</div> 
-    </div>
-    <div class="card-body">
-        <h2>Pdf Mark-up Reader</h2>
-        <p class="desc">Client-side PDF reader, OCR engine, and annotation tool. Features global page offsets, spatial text normalization, persistent storage, and CSV exports.</p>
-        <span class="btn-launch">Launch Reader &rarr;</span>
-    </div>
-</a>
+  <!-- Input Section -->
+  <div class="card">
+    <h2>1. Cohort Data & Class Bounds</h2>
+    <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+      Format: <code>First Name, Last Name, Off-Campus Rotation Term (1-3), Subject 1, Subject 2, Subject 3, Subject 4</code>
+    </p>
+    <textarea id="csvInput">Alex, Smith, 1, 10ART1, 10SCI1, 10MAT1, 10HIS1
+Jordan, Taylor, 2, 10ART1, 10TEC1, 10MUS1, 10HIS1
+Morgan, Lee, 3, 10SCI1, 10MAT1, 10TEC1, 10MUS1
+Sam, Patel, 1, 10ART1, 10TEC1, 10HIS1, 10DRA1
+Chris, Wong, 2, 10MAT1, 10SCI1, 10ART1, 10DRA1
+Taylor, Brown, 3, 10TEC1, 10HIS1, 10MUS1, 10ART1
+Casey, Davis, 1, 10SCI1, 10MAT1, 10DRA1, 10MUS1
+Riley, Wilson, 2, 10ART1, 10HIS1, 10TEC1, 10SCI1
+Jamie, Miller, 3, 10MAT1, 10TEC1, 10DRA1, 10ART1
+Avery, Clark, 1, 10SCI1, 10HIS1, 10MUS1, 10DRA1
+Quinn, Adams, 2, 10ART1, 10MAT1, 10TEC1, 10HIS1
+Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
-<a href="pom.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #e67e22, #d35400, #fbcf33);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(230, 126, 34, 0.6); color: #fff;">&#x1F345;</div> 
+    <div class="config-grid">
+      <div class="config-item">
+        <label for="minInput">Min Class Size</label>
+        <input type="number" id="minInput" value="9" min="1">
+      </div>
+      <div class="config-item">
+        <label for="optInput">Optimal Target</label>
+        <input type="number" id="optInput" value="16" min="1">
+      </div>
+      <div class="config-item">
+        <label for="maxInput">Max Class Size</label>
+        <input type="number" id="maxInput" value="20" min="1">
+      </div>
     </div>
-    <div class="card-body">
-        <h2>POM Focus Engine</h2>
-        <p class="desc">Systems-based productivity timer. Manage cognitive load with warm-ups, 'comma' wrap-ups, and active recovery.</p>
-        <span class="btn-launch">Launch Engine &rarr;</span>
-    </div>
-</a>
 
-<a href="turner.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #5D4037, #8D6E63, #A1887F);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(93, 64, 55, 0.6); color: #fff;">&#x1F4D6;</div> 
+    <div class="btn-group">
+      <button class="btn-step1" onclick="generatePreSortLockTable()">Step 1: Parse Data & Analyse Optimal Thirds</button>
     </div>
-    <div class="card-body">
-        <h2>Reader Pacer</h2>
-        <p class="desc">Optimise reading stamina by partitioning time into dedicated 'Read' and 'Reflect' phases.</p>
-        <span class="btn-launch">Launch Tool &rarr;</span>
-    </div>
-</a>    
+  </div>
 
-    <a href="group-picker.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #2E1A47, #4A2E76, #5B3A8C);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(46, 26, 71, 0.6); color: #fff;">&#x1F465;</div> 
+  <!-- Pre-Sort Lock Section -->
+  <div class="card" id="lockCard" style="display:none;">
+    <div class="step-header">
+      <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
-    <div class="card-body">
-        <h2>Group Picker</h2>
-        <p class="desc">Does what it says</p>
-        <span class="btn-launch">Launch Tool &rarr;</span>
-    </div>
-</a>
+    <p style="font-size:0.88rem; color: var(--text-muted);">
+      Click term buttons to manually lock section placement. AI-advised terms carry an orange border (<span style="color:var(--accent); font-weight:bold;">T1</span>). Review real-time unserved spillover projections.
+    </p>
 
-<a href="linknotes.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #4b3875, #6c5ce7, #a55eea);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(108, 92, 231, 0.6); color: #fff;">&#x2047;</div> 
+    <div id="lockTableContainer"></div>
+
+    <div class="btn-group" style="margin-top:20px;">
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation Across Max 2 Full Lines</button>
     </div>
-    <div class="card-body">
-        <h2>LinkNotes Categoriser</h2>
-        <p class="desc">Multi-tiered spatial sorting engine. Visualise data strings as floating nodes, map primary and subcategory variables, and inspect qualitative quotes inline.</p>
-        <span class="btn-launch">Launch Canvas &rarr;</span>
+  </div>
+
+  <!-- Step 2 Schedule Output -->
+  <div class="card" id="step2Card" style="display:none;">
+    <div class="step-header">
+      <span>STEP 2: FINAL OPTIMISED 2-LINE SCHEDULE</span>
+      <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
     </div>
-</a>
+    <div id="allocationOutput"></div>
+  </div>
+</div>
+
+<script>
+  let currentSchedule = null;
+  let parsedStudentCache = [];
+  let subjectDemandSummary = {};
+  let manualLocks = {}; // Tracks user click toggles per subject { "10ART1": ["Third 1", "Third 2"] }
+
+  document.getElementById('csvInput').addEventListener('input', function() {
+    localStorage.setItem('schola_csv_pseudo_v3', this.value);
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('schola_csv_pseudo_v3');
+    if (saved) document.getElementById('csvInput').value = saved;
+    generatePreSortLockTable();
+  });
+
+  function getBounds() {
+    return {
+      min: parseInt(document.getElementById('minInput').value) || 9,
+      opt: parseInt(document.getElementById('optInput').value) || 16,
+      max: parseInt(document.getElementById('maxInput').value) || 20
+    };
+  }
+
+  function parseCSV(text) {
+    if (!text) return [];
+    let cleanText = text.replace(/#(?:VALUE!|N\/A|REF!|NAME\?)/gi, ' ');
+    const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    const parsedStudents = [];
+
+    lines.forEach(line => {
+      const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
+      if (parts.length >= 3) {
+        const studentName = `${parts[0]} ${parts[1]}`.replace(/[0-9]/g, '').trim();
+        const tihoiTerm = parts[2].replace(/\D/g, '') || "1";
+        const subjects = parts.slice(3).map(s => s.toUpperCase()).filter(s => s.length > 0);
+        if (studentName) parsedStudents.push({ id: studentName, tihoi: tihoiTerm, subjects: subjects });
+      }
+    });
+
+    return parsedStudents;
+  }
+
+  function extractTihoiTerm(tihoiVal) {
+    if (!tihoiVal) return "1";
+    const cleaned = tihoiVal.toString().replace(/\D/g, '');
+    return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
+  }
+
+  // STEP 1: PRE-SORT ANALYSIS & INTERACTIVE LOCK MATRIX
+  function generatePreSortLockTable() {
+    parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
+    const bounds = getBounds();
+    subjectDemandSummary = {};
+    manualLocks = {};
+
+    parsedStudentCache.forEach(st => {
+      const tNum = extractTihoiTerm(st.tihoi);
+      const tihoiThird = `Third ${tNum}`;
+      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+
+      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+
+      validChoices.forEach(subj => {
+        if (!subjectDemandSummary[subj]) {
+          subjectDemandSummary[subj] = { total: 0, "Third 1": 0, "Third 2": 0, "Third 3": 0 };
+        }
+        subjectDemandSummary[subj].total++;
+        availThirds.forEach(t => subjectDemandSummary[subj][t]++);
+      });
+    });
+
+    // Initialise manual locks based on AI advice
+    Object.keys(subjectDemandSummary).forEach(subj => {
+      const data = subjectDemandSummary[subj];
+      const suggestedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
+      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+      manualLocks[subj] = rankedThirds.slice(0, suggestedCount);
+    });
+
+    renderLockTable(bounds);
+  }
+
+  function renderLockTable(bounds) {
+    const container = document.getElementById('lockTableContainer');
+    let html = `
+      <table class="lock-table">
+        <thead>
+          <tr>
+            <th>Subject Code</th>
+            <th>Total Demand</th>
+            <th>Term Availability (T1 / T2 / T3)</th>
+            <th>Manual Click Lock</th>
+            <th>Dynamic Capacity Projection</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    const sortedSubjects = Object.keys(subjectDemandSummary).sort();
+
+    sortedSubjects.forEach(subj => {
+      const data = subjectDemandSummary[subj];
+      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+      const advisedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
+      const advisedThirds = rankedThirds.slice(0, advisedCount);
+
+      html += `
+        <tr>
+          <td><strong>${subj}</strong></td>
+          <td>${data.total} choices</td>
+          <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
+          <td>
+            <button id="btn_${subj}_T1" class="toggle-btn ${advisedThirds.includes('Third 1') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 1')">T1</button>
+            <button id="btn_${subj}_T2" class="toggle-btn ${advisedThirds.includes('Third 2') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 2')">T2</button>
+            <button id="btn_${subj}_T3" class="toggle-btn ${advisedThirds.includes('Third 3') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 3')">T3</button>
+          </td>
+          <td id="projection_${subj}"></td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    document.getElementById('lockCard').style.display = 'block';
+
+    // Update active button UI states and projection figures
+    sortedSubjects.forEach(subj => updateRowUI(subj, bounds));
+  }
+
+  function toggleTermLock(subj, term) {
+    const bounds = getBounds();
+    if (!manualLocks[subj]) manualLocks[subj] = [];
+
+    const index = manualLocks[subj].indexOf(term);
+    if (index > -1) {
+      manualLocks[subj].splice(index, 1); // Remove term
+    } else {
+      manualLocks[subj].push(term); // Add term
+    }
+
+    updateRowUI(subj, bounds);
+  }
+
+  function updateRowUI(subj, bounds) {
+    const activeTerms = manualLocks[subj] || [];
     
-<a href="sprint-reporter.html" class="tool-card">
-    <div class="card-hero" style="background: linear-gradient(135deg, #2980b9, #3498db, #1abc9c);">
-        <div class="icon-hero" style="text-shadow: 0 0 15px rgba(52, 152, 219, 0.6); color: #fff;">&#x1F3C3;</div> 
-    </div>
-    <div class="card-body">
-        <h2>Report Sprint</h2>
-        <p class="desc">High-velocity batch reporting engine. Cycle through sections to capture sections and progress rhythmically through timed sprints. Customisable sections.</p>
-        <span class="btn-launch">Launch Sprint &rarr;</span>
-    </div>
-</a>
+    // Update button visual states
+    ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
+      const termCode = `T${idx + 1}`;
+      const btn = document.getElementById(`btn_${subj}_${termCode}`);
+      if (btn) {
+        if (activeTerms.includes(term)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+    });
 
-<a href="diamond-match.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #1a1a2e, #ffffff);">
-<div class="icon-hero" style="text-shadow: 0 0 10px rgba(52, 152, 219, 0.5); color: #3498db;">&#x25C7;</div> 
-</div>
-<div class="card-body">
-<h2>Diamond Match</h2>
-<p class="desc">Interactive arena to pair stressors with strengths. Watch the darkness lift as Hauora balance is restored.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
-    
-<a href="hauora.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2980b9);">
-<div class="icon-hero">&#x25B2;</div> 
-</div>
-<div class="card-body">
-<h2>Te Whare Tapa Whā</h2>
-<p class="desc">Interactive wellbeing projection. Map the four walls of Hauora.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    // Update Dynamic Leftover Projection
+    const data = subjectDemandSummary[subj];
+    const projCell = document.getElementById(`projection_${subj}`);
+    const offeredCapacity = activeTerms.length * bounds.opt;
+    const maxCapacity = activeTerms.length * bounds.max;
+    const netSpillover = data.total - offeredCapacity;
 
-<a href="gallery.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #f1c40f, #e67e22);">
-<div class="icon-hero">&#x1F4F7;</div> </div>
-<div class="card-body">
-<h2>Gallery Labeler</h2>
-<p class="desc">Interactive masonry grid for images. Curate, reorder, and identify resources with inline naming.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    if (activeTerms.length === 0) {
+      projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
+    } else if (netSpillover > 0) {
+      if (data.total <= maxCapacity) {
+        projCell.innerHTML = `<span class="projection-pill proj-overcap">Absorbed via Larger Classes (${data.total}/${maxCapacity} Max)</span>`;
+      } else {
+        projCell.innerHTML = `<span class="projection-pill proj-spillover">${netSpillover} Unserved Choices</span>`;
+      }
+    } else {
+      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${offeredCapacity} Opt)</span>`;
+    }
+  }
 
-<a href="game.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #8e44ad, #9b59b6);">
-<div class="icon-hero">Aa</div>
-</div>
-<div class="card-body">
-<h2>Knowledge Cipher</h2>
-<p class="desc">A team-based vocabulary engine using seeded cryptography. Features 'Spymaster' mode for synchronous classroom play.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+  // STEP 2: EXECUTE SORTING CONSTRAINED TO MAX 2 LINES
+  function executeLockedLineSorting() {
+    const bounds = getBounds();
+    const students = parsedStudentCache;
 
-<a href="hex.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #d35400, #e67e22);">
-<div class="icon-hero">&#x2B22;</div> </div>
-<div class="card-body">
-<h2>Systemic Pathfinder</h2>
-<p class="desc">Hexagonal competitive recall engine. Strategic territory capture via definition retrieval (Blockbusters logic).</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    // Filter active subjects that have at least one term locked
+    const activeSubjects = Object.keys(manualLocks).filter(s => manualLocks[s].length > 0).sort();
 
-<a href="tracker.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
-<div class="icon-hero">+</div> </div>
-<div class="card-body">
-<h2>Point Tracker</h2>
-<p class="desc">Individual scoring system. Keep track of student points, house merits, or participation metrics.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    // Map subjects strictly across Line 1 and Line 2 (Maximum 2 Lines)
+    const fixedLine = {};
+    activeSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
 
-<a href="higmal.html" class="tool-card">
-<div class="card-hero" style="background: linear-gradient(135deg, #2980b9, #f39c12);">
-<div class="icon-hero">&#x25A6;</div> </div>
-<div class="card-body">
-<h2>HiGMaL</h2>
-<p class="desc">Strategic Cost-Benefit Analysis and Prioritisation Tool.</p>
-<span class="btn-launch">Launch Engine &rarr;</span>
-</div>
-</a>
+    const schedule = {
+      "Third 1": { "Line 1": {}, "Line 2": {} },
+      "Third 2": { "Line 1": {}, "Line 2": {} },
+      "Third 3": { "Line 1": {}, "Line 2": {} }
+    };
 
-</div>
+    students.forEach(st => {
+      const tNum = extractTihoiTerm(st.tihoi);
+      const tihoiThird = `Third ${tNum}`;
+      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-<footer>
-System State: LIVE | Focus: Student Engagement
-</footer>
+      const termLoad = {};
+      availThirds.forEach(t => termLoad[t] = 0);
+
+      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+
+      validChoices.forEach(subj => {
+        const permittedThirds = manualLocks[subj] || [];
+        if (permittedThirds.length === 0) return; // Subject not offered
+
+        let candidateThirds = availThirds.filter(t => permittedThirds.includes(t));
+        if (candidateThirds.length === 0) return; // Clashes with off-campus rotation
+
+        // Route student to candidate Third with lowest current load
+        candidateThirds.sort((a, b) => termLoad[a] - termLoad[b]);
+        const chosenThird = candidateThirds[0];
+        termLoad[chosenThird]++;
+
+        const line = fixedLine[subj] || "Line 1";
+        if (!schedule[chosenThird][line][subj]) schedule[chosenThird][line][subj] = [];
+        schedule[chosenThird][line][subj].push(st.id);
+      });
+    });
+
+    currentSchedule = schedule;
+    renderStep2(schedule, bounds);
+  }
+
+  function renderStep2(schedule, bounds) {
+    const out = document.getElementById('allocationOutput');
+    let html = '';
+
+    for (const [thirdName, lines] of Object.entries(schedule)) {
+      html += `<div style="margin-bottom:20px;">`;
+      html += `<h3 style="color:#2b6cb0; border-bottom:1px solid #cbd5e0; padding-bottom:4px; margin-bottom:10px;">${thirdName}</h3>`;
+      html += `<div class="third-grid">`;
+
+      // Enforce strict display of Line 1 and Line 2 only
+      ["Line 1", "Line 2"].forEach(lineName => {
+        const classes = lines[lineName] || {};
+        html += `<div class="line-box">`;
+        html += `<h4>${lineName}</h4>`;
+
+        const activeClasses = Object.keys(classes).filter(k => classes[k].length > 0);
+        if (activeClasses.length === 0) {
+          html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active classes assigned to this line.</p>`;
+        } else {
+          for (const subj of activeClasses) {
+            const roster = classes[subj];
+            let count = roster.length;
+            let metricClass = "metric-good";
+            let statusText = `${count} Enrolled`;
+
+            if (count < bounds.min && count > 0) {
+              metricClass = "metric-danger";
+              statusText = `${count} (Below Min ${bounds.min})`;
+            } else if (count > bounds.max) {
+              metricClass = "metric-warn";
+              statusText = `${count} (Exceeds Max ${bounds.max})`;
+            }
+
+            html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
+            html += `<div><span class="badge">${subj}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
+            html += `<div style="margin-top:4px;">`;
+            roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
+            html += `</div></div>`;
+          }
+        }
+
+        html += `</div>`;
+      });
+
+      html += `</div></div>`;
+    }
+
+    out.innerHTML = html;
+    document.getElementById('step2Card').style.display = 'block';
+  }
+
+  function exportToCSV() {
+    if (!currentSchedule) return;
+    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject,Student Full Name\n";
+
+    for (const [thirdName, lines] of Object.entries(currentSchedule)) {
+      for (const [lineName, classes] of Object.entries(lines)) {
+        for (const [subj, roster] of Object.entries(classes)) {
+          if (roster.length > 0) {
+            roster.forEach(studentId => {
+              csvContent += `"${thirdName}","${lineName}","${subj}","${studentId}"\n`;
+            });
+          }
+        }
+      }
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Schola_Matrix_2Line_Rosters.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
 
 </body>
 </html>
