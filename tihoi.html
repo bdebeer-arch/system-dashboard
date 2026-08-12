@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Balanced Line & Cohort Planner</title>
+  <title>Schola Matrix — Equalised Line & Capacity Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -148,8 +148,10 @@
     table.unserved-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
     table.unserved-table th, table.unserved-table td { padding: 6px 10px; border: 1px solid var(--border-color); text-align: left; }
     table.unserved-table th { background: #fff; }
-    
-    /* Term Accounting Summary Table */
+    .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
+    .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
+
     table.accounting-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.88rem; }
     table.accounting-table th, table.accounting-table td { padding: 10px 14px; border: 1px solid var(--border-color); text-align: center; }
     table.accounting-table th { background: #edf2f7; color: var(--primary-dark); font-weight: 700; }
@@ -170,9 +172,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Planner & Line Accounting Dashboard</div>
+      <div class="subtitle">Equalised Line & Term-Isolated Demand Planner</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Balanced Line Accounting Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Equalised Line Balancing Active</span>
   </header>
 
   <!-- Input Section -->
@@ -209,7 +211,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       </div>
       <div class="config-item">
         <label for="lineTrialsInput">Line-Trial Permutations</label>
-        <input type="number" id="lineTrialsInput" value="15" min="1" max="100">
+        <input type="number" id="lineTrialsInput" value="20" min="1" max="100">
       </div>
       <div class="config-item">
         <label for="rlnsCyclesInput">RLNS Cycles / Trial</label>
@@ -228,7 +230,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 generates a complete accounting breakdown of active students and placements across Line 1 and Line 2 for each Third.
+      Lock section counts. High-demand subjects like <code>10ENT1</code> automatically calculate term-specific section needs ($\lceil \text{Demand}_t / 16 \rceil$) to ensure 4 sections per Third where required.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -241,14 +243,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   <!-- Telemetry Progress Card -->
   <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong style="color:var(--primary);">Dynamic Line-Trial Search & RLNS Solver in Progress...</strong>
-      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Line Trial 0 / 15</span>
+      <strong style="color:var(--primary);">Dynamic Line-Equalised Solver in Progress...</strong>
+      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Trial 0 / 20</span>
     </div>
     <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
       <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
     </div>
     <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
-      Testing Line Bipartition 1 | Best Placed: 0
+      Equalising Line 1 vs Line 2 Enrolment Density...
     </div>
   </div>
 
@@ -291,14 +293,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
   let manualLocks = {};
-  let coOccurrenceMatrix = {};
+  let perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v16', this.value);
+    localStorage.setItem('schola_csv_pseudo_v18', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v16');
+    const saved = localStorage.getItem('schola_csv_pseudo_v18');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -318,7 +320,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       min: parseInt(document.getElementById('minInput').value) || 9,
       opt: parseInt(document.getElementById('optInput').value) || 16,
       max: parseInt(document.getElementById('maxInput').value) || 20,
-      lineTrials: parseInt(document.getElementById('lineTrialsInput').value) || 15,
+      lineTrials: parseInt(document.getElementById('lineTrialsInput').value) || 20,
       rlnsCycles: parseInt(document.getElementById('rlnsCyclesInput').value) || 30
     };
   }
@@ -348,12 +350,40 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
   }
 
+  function buildPerThirdClashMatrices(students) {
+    perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
+
+    students.forEach(st => {
+      const tNum = extractTihoiTerm(st.tihoi);
+      const offCampusThird = `Third ${tNum}`;
+      const activeThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== offCampusThird);
+
+      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+
+      activeThirds.forEach(third => {
+        const matrix = perThirdClashMatrices[third];
+        for (let i = 0; i < validChoices.length; i++) {
+          for (let j = i + 1; j < validChoices.length; j++) {
+            const s1 = validChoices[i];
+            const s2 = validChoices[j];
+            matrix[s1] = matrix[s1] || {};
+            matrix[s2] = matrix[s2] || {};
+            matrix[s1][s2] = (matrix[s1][s2] || 0) + 1;
+            matrix[s2][s1] = (matrix[s2][s1] || 0) + 1;
+          }
+        }
+      });
+    });
+  }
+
+  // REFACTORED PRE-SORT LOCK CALCULATOR: Evaluates Third-specific demand directly
   function generatePreSortLockTable() {
     parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
     const bounds = getBounds();
     subjectDemandSummary = {};
     manualLocks = {};
-    coOccurrenceMatrix = {};
+
+    buildPerThirdClashMatrices(parsedStudentCache);
 
     parsedStudentCache.forEach(st => {
       const tNum = extractTihoiTerm(st.tihoi);
@@ -361,17 +391,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
-
-      for (let i = 0; i < validChoices.length; i++) {
-        for (let j = i + 1; j < validChoices.length; j++) {
-          const s1 = validChoices[i];
-          const s2 = validChoices[j];
-          coOccurrenceMatrix[s1] = coOccurrenceMatrix[s1] || {};
-          coOccurrenceMatrix[s2] = coOccurrenceMatrix[s2] || {};
-          coOccurrenceMatrix[s1][s2] = (coOccurrenceMatrix[s1][s2] || 0) + 1;
-          coOccurrenceMatrix[s2][s1] = (coOccurrenceMatrix[s2][s1] || 0) + 1;
-        }
-      }
 
       validChoices.forEach(subj => {
         if (!subjectDemandSummary[subj]) {
@@ -382,24 +401,16 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
+    // Auto-calculate exact required sections per Third (e.g. 10ENT1 with 60 choices -> 4 sections in Third)
     Object.keys(subjectDemandSummary).forEach(subj => {
       const data = subjectDemandSummary[subj];
-      const totalAdvisedSections = Math.min(3 * MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(data.total / bounds.opt)));
-      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-
       manualLocks[subj] = { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
 
-      let remaining = totalAdvisedSections;
-      for (let pass = 1; pass <= MAX_CONCURRENT_SECTIONS && remaining > 0; pass++) {
-        for (const t of rankedThirds) {
-          if (remaining > 0 && manualLocks[subj][t] < pass) {
-            if (pass === 1 || data[t] > bounds.opt * (pass - 1)) {
-              manualLocks[subj][t]++;
-              remaining--;
-            }
-          }
-        }
-      }
+      ["Third 1", "Third 2", "Third 3"].forEach(third => {
+        const termDemand = data[third] || 0;
+        const requiredSections = Math.min(MAX_CONCURRENT_SECTIONS, Math.max(0, Math.ceil(termDemand / bounds.opt)));
+        manualLocks[subj][third] = requiredSections;
+      });
     });
 
     renderLockTable(bounds);
@@ -523,43 +534,68 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function slotKey(third, line) { return `${third}|${line}`; }
 
-  function generateCandidateLineTrial(activeSubjects, trialIndex) {
-    const primaryLine = {};
+  function optimizeLineBipartitionPerThird(thirdName, trialIndex) {
+    const matrix = perThirdClashMatrices[thirdName] || {};
+    const runningSubjects = Object.keys(manualLocks).filter(s => (manualLocks[s]?.[thirdName] || 0) > 0);
+    const lineAssignment = {};
+
+    if (runningSubjects.length === 0) return lineAssignment;
 
     if (trialIndex === 0) {
-      const unassigned = activeSubjects.slice().sort((a, b) => subjectDemandSummary[b].total - subjectDemandSummary[a].total);
+      const sorted = runningSubjects.slice().sort((a, b) => (subjectDemandSummary[b]?.[thirdName] || 0) - (subjectDemandSummary[a]?.[thirdName] || 0));
       const line1 = [];
       const line2 = [];
+      let l1Demand = 0;
+      let l2Demand = 0;
 
-      unassigned.forEach(subj => {
-        let conflict1 = 0;
-        let conflict2 = 0;
+      sorted.forEach(subj => {
+        const demand = (subjectDemandSummary[subj]?.[thirdName] || 0);
+        let clash1 = 0;
+        let clash2 = 0;
 
-        line1.forEach(s => conflict1 += (coOccurrenceMatrix[subj]?.[s] || 0));
-        line2.forEach(s => conflict2 += (coOccurrenceMatrix[subj]?.[s] || 0));
+        line1.forEach(s => clash1 += (matrix[subj]?.[s] || 0));
+        line2.forEach(s => clash2 += (matrix[subj]?.[s] || 0));
 
-        if (conflict1 <= conflict2) {
+        const score1 = clash1 * 10 + Math.abs((l1Demand + demand) - l2Demand);
+        const score2 = clash2 * 10 + Math.abs(l1Demand - (l2Demand + demand));
+
+        if (score1 <= score2) {
           line1.push(subj);
-          primaryLine[subj] = "Line 1";
+          lineAssignment[subj] = "Line 1";
+          l1Demand += demand;
         } else {
           line2.push(subj);
-          primaryLine[subj] = "Line 2";
+          lineAssignment[subj] = "Line 2";
+          l2Demand += demand;
         }
       });
     } else {
-      activeSubjects.forEach(subj => {
-        primaryLine[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
+      runningSubjects.forEach(subj => {
+        lineAssignment[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
       });
     }
 
-    return primaryLine;
+    return lineAssignment;
   }
 
-  function getSubjectLinesForTerm(subj, third, primaryLine) {
+  function getSubjectLinesForTerm(subj, third, perThirdPrimaryLines) {
     const lockedSectionsInTerm = manualLocks[subj]?.[third] || 0;
     if (lockedSectionsInTerm <= 0) return [];
-    if (lockedSectionsInTerm === 1) return [primaryLine[subj] || "Line 1"];
+    
+    if (lockedSectionsInTerm === 1) {
+      return [perThirdPrimaryLines[third]?.[subj] || "Line 1"];
+    }
+
     return ["Line 1", "Line 2"];
+  }
+
+  function getLineEnrolmentCount(schedule, third, line) {
+    let count = 0;
+    const classes = schedule[third][line] || {};
+    Object.values(classes).forEach(sections => {
+      sections.forEach(sec => count += sec.length);
+    });
+    return count;
   }
 
   function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds, allowSoftOverflow = false) {
@@ -612,7 +648,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
-  function attemptAllocation(studentOrder, primaryLine, bounds, allowSoftOverflow = false) {
+  // REFACTORED SOLVER: Enforces real-time Line 1 vs Line 2 student count equalisation
+  function attemptAllocation(studentOrder, perThirdPrimaryLines, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
       "Third 2": { "Line 1": {}, "Line 2": {} },
@@ -638,7 +675,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const withScore = validChoices.map(subj => {
         const options = [];
         availThirds.forEach(t => {
-          const lines = getSubjectLinesForTerm(subj, t, primaryLine);
+          const lines = getSubjectLinesForTerm(subj, t, perThirdPrimaryLines);
           lines.forEach(l => {
             if (!studentSlots[st.id].has(slotKey(t, l))) {
               options.push({ third: t, line: l });
@@ -654,11 +691,18 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
           return;
         }
 
+        // Sort candidate options to equalise Line 1 vs Line 2 enrolment count in that Third
+        options.sort((a, b) => {
+          const l1Load = getLineEnrolmentCount(schedule, a.third, a.line);
+          const l2Load = getLineEnrolmentCount(schedule, b.third, b.line);
+          if (l1Load !== l2Load) return l1Load - l2Load; // Pick line with lower current student count
+          return (counts[subj][a.third] || 0) - (counts[subj][b.third] || 0);
+        });
+
         const underOpt = options.filter(o => (counts[subj][o.third] || 0) < ((manualLocks[subj][o.third] || 1) * bounds.opt));
         const underMax = options.filter(o => (counts[subj][o.third] || 0) < ((manualLocks[subj][o.third] || 1) * bounds.max));
         const pool = underOpt.length ? underOpt : (underMax.length ? underMax : options);
 
-        pool.sort((a, b) => (counts[subj][a.third] || 0) - (counts[subj][b.third] || 0));
         const chosen = pool[0];
 
         const placed = placeInSubjectThird(schedule, counts, subj, chosen.third, chosen.line, st.id, bounds, allowSoftOverflow);
@@ -675,7 +719,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function repairSwaps(result, primaryLine, bounds, maxPasses = 4) {
+  function repairSwaps(result, perThirdPrimaryLines, bounds, maxPasses = 4) {
     for (let pass = 0; pass < maxPasses; pass++) {
       let improved = false;
 
@@ -688,7 +732,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
         for (const third of availThirds) {
-          const validLines = getSubjectLinesForTerm(subj, third, primaryLine);
+          const validLines = getSubjectLinesForTerm(subj, third, perThirdPrimaryLines);
 
           for (const line of validLines) {
             if (result.studentSlots[st.id].has(slotKey(third, line))) continue;
@@ -703,7 +747,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${occTNum}`);
 
               for (const altT of occAvail) {
-                const altLines = getSubjectLinesForTerm(subj, altT, primaryLine);
+                const altLines = getSubjectLinesForTerm(subj, altT, perThirdPrimaryLines);
                 for (const altL of altLines) {
                   if (altT === third && altL === line) continue;
                   if (!result.studentSlots[occupantId].has(slotKey(altT, altL))) {
@@ -732,7 +776,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return result;
   }
 
-  function enforceSlotUniqueness(result, primaryLine, bounds) {
+  function enforceSlotUniqueness(result, perThirdPrimaryLines, bounds) {
     parsedStudentCache.forEach(st => {
       ["Third 1", "Third 2", "Third 3"].forEach(third => {
         ["Line 1", "Line 2"].forEach(line => {
@@ -758,7 +802,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             const oppKey = slotKey(third, oppLine);
             let resolved = false;
 
-            const validLines = getSubjectLinesForTerm(clash.subj, third, primaryLine);
+            const validLines = getSubjectLinesForTerm(clash.subj, third, perThirdPrimaryLines);
             if (validLines.includes(oppLine) && !result.studentSlots[st.id].has(oppKey)) {
               const placed = placeInSubjectThird(result.schedule, result.counts, clash.subj, third, oppLine, st.id, bounds, true);
               if (placed) {
@@ -773,7 +817,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               for (const altT of availThirds) {
                 for (const altL of ["Line 1", "Line 2"]) {
                   const altKey = slotKey(altT, altL);
-                  const altValidLines = getSubjectLinesForTerm(clash.subj, altT, primaryLine);
+                  const altValidLines = getSubjectLinesForTerm(clash.subj, altT, primaryLines);
                   if (altValidLines.includes(altL) && !result.studentSlots[st.id].has(altKey)) {
                     const placed = placeInSubjectThird(result.schedule, result.counts, clash.subj, altT, altL, st.id, bounds, true);
                     if (placed) {
@@ -803,9 +847,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
-    const activeSubjects = Object.keys(manualLocks).filter(s =>
-      Object.values(manualLocks[s]).some(c => c > 0)
-    ).sort();
 
     const totalChoices = students.reduce((sum, st) => sum + st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4).length, 0);
 
@@ -819,15 +860,19 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     let globalBestUnserved = Infinity;
 
     for (let trial = 0; trial < bounds.lineTrials; trial++) {
-      const candidatePrimaryLine = generateCandidateLineTrial(activeSubjects, trial);
+      const perThirdPrimaryLines = {
+        "Third 1": optimizeLineBipartitionPerThird("Third 1", trial),
+        "Third 2": optimizeLineBipartitionPerThird("Third 2", trial),
+        "Third 3": optimizeLineBipartitionPerThird("Third 3", trial)
+      };
 
       let trialBest = null;
       let trialBestUnserved = Infinity;
 
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
-        let result = attemptAllocation(order, candidatePrimaryLine, bounds, false);
-        result = repairSwaps(result, candidatePrimaryLine, bounds);
+        let result = attemptAllocation(order, perThirdPrimaryLines, bounds, false);
+        result = repairSwaps(result, perThirdPrimaryLines, bounds);
 
         if (result.unserved.length < trialBestUnserved) {
           trialBest = result;
@@ -845,7 +890,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const pct = Math.round(((trial + 1) / bounds.lineTrials) * 100);
       progressBar.style.width = `${pct}%`;
       cycleBadge.innerText = `Line Trial ${trial + 1} / ${bounds.lineTrials}`;
-      statusText.innerText = `Testing Line Bipartitions | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
+      statusText.innerText = `Equalising Line 1 vs Line 2 Enrolments | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
       await new Promise(resolve => setTimeout(resolve, 20));
 
       if (globalBestUnserved === 0) break;
@@ -855,13 +900,18 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       statusText.innerText = "Executing final Soft-Overflow repair pass...";
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      const fallbackLine = generateCandidateLineTrial(activeSubjects, 0);
-      let overflowResult = attemptAllocation(students, fallbackLine, bounds, true);
+      const fallbackLines = {
+        "Third 1": optimizeLineBipartitionPerThird("Third 1", 0),
+        "Third 2": optimizeLineBipartitionPerThird("Third 2", 0),
+        "Third 3": optimizeLineBipartitionPerThird("Third 3", 0)
+      };
+
+      let overflowResult = attemptAllocation(students, fallbackLines, bounds, true);
 
       statusText.innerText = "Optimising soft-overflow allocations...";
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      overflowResult = repairSwaps(overflowResult, fallbackLine, bounds);
+      overflowResult = repairSwaps(overflowResult, fallbackLines, bounds);
       if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
@@ -869,7 +919,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     statusText.innerText = "Verifying zero slot double-bookings...";
     await new Promise(resolve => setTimeout(resolve, 30));
-    enforceSlotUniqueness(globalBest, generateCandidateLineTrial(activeSubjects, 0), bounds);
+
+    const finalLines = {
+      "Third 1": optimizeLineBipartitionPerThird("Third 1", 0),
+      "Third 2": optimizeLineBipartitionPerThird("Third 2", 0),
+      "Third 3": optimizeLineBipartitionPerThird("Third 3", 0)
+    };
+    enforceSlotUniqueness(globalBest, finalLines, bounds);
 
     progressBar.style.width = "100%";
     cycleBadge.innerText = "Complete!";
@@ -892,7 +948,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const placedChoices = totalChoices - unserved.length;
     const coveragePct = totalChoices ? Math.round((placedChoices / totalChoices) * 100) : 100;
 
-    // Calculate per-Third active student and line accounting metrics
     const thirdAccounting = {};
     ["Third 1", "Third 2", "Third 3"].forEach(thirdName => {
       const tNum = thirdName.replace('Third ', '');
@@ -918,7 +973,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <div class="stat-chip">Unplaced Choices: <b>${unserved.length}</b></div>
     </div>`;
 
-    // Render Term Line Accounting Table
     html += `
       <table class="accounting-table">
         <thead>
@@ -1155,7 +1209,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_LineAccounting_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Equalised_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
