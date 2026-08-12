@@ -126,15 +126,14 @@
     table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
     table.lock-table th { background: #edf2f7; color: #2d3748; }
 
-    .toggle-group { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; }
+    .toggle-group { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; margin-bottom: 4px; }
     .toggle-btn {
       padding: 5px 9px; border-radius: 6px; border: 1px solid #cbd5e0;
       background: #edf2f7; color: #4a5568; font-size: 0.78rem; font-weight: 700; cursor: pointer;
     }
     .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
-    .toggle-btn.advised { border: 2px solid var(--accent); }
-    .toggle-btn.sec2 { font-size: 0.7rem; padding: 4px 7px; background: #e2e8f0; }
-    .toggle-btn.sec2.active { background: #805ad5; color: white; border-color: #553c9a; }
+    .toggle-btn.sec-extra { font-size: 0.7rem; padding: 4px 7px; background: #e2e8f0; }
+    .toggle-btn.sec-extra.active { background: #805ad5; color: white; border-color: #553c9a; }
 
     .projection-pill { display: inline-block; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; }
     .proj-balanced { background: var(--success-bg); color: var(--success-text); }
@@ -161,7 +160,7 @@
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
       <div class="subtitle">Interactive 2-Line Capacity Planner & Cohort Optimiser</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict 2-Line Cap Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Up to 4 Concurrent Sections</span>
   </header>
 
   <!-- Input Section -->
@@ -209,7 +208,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to lock class sections. Terms exceeding optimal class size reveal a secondary toggle (<span style="color:#805ad5; font-weight:bold;">+2nd</span>) to manually authorize a concurrent section on the same line.
+      Click term buttons to lock class sections. Higher-tier section toggles (<span style="color:#805ad5; font-weight:bold;">+2nd, +3rd, +4th</span>) appear dynamically only when term demand exceeds class optimal thresholds.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -230,7 +229,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 </div>
 
 <script>
-  const MAX_CONCURRENT_SECTIONS = 2; // Maximum concurrent classes of a subject in a single term
+  const MAX_CONCURRENT_SECTIONS = 4; // Maximum concurrent classes of a subject in a single term
 
   let currentSchedule = null;
   let currentUnserved = [];
@@ -239,11 +238,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let manualLocks = {}; // Tracks locked section counts per term { "10ART1": { "Third 1": 2, "Third 2": 1, "Third 3": 0 } }
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v5', this.value);
+    localStorage.setItem('schola_csv_pseudo_v6', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v5');
+    const saved = localStorage.getItem('schola_csv_pseudo_v6');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -304,7 +303,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
-    // Preset manual section locks based on AI advice
+    // Preset manual section locks based on optimal class target
     Object.keys(subjectDemandSummary).forEach(subj => {
       const data = subjectDemandSummary[subj];
       const totalAdvisedSections = Math.min(3 * MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(data.total / bounds.opt)));
@@ -316,8 +315,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       for (let pass = 1; pass <= MAX_CONCURRENT_SECTIONS && remaining > 0; pass++) {
         for (const t of rankedThirds) {
           if (remaining > 0 && manualLocks[subj][t] < pass) {
-            // Only offer second section if demand in that term exceeds bounds.opt
-            if (pass === 1 || data[t] > bounds.opt) {
+            // Only offer additional concurrent sections if demand in that term exceeds previous section bounds
+            if (pass === 1 || data[t] > bounds.opt * (pass - 1)) {
               manualLocks[subj][t]++;
               remaining--;
             }
@@ -348,8 +347,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     sortedSubjects.forEach(subj => {
       const data = subjectDemandSummary[subj];
-      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-      const advisedTotalSections = Math.min(3 * MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(data.total / bounds.opt)));
 
       html += `
         <tr>
@@ -361,14 +358,16 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
         const termCode = `T${idx + 1}`;
         const termDemand = data[term];
-        const exceedsSingleClass = termDemand > bounds.opt;
+
+        // Progressive Disclosure: calculate how many section toggles to reveal for this term (up to 4)
+        const maxLevelToShow = Math.min(MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(termDemand / bounds.opt)));
 
         html += `<div class="toggle-group">`;
         html += `<button id="btn_${subj}_${termCode}_1" class="toggle-btn" onclick="toggleSectionCount('${subj}', '${term}', 1)">${termCode}</button>`;
 
-        // Render secondary section toggle ONLY if term demand exceeds bounds.opt
-        if (exceedsSingleClass) {
-          html += `<button id="btn_${subj}_${termCode}_2" class="toggle-btn sec2" onclick="toggleSectionCount('${subj}', '${term}', 2)" title="${termCode} demand (${termDemand}) exceeds target size (${bounds.opt}). Click to toggle 2nd concurrent section.">+2nd</button>`;
+        for (let level = 2; level <= maxLevelToShow; level++) {
+          const suffix = level === 2 ? '+2nd' : (level === 3 ? '+3rd' : '+4th');
+          html += `<button id="btn_${subj}_${termCode}_${level}" class="toggle-btn sec-extra" onclick="toggleSectionCount('${subj}', '${term}', ${level})" title="${termCode} demand (${termDemand}) justifies section ${level}. Click to toggle.">${suffix}</button>`;
         }
 
         html += `</div>`;
@@ -392,12 +391,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     const currentCount = manualLocks[subj][term] || 0;
 
-    if (sectionLevel === 1) {
-      // Toggle primary section on/off
-      manualLocks[subj][term] = (currentCount >= 1) ? 0 : 1;
-    } else if (sectionLevel === 2) {
-      // Toggle secondary concurrent section on/off
-      manualLocks[subj][term] = (currentCount === 2) ? 1 : 2;
+    if (currentCount === sectionLevel) {
+      manualLocks[subj][term] = sectionLevel - 1; // Step down section count
+    } else {
+      manualLocks[subj][term] = sectionLevel; // Set directly to selected level
     }
 
     updateRowUI(subj, bounds);
@@ -414,17 +411,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const count = locks[term] || 0;
       totalLockedCapacity += count * bounds.opt;
 
-      const btn1 = document.getElementById(`btn_${subj}_${termCode}_1`);
-      const btn2 = document.getElementById(`btn_${subj}_${termCode}_2`);
-
-      if (btn1) {
-        if (count >= 1) btn1.classList.add('active');
-        else btn1.classList.remove('active');
-      }
-
-      if (btn2) {
-        if (count === 2) btn2.classList.add('active');
-        else btn2.classList.remove('active');
+      for (let level = 1; level <= MAX_CONCURRENT_SECTIONS; level++) {
+        const btn = document.getElementById(`btn_${subj}_${termCode}_${level}`);
+        if (btn) {
+          if (count >= level) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
       }
     });
 
@@ -736,7 +728,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
       html += `</tbody></table>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; margin-bottom:0;">
-          Try enabling a secondary section (+2nd) or opening an extra Term lock for affected subjects, then re-run Step 2.
+          Try enabling higher-tier section toggles (+2nd, +3rd) or opening an extra Term lock for affected subjects, then re-run Step 2.
         </p></div>`;
     }
 
