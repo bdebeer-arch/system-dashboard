@@ -185,7 +185,7 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
       <span>STEP 1: PRE-SORT ELECTIVE DEMAND (ALL ON-CAMPUS CHOICES)</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Displays the total un-sorted subject choice demand across all students while on campus (Tihoi term choices excluded). Step 2 will sort these choices across Thirds 1–3 and Lines 1–2.
+      Displays total un-sorted subject choice demand across all students while on campus (Tihoi term choices excluded). Accepts comma or tab-delimited inputs.
     </p>
 
     <div id="viabilityOutput"></div>
@@ -208,11 +208,11 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
   let currentSchedule = null;
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v11', this.value);
+    localStorage.setItem('schola_csv_v12', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v11');
+    const saved = localStorage.getItem('schola_csv_v12');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix();
   });
@@ -225,9 +225,10 @@ Isabella Jackson, Tihoi 1, Ent1, Sci1, ATD1, Mus1</textarea>
     };
   }
 
+  // DUAL-DELIMITER PARSER (Recognises Tabs '\t' and Commas ',')
   function parseCSV(text) {
     return text.trim().split('\n').filter(l => l.trim().length > 0).map(line => {
-      const parts = line.split(',').map(s => s.trim());
+      const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
       return { id: parts[0], tihoi: parts[1], subjects: parts.slice(2) };
     });
   }
