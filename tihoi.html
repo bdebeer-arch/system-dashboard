@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Interactive Line & Capacity Planner</title>
+  <title>Schola Matrix — Adaptive RLNS Capacity Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -121,6 +121,7 @@
     .metric-good { background: var(--success-bg); color: var(--success-text); }
     .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
     .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
+    .metric-overflow { background: #feebc8; color: #c05621; border: 1px solid #dd6b20; }
 
     table.lock-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
     table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
@@ -158,9 +159,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Interactive 2-Line Capacity Planner & Cohort Optimiser</div>
+      <div class="subtitle">Adaptive RLNS Capacity Planner & Soft-Overflow Manager</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Up to 4 Concurrent Sections</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Adaptive RLNS Loop Active</span>
   </header>
 
   <!-- Input Section -->
@@ -195,6 +196,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         <label for="maxInput">Max Class Size</label>
         <input type="number" id="maxInput" value="20" min="1">
       </div>
+      <div class="config-item">
+        <label for="rlnsCyclesInput">RLNS Cycles / Step</label>
+        <input type="number" id="rlnsCyclesInput" value="50" min="10" max="500">
+      </div>
     </div>
 
     <div class="btn-group">
@@ -208,20 +213,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to lock class sections. Higher-tier section toggles (<span style="color:#805ad5; font-weight:bold;">+2nd, +3rd, +4th</span>) appear dynamically only when term demand exceeds class optimal thresholds.
+      Click term buttons to lock section placement. The adaptive RLNS engine will cycle to target 100% placement, softly overflowing locked classes beyond Max Class Size if necessary.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation Across Max 2 Full Lines</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute RLNS Allocation (Targeting 100%)</button>
     </div>
   </div>
 
   <!-- Step 2 Schedule Output -->
   <div class="card" id="step2Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 2: FINAL OPTIMISED 2-LINE SCHEDULE</span>
+      <span>STEP 2: FINAL OPTIMISED SCHEDULE</span>
       <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
     </div>
     <div id="allocationOutput"></div>
@@ -229,20 +234,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 </div>
 
 <script>
-  const MAX_CONCURRENT_SECTIONS = 4; // Maximum concurrent classes of a subject in a single term
+  const MAX_CONCURRENT_SECTIONS = 4;
 
   let currentSchedule = null;
   let currentUnserved = [];
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
-  let manualLocks = {}; // Tracks locked section counts per term { "10ART1": { "Third 1": 2, "Third 2": 1, "Third 3": 0 } }
+  let manualLocks = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v6', this.value);
+    localStorage.setItem('schola_csv_pseudo_v7', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v6');
+    const saved = localStorage.getItem('schola_csv_pseudo_v7');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -251,7 +256,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return {
       min: parseInt(document.getElementById('minInput').value) || 9,
       opt: parseInt(document.getElementById('optInput').value) || 16,
-      max: parseInt(document.getElementById('maxInput').value) || 20
+      max: parseInt(document.getElementById('maxInput').value) || 20,
+      rlnsCycles: parseInt(document.getElementById('rlnsCyclesInput').value) || 50
     };
   }
 
@@ -303,7 +309,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
-    // Preset manual section locks based on optimal class target
     Object.keys(subjectDemandSummary).forEach(subj => {
       const data = subjectDemandSummary[subj];
       const totalAdvisedSections = Math.min(3 * MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(data.total / bounds.opt)));
@@ -315,7 +320,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       for (let pass = 1; pass <= MAX_CONCURRENT_SECTIONS && remaining > 0; pass++) {
         for (const t of rankedThirds) {
           if (remaining > 0 && manualLocks[subj][t] < pass) {
-            // Only offer additional concurrent sections if demand in that term exceeds previous section bounds
             if (pass === 1 || data[t] > bounds.opt * (pass - 1)) {
               manualLocks[subj][t]++;
               remaining--;
@@ -358,8 +362,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
         const termCode = `T${idx + 1}`;
         const termDemand = data[term];
-
-        // Progressive Disclosure: calculate how many section toggles to reveal for this term (up to 4)
         const maxLevelToShow = Math.min(MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(termDemand / bounds.opt)));
 
         html += `<div class="toggle-group">`;
@@ -392,9 +394,9 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const currentCount = manualLocks[subj][term] || 0;
 
     if (currentCount === sectionLevel) {
-      manualLocks[subj][term] = sectionLevel - 1; // Step down section count
+      manualLocks[subj][term] = sectionLevel - 1;
     } else {
-      manualLocks[subj][term] = sectionLevel; // Set directly to selected level
+      manualLocks[subj][term] = sectionLevel;
     }
 
     updateRowUI(subj, bounds);
@@ -426,13 +428,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     if (totalLockedCapacity === 0) {
       projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
     } else if (netSpillover > 0) {
-      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${netSpillover} choices over optimal capacity</span>`;
+      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${netSpillover} over opt (RLNS Soft-Overflow Active)</span>`;
     } else {
       projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${totalLockedCapacity} Opt)</span>`;
     }
   }
 
-  // STEP 2: ALLOCATION SOLVER ENFORCING STRICT SECTION LOCKS
+  // STEP 2: REPEATED LOCAL NEIGHBOURHOOD SEARCH (RLNS) SOLVER WITH SOFT OVERFLOW
   function shuffleArray(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -444,23 +446,28 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function slotKey(third, line) { return `${third}|${line}`; }
 
-  function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds) {
+  function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds, allowSoftOverflow = false) {
     if (!schedule[third][line][subj]) schedule[third][line][subj] = [[]];
     const sections = schedule[third][line][subj];
     const maxAllowedSections = manualLocks[subj]?.[third] || 0;
 
     if (maxAllowedSections === 0) return false;
 
+    // 1. Try to place under Optimal Target
     let target = sections.find(sec => sec.length < bounds.opt);
+    // 2. Try to place under Max Class Size
     if (!target) target = sections.find(sec => sec.length < bounds.max);
-    if (!target) {
-      if (sections.length < maxAllowedSections) {
-        target = [];
-        sections.push(target);
-      } else {
-        return false;
-      }
+    // 3. Try opening an additional locked section if available
+    if (!target && sections.length < maxAllowedSections) {
+      target = [];
+      sections.push(target);
     }
+    // 4. Soft-Overflow: If permitted, place in existing section even if > bounds.max
+    if (!target && allowSoftOverflow) {
+      target = sections[0]; // Place in primary locked section
+    }
+
+    if (!target) return false;
 
     target.push(studentId);
     counts[subj][third] = (counts[subj][third] || 0) + 1;
@@ -495,7 +502,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return fixedLine;
   }
 
-  function attemptAllocation(studentOrder, fixedLine, bounds) {
+  function attemptAllocation(studentOrder, fixedLine, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
       "Third 2": { "Line 1": {}, "Line 2": {} },
@@ -533,25 +540,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         const freeThirds = legal.filter(t => !studentSlots[st.id].has(slotKey(t, line)));
 
         if (freeThirds.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Line conflict with another elective choice' });
+          unserved.push({ id: st.id, subj, reason: 'Line conflict with another choice' });
           return;
         }
 
         const underOpt = freeThirds.filter(t => (counts[subj][t] || 0) < (manualLocks[subj][t] * bounds.opt));
         const underMax = freeThirds.filter(t => (counts[subj][t] || 0) < (manualLocks[subj][t] * bounds.max));
-        const pool = underOpt.length ? underOpt : (underMax.length ? underMax : null);
-
-        if (!pool) {
-          unserved.push({ id: st.id, subj, reason: 'Locked class sections full in active terms' });
-          return;
-        }
+        const pool = underOpt.length ? underOpt : (underMax.length ? underMax : freeThirds);
 
         pool.sort((a, b) => (counts[subj][a] || 0) - (counts[subj][b] || 0));
         const chosenThird = pool[0];
 
-        const placed = placeInSubjectThird(schedule, counts, subj, chosenThird, line, st.id, bounds);
+        const placed = placeInSubjectThird(schedule, counts, subj, chosenThird, line, st.id, bounds, allowSoftOverflow);
         if (!placed) {
-          unserved.push({ id: st.id, subj, reason: 'Locked class sections full in active terms' });
+          unserved.push({ id: st.id, subj, reason: 'Locked sections at capacity' });
           return;
         }
 
@@ -563,7 +565,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function repairSwaps(result, fixedLine, bounds, maxPasses = 4) {
+  function repairSwaps(result, fixedLine, bounds, maxPasses = 6) {
     for (let pass = 0; pass < maxPasses; pass++) {
       let improved = false;
 
@@ -592,8 +594,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== occTihoiThird);
             const altThirds = occAvail.filter(t =>
               t !== third && (locks[t] || 0) > 0 &&
-              !result.studentSlots[occupantId].has(slotKey(t, line)) &&
-              (result.counts[subj][t] || 0) < (locks[t] * bounds.max)
+              !result.studentSlots[occupantId].has(slotKey(t, line))
             );
 
             if (altThirds.length > 0) {
@@ -602,10 +603,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
               removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
               result.studentSlots[occupantId].delete(slotKey(third, line));
-              placeInSubjectThird(result.schedule, result.counts, subj, moveTo, line, occupantId, bounds);
+              placeInSubjectThird(result.schedule, result.counts, subj, moveTo, line, occupantId, bounds, true);
               result.studentSlots[occupantId].add(slotKey(moveTo, line));
 
-              placeInSubjectThird(result.schedule, result.counts, subj, third, line, st.id, bounds);
+              placeInSubjectThird(result.schedule, result.counts, subj, third, line, st.id, bounds, true);
               result.studentSlots[st.id].add(slotKey(third, line));
               result.placements[st.id].push({ subj, third, line });
 
@@ -622,6 +623,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return result;
   }
 
+  // EXECUTE RLNS CYCLES WITH ADAPTIVE THRESHOLD DECAY
   function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -630,23 +632,42 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     ).sort();
 
     const fixedLine = assignLinesByLoad(activeSubjects);
+    const totalChoices = students.reduce((sum, st) => sum + st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4).length, 0);
 
-    const ATTEMPTS = 25;
     let best = null;
-    let bestScore = null;
+    let bestUnservedCount = Infinity;
 
-    for (let i = 0; i < ATTEMPTS; i++) {
-      const order = i === 0 ? students.slice() : shuffleArray(students);
-      const result = attemptAllocation(order, fixedLine, bounds);
-      const unservedCount = result.unserved.length;
+    // Adaptive RLNS Threshold Decay Loops (100% target yield down to 98%, then Soft-Overflow)
+    const targetYields = [1.0, 0.99, 0.98];
 
-      if (!bestScore || unservedCount < bestScore) {
-        best = result;
-        bestScore = unservedCount;
+    for (const targetYield of targetYields) {
+      const allowedUnservedThreshold = Math.floor(totalChoices * (1.0 - targetYield));
+
+      for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
+        const order = cycle === 0 ? students.slice() : shuffleArray(students);
+        let result = attemptAllocation(order, fixedLine, bounds, false);
+        result = repairSwaps(result, fixedLine, bounds);
+
+        if (result.unserved.length < bestUnservedCount) {
+          best = result;
+          bestUnservedCount = result.unserved.length;
+        }
+
+        // Break early if target yield achieved
+        if (bestUnservedCount <= allowedUnservedThreshold) break;
       }
+
+      if (bestUnservedCount <= allowedUnservedThreshold) break;
     }
 
-    best = repairSwaps(best, fixedLine, bounds);
+    // Final Soft-Overflow Pass: If choices remain unplaced due to strict max caps, force overflow into locked sections
+    if (bestUnservedCount > 0) {
+      let overflowResult = attemptAllocation(students, fixedLine, bounds, true);
+      overflowResult = repairSwaps(overflowResult, fixedLine, bounds);
+      if (overflowResult.unserved.length < bestUnservedCount) {
+        best = overflowResult;
+      }
+    }
 
     currentSchedule = best.schedule;
     currentUnserved = best.unserved;
@@ -665,8 +686,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     html += `<div class="stat-strip">
       <div class="stat-chip">Students: <b>${totalStudents}</b></div>
-      <div class="stat-chip">Choices placed: <b>${placedChoices} / ${totalChoices}</b> (${coveragePct}%)</div>
-      <div class="stat-chip">Unplaced: <b>${unserved.length}</b></div>
+      <div class="stat-chip">Choices Placed: <b>${placedChoices} / ${totalChoices}</b> (${coveragePct}%)</div>
+      <div class="stat-chip">Unplaced Choices: <b>${unserved.length}</b></div>
     </div>`;
 
     for (const [thirdName, lines] of Object.entries(schedule)) {
@@ -692,12 +713,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               let metricClass = "metric-good";
               let statusText = `${count} Enrolled`;
 
-              if (count < bounds.min) {
+              if (count > bounds.max) {
+                metricClass = "metric-overflow";
+                statusText = `${count} Enrolled (+${count - bounds.max} Overflow)`;
+              } else if (count < bounds.min) {
                 metricClass = "metric-danger";
                 statusText = `${count} (Below Min ${bounds.min})`;
-              } else if (count > bounds.max) {
-                metricClass = "metric-warn";
-                statusText = `${count} (Exceeds Max ${bounds.max})`;
               }
 
               const label = multiSection ? `${subj} — Group ${String.fromCharCode(65 + secIdx)}` : subj;
@@ -718,17 +739,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
 
     if (unserved.length === 0) {
-      html += `<div class="unserved-card clear"><h3>✓ Every subject choice was placed</h3>
-        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit within the current locks and bounds.</p></div>`;
+      html += `<div class="unserved-card clear"><h3>✓ 100% Choice Placement Achieved</h3>
+        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit within current section locks (using soft-overflow where flagged).</p></div>`;
     } else {
       html += `<div class="unserved-card"><h3>⚠ ${unserved.length} choice(s) could not be placed</h3>
         <table class="unserved-table"><thead><tr><th>Student</th><th>Subject</th><th>Reason</th></tr></thead><tbody>`;
       unserved.forEach(u => {
         html += `<tr><td>${u.id}</td><td>${u.subj}</td><td>${u.reason}</td></tr>`;
       });
-      html += `</tbody></table>
+      html += `</tbody>纠</table>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; margin-bottom:0;">
-          Try enabling higher-tier section toggles (+2nd, +3rd) or opening an extra Term lock for affected subjects, then re-run Step 2.
+          Try enabling higher-tier section toggles (+2nd, +3rd) for affected subjects, or increase RLNS cycles per step.
         </p></div>`;
     }
 
@@ -761,7 +782,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_2Line_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_RLNS_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
