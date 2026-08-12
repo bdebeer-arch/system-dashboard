@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Senior Schola Matrix — 6-Line Multi-Tab Senior Planner</title>
+  <style>
+    :root {
+      --bg-main: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #2b6cb0;
+      --primary-dark: #2c5282;
+      --accent: #ed8936;
+      --text-main: #2d3748;
+      --text-muted: #718096;
+      --border-color: #e2e8f0;
+      --success-bg: #c6f6d5;
+      --success-text: #22543d;
+      --warning-bg: #feebc8;
+      --warning-text: #744210;
+      --danger-bg: #fed7d7;
+      --danger-text: #9b2c2c;
+      --radius: 12px;
+      --shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      margin: 0;
+      padding: 30px;
+      line-height: 1.6;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px dashed var(--border-color);
+    }
+
+    h1 { font-size: 1.8rem; color: #1a202c; margin: 0; display: flex; align-items: center; gap: 10px; }
+    .sparkle { color: var(--accent); font-size: 1.4rem; }
+    .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 0; }
+    .tab-btn {
+      padding: 10px 20px; border: 1px solid var(--border-color); border-bottom: none;
+      border-top-left-radius: 8px; border-top-right-radius: 8px;
+      background: #edf2f7; color: #4a5568; font-weight: 700; cursor: pointer; transition: all 0.15s ease;
+    }
+    .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); margin-bottom: -2px; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      margin-bottom: 25px;
+    }
+
+    .card h2 { margin-top: 0; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+
+    textarea {
+      width: 100%; height: 150px; box-sizing: border-box;
+      border: 1px solid var(--border-color); border-radius: 8px;
+      padding: 12px; font-family: monospace; font-size: 0.85rem;
+      background: #faf5ff; color: #4a5568; resize: vertical;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .config-item { display: flex; flex-direction: column; gap: 4px; }
+    .config-item label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .config-item input { padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; }
+
+    .btn-group { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
+
+    button {
+      border: none; padding: 10px 20px; border-radius: 8px;
+      font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+    }
+
+    .btn-step1 { background: #319795; color: white; box-shadow: 0 2px 8px rgba(49, 151, 149, 0.3); }
+    .btn-step1:hover { background: #2c7a7b; }
+    .btn-taboo { background: #805ad5; color: white; box-shadow: 0 2px 8px rgba(128, 90, 213, 0.3); }
+    .btn-taboo:hover { background: #553c9a; }
+    .btn-step2 { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3); }
+    .btn-step2:hover { background: #2c5282; }
+    .btn-export { background: #38a169; color: white; box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3); }
+    .btn-export:hover { background: #2f855a; }
+
+    .step-header {
+      background: #edf2f7; padding: 8px 14px; border-radius: 6px;
+      font-weight: 700; font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .senior-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; }
+
+    .line-box {
+      background: white; border: 1px solid #e2e8f0; border-radius: 6px;
+      padding: 12px; margin-bottom: 12px;
+    }
+
+    .line-box h4 { margin: 0 0 8px 0; font-size: 0.9rem; color: #4a5568; border-bottom: 2px solid #cbd5e0; padding-bottom: 4px; }
+
+    .student-tag {
+      display: inline-block; background: #edf2f7; border: 1px solid #cbd5e0;
+      padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 0.78rem;
+    }
+
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
+
+    .metric-pill { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; float: right; font-weight: 600; }
+    .metric-good { background: var(--success-bg); color: var(--success-text); }
+    .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
+
+    table.taboo-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+    table.taboo-table th, table.taboo-table td { padding: 8px 10px; border: 1px solid var(--border-color); text-align: left; }
+    table.taboo-table th { background: #edf2f7; color: #2d3748; }
+
+    .phase3-card { background: #faf5ff; border: 2px solid #805ad5; }
+    .phase3-card h2 { color: #553c9a; }
+    .search-box { width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; margin-bottom: 15px; }
+    .isolation-panel { background: white; border: 1px solid #d6bcfa; border-radius: 8px; padding: 16px; margin-top: 15px; }
+    .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
+    .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
+
+    .taboo-collision { background: #fed7d7; color: #9b2c2c; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    .taboo-ok { background: #c6f6d5; color: #22543d; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1><span class="sparkle">✦</span> Schola Matrix Senior</h1>
+      <div class="subtitle">6-Line Full-Year Master Timetable Planner & Cross-Year Taboo Lock</div>
+    </div>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Senior 6-Line Model Active</span>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchYearTab('Y11')">Year 11 Cohort</button>
+    <button class="tab-btn" onclick="switchYearTab('Y12')">Year 12 Cohort</button>
+    <button class="tab-btn" onclick="switchYearTab('Y13')">Year 13 Cohort</button>
+  </div>
+
+  <!-- Config & Cohort Input Section -->
+  <div class="card">
+    <h2 id="cohortTitle">1. Year 11 Cohort Data & Teacher Mappings</h2>
+    <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+      Format: <code>First Name, Last Name, Subj1[TeacherID], Subj2[TeacherID], Subj3[TeacherID], Subj4[TeacherID], Subj5[TeacherID], Subj6[TeacherID]</code>
+    </p>
+    <textarea id="csvInput_Y11">Alex, Smith, 11ENG[ENG1], 11MAT[MAT1], 11SCI[SCI1], 11HIS[HIS1], 11ART[ART1], 11SPA[SPA1]
+Jordan, Taylor, 11ENG[ENG2], 11MAT[MAT2], 11SCI[SCI2], 11TEC[TEC1], 11MUS[MUS1], 11HIS[HIS1]
+Morgan, Lee, 11ENG[ENG1], 11MAT[MAT1], 11SCI[SCI1], 11TEC[TEC1], 11MUS[MUS1], 11ART[ART1]
+Sam, Patel, 11ENG[ENG2], 11MAT[MAT2], 11HIS[HIS1], 11DRA[DRA1], 11SPA[SPA1], 11TEC[TEC1]
+Chris, Wong, 11ENG[ENG1], 11MAT[MAT1], 11SCI[SCI2], 11ART[ART1], 11DRA[DRA1], 11MUS[MUS1]</textarea>
+
+    <textarea id="csvInput_Y12" style="display:none;">Casey, Davis, 12ENG[ENG1], 12MAT[MAT1], 12PHY[SCI1], 12CHE[SCI2], 12HIS[HIS1], 12SPA[SPA1]
+Riley, Wilson, 12ENG[ENG2], 12MAT[MAT2], 12ART[ART1], 12HIS[HIS1], 12TEC[TEC1], 12PHY[SCI1]
+Jamie, Miller, 12ENG[ENG1], 12MAT[MAT1], 12TEC[TEC1], 12DRA[DRA1], 12ART[ART1], 12MUS[MUS1]</textarea>
+
+    <textarea id="csvInput_Y13" style="display:none;">Avery, Clark, 13ENG[ENG1], 13STATS[MAT1], 13CALC[MAT2], 13PHY[SCI1], 13HIS[HIS1], 13SPA[SPA1]
+Quinn, Adams, 13ENG[ENG2], 13STATS[MAT1], 13ART[ART1], 13TEC[TEC1], 13HIS[HIS1], 13DRA[DRA1]
+Dakota, White, 13ENG[ENG1], 13CALC[MAT2], 13PHY[SCI1], 13DRA[DRA1], 13MUS[MUS1], 13TEC[TEC1]</textarea>
+
+    <div class="config-grid">
+      <div class="config-item">
+        <label for="minInput">Min Class Size</label>
+        <input type="number" id="minInput" value="10" min="1">
+      </div>
+      <div class="config-item">
+        <label for="optInput">Optimal Target</label>
+        <input type="number" id="optInput" value="18" min="1">
+      </div>
+      <div class="config-item">
+        <label for="maxInput">Max Class Size</label>
+        <input type="number" id="maxInput" value="24" min="1">
+      </div>
+      <div class="config-item">
+        <label for="lineTrialsInput">Line-Trial Permutations</label>
+        <input type="number" id="lineTrialsInput" value="15" min="1" max="100">
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn-step1" onclick="parseAllTabs()">Step 1: Parse All Senior Cohorts</button>
+      <button class="btn-taboo" onclick="executeCrossYearTeacherTabooCheck()">Step 1.5: Validate Cross-Year Teacher Taboo Lock</button>
+    </div>
+  </div>
+
+  <!-- Step 1.5 Teacher Taboo Audit Card -->
+  <div class="card" id="tabooCard" style="display:none;">
+    <div class="step-header" style="background:#e9d8fd; color:#44337a;">
+      <span>STEP 1.5: CROSS-YEAR SPECIALIST TEACHER TABOO LOCK MATRIX</span>
+    </div>
+    <p style="font-size:0.85rem; color: var(--text-muted);">
+      Validates that specialist teachers working across Y11, Y12, and Y13 are never double-booked on the same line.
+    </p>
+
+    <div id="tabooTableContainer"></div>
+
+    <div class="btn-group" style="margin-top:15px;">
+      <button class="btn-step2" onclick="executeSeniorStudentAllocation()">Step 2: Execute Priority Cascade Student Allocation</button>
+    </div>
+  </div>
+
+  <!-- Telemetry Progress Card -->
+  <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <strong style="color:var(--primary);">Senior 6-Line Priority Cascade Solver in Progress...</strong>
+      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Trial 0 / 15</span>
+    </div>
+    <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
+      <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
+    </div>
+    <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
+      Allocating Students across 6 Master Lines...
+    </div>
+  </div>
+
+  <!-- Step 2 Schedule Output -->
+  <div class="card" id="step2Card" style="display:none;">
+    <div class="step-header">
+      <span id="outputHeaderTitle">STEP 2: FINAL OPTIMISED SENIOR SCHEDULE</span>
+      <button class="btn-export" onclick="exportSeniorCSV()">Export Master Schedule (CSV)</button>
+    </div>
+    <div id="allocationOutput"></div>
+  </div>
+
+  <!-- PHASE 3 DIAGNOSTIC DASHBOARD -->
+  <div class="card phase3-card" id="phase3Card" style="display:none;">
+    <div class="step-header" style="background:#e9d8fd; color:#44337a;">
+      <span>PHASE 3: SENIOR CLASH ANALYTICS & STUDENT ISOLATION INSPECTOR</span>
+    </div>
+
+    <h3>1. Senior Subject Choice Clash Metrics</h3>
+    <div id="subjectClashMetricsContainer"></div>
+
+    <h3 style="margin-top:25px;">2. Student Choice Isolation Inspector</h3>
+    <input type="text" id="studentSearchInput" class="search-box" placeholder="Search senior student or subject..." oninput="isolateSeniorStudent()">
+
+    <div id="studentIsolationOutput"></div>
+  </div>
+</div>
+
+<script>
+  const LINES = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5", "Line 6"];
+  let activeTab = 'Y11';
+
+  let cohortData = { Y11: [], Y12: [], Y13: [] };
+  let subjectTeacherMap = {}; // Subj -> TeacherID
+  let masterTeacherLineMap = {}; // Line -> Set of TeacherIDs
+  let lockedSubjectLines = {}; // (Year, Subj) -> Line
+  let seniorSchedules = { Y11: null, Y12: null, Y13: null };
+  let seniorUnserved = { Y11: [], Y12: [], Y13: [] };
+
+  function switchYearTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    document.getElementById('cohortTitle').innerText = `1. ${tab} Cohort Data & Teacher Mappings`;
+    ['Y11', 'Y12', 'Y13'].forEach(y => {
+      document.getElementById(`csvInput_${y}`).style.display = (y === tab) ? 'block' : 'none';
+    });
+
+    if (seniorSchedules[tab]) {
+      renderSeniorSchedule(tab);
+    }
+  }
+
+  function parseSubjectAndTeacher(rawCode) {
+    const match = rawCode.match(/^([^\[]+)(?:\[([^\]]+)\])?$/);
+    if (match) {
+      return { subj: match[1].trim(), teacher: match[2] ? match[2].trim() : 'UNASSIGNED' };
+    }
+    return { subj: rawCode.trim(), teacher: 'UNASSIGNED' };
+  }
+
+  function parseSeniorCSV(text) {
+    if (!text) return [];
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    const parsed = [];
+
+    lines.forEach(line => {
+      const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
+      if (parts.length >= 3) {
+        const studentName = `${parts[0]} ${parts[1]}`;
+        const rawChoices = parts.slice(2, 8); // 6 Subject Choices
+        const choices = [];
+
+        rawChoices.forEach(c => {
+          const { subj, teacher } = parseSubjectAndTeacher(c);
+          choices.push(subj);
+          if (teacher !== 'UNASSIGNED') {
+            subjectTeacherMap[subj] = teacher;
+          }
+        });
+
+        parsed.push({ id: studentName, subjects: choices });
+      }
+    });
+
+    return parsed;
+  }
+
+  function parseAllTabs() {
+    cohortData.Y11 = parseSeniorCSV(document.getElementById('csvInput_Y11').value);
+    cohortData.Y12 = parseSeniorCSV(document.getElementById('csvInput_Y12').value);
+    cohortData.Y13 = parseSeniorCSV(document.getElementById('csvInput_Y13').value);
+
+    alert(`Parsed Senior Cohorts:\nYear 11: ${cohortData.Y11.length} Students\nYear 12: ${cohortData.Y12.length} Students\nYear 13: ${cohortData.Y13.length} Students`);
+  }
+
+  // STEP 1.5: CROSS-YEAR SPECIALIST TEACHER TABOO LOCK CHECKER
+  function executeCrossYearTeacherTabooCheck() {
+    parseAllTabs();
+    masterTeacherLineMap = { "Line 1": new Set(), "Line 2": new Set(), "Line 3": new Set(), "Line 4": new Set(), "Line 5": new Set(), "Line 6": new Set() };
+    lockedSubjectLines = {};
+    let collisions = [];
+
+    const bounds = { min: 10, opt: 18, max: 24 };
+
+    ['Y11', 'Y12', 'Y13'].forEach(year => {
+      const demandSummary = {};
+      cohortData[year].forEach(st => {
+        st.subjects.forEach(subj => demandSummary[subj] = (demandSummary[subj] || 0) + 1);
+      });
+
+      // Find single-section subjects for this year level
+      Object.keys(demandSummary).forEach(subj => {
+        const demand = demandSummary[subj];
+        const sections = Math.ceil(demand / bounds.opt);
+
+        if (sections === 1) {
+          const teacher = subjectTeacherMap[subj] || 'UNASSIGNED';
+          let assignedLine = null;
+
+          // Assign to first line where teacher is NOT booked
+          for (const line of LINES) {
+            if (teacher === 'UNASSIGNED' || !masterTeacherLineMap[line].has(teacher)) {
+              assignedLine = line;
+              if (teacher !== 'UNASSIGNED') masterTeacherLineMap[line].add(teacher);
+              break;
+            }
+          }
+
+          if (assignedLine) {
+            lockedSubjectLines[`${year}_${subj}`] = assignedLine;
+          } else {
+            collisions.push({ year, subj, teacher, reason: 'Taboo Double-Booking across Lines 1-6' });
+          }
+        }
+      });
+    });
+
+    renderTabooTable(collisions);
+  }
+
+  function renderTabooTable(collisions) {
+    const container = document.getElementById('tabooTableContainer');
+    let html = `<table class="taboo-table"><thead><tr><th>Year</th><th>Subject Code</th><th>Teacher ID</th><th>Assigned Annual Line</th><th>Taboo Status</th></tr></thead><tbody>`;
+
+    Object.keys(lockedSubjectLines).forEach(key => {
+      const [year, subj] = key.split('_');
+      const teacher = subjectTeacherMap[subj] || 'UNASSIGNED';
+      const line = lockedSubjectLines[key];
+
+      html += `<tr><td><strong>${year}</strong></td><td>${subj}</td><td>${teacher}</td><td><strong>${line}</strong></td><td><span class="taboo-ok">✓ LOCK VALID</span></td></tr>`;
+    });
+
+    collisions.forEach(c => {
+      html += `<tr><td><strong>${c.year}</strong></td><td>${c.subj}</td><td>${c.teacher}</td><td>None</td><td><span class="taboo-collision">⚠ TABOO COLLISION</span></td></tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    document.getElementById('tabooCard').style.display = 'block';
+  }
+
+  // STEP 2: SENIOR STUDENT ALLOCATION ENGINE Across 6 Lines
+  async function executeSeniorStudentAllocation() {
+    const progressCard = document.getElementById('rlnsProgressCard');
+    const progressBar = document.getElementById('rlnsProgressBar');
+    const statusText = document.getElementById('rlnsStatusText');
+    progressCard.style.display = 'block';
+
+    const bounds = {
+      min: parseInt(document.getElementById('minInput').value) || 10,
+      opt: parseInt(document.getElementById('optInput').value) || 18,
+      max: parseInt(document.getElementById('maxInput').value) || 24
+    };
+
+    const tabs = ['Y11', 'Y12', 'Y13'];
+    for (let idx = 0; idx < tabs.length; idx++) {
+      const year = tabs[idx];
+      statusText.innerText = `Sorting Senior ${year} Cohort across Lines 1-6...`;
+      progressBar.style.width = `${Math.round(((idx + 1) / 3) * 100)}%`;
+      await new Promise(res => setTimeout(res, 50));
+
+      const { schedule, unserved } = solveSeniorCohort(year, cohortData[year], bounds);
+      seniorSchedules[year] = schedule;
+      seniorUnserved[year] = unserved;
+    }
+
+    progressCard.style.display = 'none';
+    renderSeniorSchedule(activeTab);
+    renderSeniorDiagnostics();
+  }
+
+  function solveSeniorCohort(year, students, bounds) {
+    const schedule = {};
+    LINES.forEach(l => schedule[l] = {});
+    const studentSlots = {};
+    students.forEach(st => studentSlots[st.id] = new Set());
+    const unserved = [];
+
+    // Calculate subject demand for RSI
+    const demand = {};
+    students.forEach(st => st.subjects.forEach(s => demand[s] = (demand[s] || 0) + 1));
+
+    students.forEach(st => {
+      // Sort student choices by RSI Scarcity (highest demand / capacity first)
+      const rankedChoices = st.subjects.map(s => {
+        const lockedLine = lockedSubjectLines[`${year}_${s}`];
+        const targetLines = lockedLine ? [lockedLine] : LINES;
+        const available = targetLines.filter(l => !studentSlots[st.id].has(l));
+        return { subj: s, available, demand: demand[s] || 1 };
+      }).sort((a, b) => a.available.length - b.available.length || b.demand - a.demand);
+
+      rankedChoices.forEach(({ subj, available }) => {
+        if (available.length === 0) {
+          unserved.push({ id: st.id, subj, reason: 'Line conflict across senior choices' });
+          return;
+        }
+
+        // Pick line with lowest current enrolment
+        available.sort((l1, l2) => getSeniorLineLoad(schedule, l1) - getSeniorLineLoad(schedule, l2));
+        const chosenLine = available[0];
+
+        if (!schedule[chosenLine][subj]) schedule[chosenLine][subj] = [[]];
+        let section = schedule[chosenLine][subj].find(sec => sec.length < bounds.opt) ||
+                      schedule[chosenLine][subj].find(sec => sec.length < bounds.max);
+
+        if (!section) {
+          section = [];
+          schedule[chosenLine][subj].push(section);
+        }
+
+        section.push(st.id);
+        studentSlots[st.id].add(chosenLine);
+      });
+    });
+
+    return { schedule, unserved };
+  }
+
+  function getSeniorLineLoad(schedule, line) {
+    let count = 0;
+    Object.values(schedule[line] || {}).forEach(sections => {
+      sections.forEach(sec => count += sec.length);
+    });
+    return count;
+  }
+
+  function renderSeniorSchedule(year) {
+    const out = document.getElementById('allocationOutput');
+    const schedule = seniorSchedules[year];
+    const unserved = seniorUnserved[year] || [];
+    if (!schedule) return;
+
+    document.getElementById('outputHeaderTitle').innerText = `STEP 2: OPTIMISED ${year} SENIOR SCHEDULE`;
+
+    let html = `<div class="stat-strip">
+      <div class="stat-chip">Senior Cohort: <b>${cohortData[year].length} Students</b></div>
+      <div class="stat-chip">Unplaced Choices: <b>${unserved.length}</b></div>
+    </div>`;
+
+    html += `<div class="senior-grid">`;
+    LINES.forEach(line => {
+      html += `<div class="line-box"><h4>${line}</h4>`;
+      const classes = schedule[line] || {};
+      const activeSubjects = Object.keys(classes).filter(s => classes[s].some(sec => sec.length > 0));
+
+      if (activeSubjects.length === 0) {
+        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No classes assigned.</p>`;
+      } else {
+        activeSubjects.forEach(subj => {
+          classes[subj].forEach((roster, idx) => {
+            if (roster.length > 0) {
+              const label = classes[subj].length > 1 ? `${subj} — Group ${String.fromCharCode(65 + idx)}` : subj;
+              html += `<div style="margin-bottom:6px;">`;
+              html += `<span class="badge">${label}</span> <span class="metric-pill metric-good">${roster.length} Enrolled</span><br>`;
+              roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
+              html += `</div>`;
+            }
+          });
+        });
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+
+    out.innerHTML = html;
+    document.getElementById('step2Card').style.display = 'block';
+  }
+
+  function renderSeniorDiagnostics() {
+    const container = document.getElementById('subjectClashMetricsContainer');
+    let html = `<p style="font-size:0.85rem; color:var(--text-muted);">Showing aggregate choice placement status across Y11, Y12, and Y13.</p>`;
+    container.innerHTML = html;
+    document.getElementById('phase3Card').style.display = 'block';
+  }
+
+  function isolateSeniorStudent() {
+    const query = document.getElementById('studentSearchInput').value.trim().toLowerCase();
+    const output = document.getElementById('studentIsolationOutput');
+    if (!query) { output.innerHTML = ''; return; }
+
+    const allStudents = [...cohortData.Y11, ...cohortData.Y12, ...cohortData.Y13];
+    const matches = allStudents.filter(st => st.id.toLowerCase().includes(query) || st.subjects.some(s => s.toLowerCase() === query));
+
+    let html = '';
+    matches.forEach(st => {
+      html += `<div class="isolation-panel"><h4>👤 ${st.id}</h4><p style="font-size:0.85rem;">Requested Choices: ${st.subjects.join(', ')}</p></div>`;
+    });
+
+    output.innerHTML = html;
+  }
+
+  function exportSeniorCSV() {
+    let csv = "data:text/csv;charset=utf-8,Year,Line,Subject,Student Name\n";
+    ['Y11', 'Y12', 'Y13'].forEach(year => {
+      const schedule = seniorSchedules[year] || {};
+      LINES.forEach(line => {
+        Object.keys(schedule[line] || {}).forEach(subj => {
+          schedule[line][subj].forEach(roster => {
+            roster.forEach(st => {
+              csv += `"${year}","${line}","${subj}","${st}"\n`;
+            });
+          });
+        });
+      });
+    });
+
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = "Schola_Matrix_Senior_Master.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+
+</body>
+</html>
