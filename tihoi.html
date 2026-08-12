@@ -283,21 +283,57 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     renderLockTable(bounds);
   }
 
-  function renderLockTable(bounds) {
-    const container = document.getElementById('lockTableContainer');
-    let html = `
-      <table class="lock-table">
-        <thead>
-          <tr>
-            <th>Subject Code</th>
-            <th>Total Choices</th>
-            <th>Available Demand (T1 / T2 / T3)</th>
-            <th>Suggested Sections</th>
-            <th>Lock Offered Sections</th>
-            <th>Optimal Third(s) Advice</th>
-          </tr>
-        </thead>
-        <tbody>`;
+ function renderLockTable(bounds) {
+  const container = document.getElementById('lockTableContainer');
+  let html = `
+    <table class="lock-table">
+      <thead>
+        <tr>
+          <th>Subject Code</th>
+          <th>Total Demand</th>
+          <th>Term Availability (T1 / T2 / T3)</th>
+          <th>Suggested Sections</th>
+          <th>Lock Offered Sections</th>
+          <th>Optimal Third(s) Advice</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  const sortedSubjects = Object.keys(subjectDemandSummary).sort();
+
+  sortedSubjects.forEach(subj => {
+    const data = subjectDemandSummary[subj];
+    
+    // Corrected Formula: Calculates total sections required across active Thirds
+    const activeTermsCount = 3; 
+    const totalRequiredCapacity = Math.max(1, Math.ceil(data.total / bounds.opt));
+    const suggestedCount = Math.min(3, Math.max(1, Math.round(totalRequiredCapacity / activeTermsCount)));
+
+    html += `
+      <tr>
+        <td><strong>${subj}</strong></td>
+        <td>${data.total} choices</td>
+        <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
+        <td>${suggestedCount} section(s) total</td>
+        <td>
+          <input type="number" id="lock_${subj}" value="${suggestedCount}" min="0" max="6">
+        </td>
+        <td id="advice_${subj}">
+          <span class="recommendation-tag">Analyse on Lock</span>
+        </td>
+      </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+  document.getElementById('lockCard').style.display = 'block';
+
+  sortedSubjects.forEach(subj => {
+    const el = document.getElementById(`lock_${subj}`);
+    el.addEventListener('input', () => updateThirdAdvice(subj));
+    updateThirdAdvice(subj);
+  });
+}
 
     const sortedSubjects = Object.keys(subjectDemandSummary).sort();
 
