@@ -159,9 +159,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Capacity Planner & Multi-Line Spreading Engine</div>
+      <div class="subtitle">Adaptive RLNS Capacity Planner & Slot Uniqueness Auditor</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Multi-Line Section Spreading Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Zero Intra-Term Line Clashes Guaranteed</span>
   </header>
 
   <!-- Input Section -->
@@ -213,13 +213,27 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to lock section placement. Multi-section offerings in the same Third automatically spread across Line 1 and Line 2 to maximize student choice flexibility.
+      Click term buttons to lock section placement. The solver enforces strict slot uniqueness so no student holds two classes on the same line in a single Third.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute RLNS Allocation across Lines 1 & 2</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute RLNS Allocation (Strict Slot Uniqueness)</button>
+    </div>
+  </div>
+
+  <!-- Telemetry Progress Card -->
+  <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <strong style="color:var(--primary);">RLNS Local Search & Slot Uniqueness Audit in Progress...</strong>
+      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Cycle 0 / 50</span>
+    </div>
+    <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
+      <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
+    </div>
+    <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
+      Target Yield: 100% | Best Placed: 0
     </div>
   </div>
 
@@ -243,11 +257,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let manualLocks = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v8', this.value);
+    localStorage.setItem('schola_csv_pseudo_v9', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v8');
+    const saved = localStorage.getItem('schola_csv_pseudo_v9');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -428,13 +442,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     if (totalLockedCapacity === 0) {
       projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
     } else if (netSpillover > 0) {
-      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${netSpillover} over opt (RLNS Soft-Overflow Active)</span>`;
+      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${netSpillover} over opt (Soft-Overflow Active)</span>`;
     } else {
       projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${totalLockedCapacity} Opt)</span>`;
     }
   }
 
-  // STEP 2: RLNS SOLVER WITH MULTI-LINE SECTION SPREADING
+  // STEP 2: RLNS SOLVER WITH STRICT SLOT UNIQUENESS
   function shuffleArray(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -460,14 +474,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return primaryLine;
   }
 
-  // Determine line availability for a subject in a specific Third:
-  // Single section -> Primary Line only.
-  // Multiple concurrent sections -> Spread across both Line 1 and Line 2.
   function getSubjectLinesForTerm(subj, third, primaryLine) {
     const lockedSections = manualLocks[subj]?.[third] || 0;
     if (lockedSections <= 0) return [];
     if (lockedSections === 1) return [primaryLine[subj] || "Line 1"];
-    // 2+ concurrent sections in the same Third -> Available on BOTH lines!
     return ["Line 1", "Line 2"];
   }
 
@@ -475,7 +485,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     if (!schedule[third][line][subj]) schedule[third][line][subj] = [[]];
     const sections = schedule[third][line][subj];
 
-    // Determine max allowed sections on THIS specific line for this Third
     const totalTermLocks = manualLocks[subj]?.[third] || 0;
     const lineLimit = (totalTermLocks >= 2) ? Math.ceil(totalTermLocks / 2) : 1;
 
@@ -533,12 +542,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      // Score options by available legal (Third, Line) options
       const withScore = validChoices.map(subj => {
         const options = [];
         availThirds.forEach(t => {
           const lines = getSubjectLinesForTerm(subj, t, primaryLine);
           lines.forEach(l => {
+            // STRICT HARD CONSTRAINT: Never assign a student to a slot they already occupy!
             if (!studentSlots[st.id].has(slotKey(t, l))) {
               options.push({ third: t, line: l });
             }
@@ -549,11 +558,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       withScore.forEach(({ subj, options }) => {
         if (options.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Line/term clash with other elective choices' });
+          unserved.push({ id: st.id, subj, reason: 'Line/term clash with another choice' });
           return;
         }
 
-        // Prioritise options under optimal class size
         const underOpt = options.filter(o => (counts[subj][o.third] || 0) < ((manualLocks[subj][o.third] || 1) * bounds.opt));
         const underMax = options.filter(o => (counts[subj][o.third] || 0) < ((manualLocks[subj][o.third] || 1) * bounds.max));
         const pool = underOpt.length ? underOpt : (underMax.length ? underMax : options);
@@ -591,6 +599,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
           const validLines = getSubjectLinesForTerm(subj, third, primaryLine);
 
           for (const line of validLines) {
+            // STRICT HARD CONSTRAINT: Skip if unserved student ALREADY holds a class in this slot
             if (result.studentSlots[st.id].has(slotKey(third, line))) continue;
 
             const sections = result.schedule[third][line][subj] || [];
@@ -602,13 +611,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               const occTNum = extractTihoiTerm(occ.tihoi);
               const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${occTNum}`);
 
-              // Check alternate legal slots for existing occupant
               for (const altT of occAvail) {
                 const altLines = getSubjectLinesForTerm(subj, altT, primaryLine);
                 for (const altL of altLines) {
                   if (altT === third && altL === line) continue;
+                  // Ensure existing occupant does not conflict on their new slot
                   if (!result.studentSlots[occupantId].has(slotKey(altT, altL))) {
-                    // Execute swap
                     removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
                     result.studentSlots[occupantId].delete(slotKey(third, line));
 
@@ -634,7 +642,82 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return result;
   }
 
-  function executeLockedLineSorting() {
+  // POST-SORT AUDIT: Enforces absolute slot uniqueness per student
+  function enforceSlotUniqueness(result, primaryLine, bounds) {
+    parsedStudentCache.forEach(st => {
+      ["Third 1", "Third 2", "Third 3"].forEach(third => {
+        ["Line 1", "Line 2"].forEach(line => {
+          const key = slotKey(third, line);
+
+          // Find all subjects where this student is currently placed in this slot
+          const enrolledInSlot = [];
+          Object.keys(result.schedule[third][line]).forEach(subj => {
+            const sections = result.schedule[third][line][subj];
+            sections.forEach((sec, secIdx) => {
+              if (sec.includes(st.id)) {
+                enrolledInSlot.push({ subj, secIdx, sec });
+              }
+            });
+          });
+
+          // Resolve any double-bookings on the exact same (Third, Line)
+          while (enrolledInSlot.length > 1) {
+            const clash = enrolledInSlot.pop();
+            const idx = clash.sec.indexOf(st.id);
+            if (idx > -1) clash.sec.splice(idx, 1);
+            result.counts[clash.subj][third]--;
+
+            const oppLine = (line === "Line 1") ? "Line 2" : "Line 1";
+            const oppKey = slotKey(third, oppLine);
+            let resolved = false;
+
+            // Attempt 1: Move to opposite line in the same Third
+            const validLines = getSubjectLinesForTerm(clash.subj, third, primaryLine);
+            if (validLines.includes(oppLine) && !result.studentSlots[st.id].has(oppKey)) {
+              const placed = placeInSubjectThird(result.schedule, result.counts, clash.subj, third, oppLine, st.id, bounds, true);
+              if (placed) {
+                result.studentSlots[st.id].add(oppKey);
+                resolved = true;
+              }
+            }
+
+            // Attempt 2: Move to another active Third
+            if (!resolved) {
+              const tNum = extractTihoiTerm(st.tihoi);
+              const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${tNum}` && t !== third);
+              for (const altT of availThirds) {
+                for (const altL of ["Line 1", "Line 2"]) {
+                  const altKey = slotKey(altT, altL);
+                  const altValidLines = getSubjectLinesForTerm(clash.subj, altT, primaryLine);
+                  if (altValidLines.includes(altL) && !result.studentSlots[st.id].has(altKey)) {
+                    const placed = placeInSubjectThird(result.schedule, result.counts, clash.subj, altT, altL, st.id, bounds, true);
+                    if (placed) {
+                      result.studentSlots[st.id].add(altKey);
+                      resolved = true;
+                      break;
+                    }
+                  }
+                }
+                if (resolved) break;
+              }
+            }
+
+            // Flag as legitimately unplaced if impossible to resolve without line double-booking
+            if (!resolved) {
+              result.unserved.push({
+                id: st.id,
+                subj: clash.subj,
+                reason: `Line clash in ${third} (${line}) — resolved to avoid double-booking`
+              });
+            }
+          }
+        });
+      });
+    });
+  }
+
+  // ASYNCHRONOUS RLNS SOLVER WITH LIVE TELEMETRY
+  async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
     const activeSubjects = Object.keys(manualLocks).filter(s =>
@@ -644,15 +727,33 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const primaryLine = assignLinesByLoad(activeSubjects);
     const totalChoices = students.reduce((sum, st) => sum + st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4).length, 0);
 
+    const progressCard = document.getElementById('rlnsProgressCard');
+    const progressBar = document.getElementById('rlnsProgressBar');
+    const cycleBadge = document.getElementById('rlnsCycleBadge');
+    const statusText = document.getElementById('rlnsStatusText');
+    progressCard.style.display = 'block';
+
     let best = null;
     let bestUnservedCount = Infinity;
 
-    const targetYields = [1.0, 0.99, 0.98];
+    const targetYields = [1.0, 0.99, 0.98, 0.96, 0.94];
+    const totalSteps = targetYields.length * bounds.rlnsCycles;
+    let completedSteps = 0;
 
     for (const targetYield of targetYields) {
       const allowedUnservedThreshold = Math.floor(totalChoices * (1.0 - targetYield));
 
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
+        completedSteps++;
+
+        if (cycle % 5 === 0) {
+          const pct = Math.round((completedSteps / totalSteps) * 100);
+          progressBar.style.width = `${pct}%`;
+          cycleBadge.innerText = `Cycle ${cycle + 1} / ${bounds.rlnsCycles} (Yield ${Math.round(targetYield * 100)}%)`;
+          statusText.innerText = `Target: ${Math.round(targetYield * 100)}% | Best Placed: ${totalChoices - (bestUnservedCount === Infinity ? totalChoices : bestUnservedCount)} / ${totalChoices}`;
+          await new Promise(resolve => setTimeout(resolve, 15));
+        }
+
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
         let result = attemptAllocation(order, primaryLine, bounds, false);
         result = repairSwaps(result, primaryLine, bounds);
@@ -669,12 +770,21 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
 
     if (bestUnservedCount > 0) {
+      statusText.innerText = "Executing final Soft-Overflow repair pass...";
       let overflowResult = attemptAllocation(students, primaryLine, bounds, true);
       overflowResult = repairSwaps(overflowResult, primaryLine, bounds);
       if (overflowResult.unserved.length < bestUnservedCount) {
         best = overflowResult;
       }
     }
+
+    // Run deterministic Slot Uniqueness Audit
+    enforceSlotUniqueness(best, primaryLine, bounds);
+
+    progressBar.style.width = "100%";
+    cycleBadge.innerText = "Complete!";
+    await new Promise(resolve => setTimeout(resolve, 150));
+    progressCard.style.display = 'none';
 
     currentSchedule = best.schedule;
     currentUnserved = best.unserved;
@@ -746,7 +856,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     if (unserved.length === 0) {
       html += `<div class="unserved-card clear"><h3>✓ 100% Choice Placement Achieved</h3>
-        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit cleanly across Line 1 and Line 2.</p></div>`;
+        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit cleanly across Line 1 and Line 2 with zero intra-term clashes.</p></div>`;
     } else {
       html += `<div class="unserved-card"><h3>⚠ ${unserved.length} choice(s) could not be placed</h3>
         <table class="unserved-table"><thead><tr><th>Student</th><th>Subject</th><th>Reason</th></tr></thead><tbody>`;
@@ -788,7 +898,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_RLNS_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Audited_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
