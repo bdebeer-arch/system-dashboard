@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Equalised Roster & RLNS Capacity Planner</title>
+  <title>Schola Matrix — Interactive Phase 3 Clash Diagnostics</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -155,6 +155,7 @@
     .line-balance-good { color: var(--success-text); font-weight: 700; }
     .line-balance-warn { color: #c05621; font-weight: 700; }
 
+    /* Phase 3 Diagnostic Dashboard Styling */
     .phase3-card { background: #faf5ff; border: 2px solid #805ad5; }
     .phase3-card h2 { color: #553c9a; }
     .search-box { width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; margin-bottom: 15px; }
@@ -164,6 +165,11 @@
     .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
     .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
     .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
+
+    .clickable-row { cursor: pointer; transition: background 0.15s ease; }
+    .clickable-row:hover { background: #f3e8ff !important; }
+    .action-btn-sm { padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; background: #805ad5; color: white; border: none; cursor: pointer; }
+    .action-btn-sm:hover { background: #553c9a; }
   </style>
 </head>
 <body>
@@ -172,9 +178,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Planner & Universal Roster Equaliser</div>
+      <div class="subtitle">Adaptive RLNS Planner & Phase 3 Diagnostic Dashboard</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Water-Filling Roster Equalisation Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Interactive Phase 3 Active</span>
   </header>
 
   <!-- Input Section -->
@@ -230,13 +236,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 automatically equalises student numbers across parallel sections of the same subject to eliminate group size disparities.
+      Lock section counts. Step 2 calculates placement yield and populates the Phase 3 Diagnostics Dashboard for clash isolation.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Equalise Parallel Rosters</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Phase 3 Diagnostics</button>
     </div>
   </div>
 
@@ -266,20 +272,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   <!-- PHASE 3 DIAGNOSTIC DASHBOARD -->
   <div class="card phase3-card" id="phase3Card" style="display:none;">
     <div class="step-header" style="background:#e9d8fd; color:#44337a;">
-      <span>PHASE 3: CLASS CLASH ANALYTICS & STUDENT ISOLATION INSPECTOR</span>
+      <span>PHASE 3: INTERACTIVE CLASH DIAGNOSTICS & STUDENT ISOLATION INSPECTOR</span>
     </div>
 
-    <h3>1. Subject-Level Clash % Metrics</h3>
+    <h3>1. Subject-Level Clash % & Resolution Matrix</h3>
     <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-      Calculates exact choice clash percentages ($(\text{Unplaced Choices} / \text{Total Demand}) \times 100$) per subject.
+      Click any row to filter affected students below. Use the action button to apply immediate section lock recommendations.
     </p>
     <div id="subjectClashMetricsContainer"></div>
 
     <h3 style="margin-top:25px;">2. Student Choice Isolation Inspector</h3>
     <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-      Type a student's name to isolate their requested electives, active term allocations, and specific clash reasons.
+      Type a student's name or click a subject row above to isolate choices and clash details.
     </p>
-    <input type="text" id="studentSearchInput" class="search-box" placeholder="Search student name (e.g. Alex Smith)..." oninput="isolateStudentChoices()">
+    <input type="text" id="studentSearchInput" class="search-box" placeholder="Search student name or click subject row above..." oninput="isolateStudentChoices()">
 
     <div id="studentIsolationOutput"></div>
   </div>
@@ -296,11 +302,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v20', this.value);
+    localStorage.setItem('schola_csv_pseudo_v21', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v20');
+    const saved = localStorage.getItem('schola_csv_pseudo_v21');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -840,7 +846,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
-  // UNIVERSAL ROSTER EQUALISATION (Water-Filling Rule: Eliminates section size disparities like 21 vs 4)
   function equaliseParallelRosters(schedule) {
     for (const [thirdName, lines] of Object.entries(schedule)) {
       for (const [lineName, classes] of Object.entries(lines)) {
@@ -851,7 +856,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             const k = activeSections.length;
             const newSections = Array.from({ length: k }, () => []);
             
-            // Round-robin redistribution guarantees |Size_i - Size_j| <= 1
             pooledStudents.forEach((studentId, idx) => {
               newSections[idx % k].push(studentId);
             });
@@ -945,7 +949,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     };
     enforceSlotUniqueness(globalBest, finalLines, bounds);
 
-    // Apply Universal Water-Filling Roster Equalisation
     equaliseParallelRosters(globalBest.schedule);
 
     progressBar.style.width = "100%";
@@ -1089,6 +1092,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     document.getElementById('step2Card').style.display = 'block';
   }
 
+  // PHASE 3 DIAGNOSTIC DASHBOARD WITH CLICKABLE SUBJECT FILTER
   function renderPhase3Diagnostics(schedule, unserved) {
     const container = document.getElementById('subjectClashMetricsContainer');
     let html = `
@@ -1100,6 +1104,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             <th>Unplaced Choices</th>
             <th>Clash %</th>
             <th>Visual Impact Bar</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>`;
@@ -1116,16 +1121,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       else if (clashPct > 5) barColor = "#dd6b20";
 
       html += `
-        <tr>
+        <tr class="clickable-row" onclick="filterIsolationBySubject('${subj}')" title="Click to filter affected students below">
           <td><strong>${subj}</strong></td>
           <td>${demand} choices</td>
           <td>${unplacedCount} unplaced</td>
           <td><strong>${clashPct}%</strong></td>
-          <td style="width:30%;">
+          <td style="width:25%;">
             <div class="clash-meter-bg">
               <div class="clash-meter-fill" style="width:${clashPct}%; background:${barColor};"></div>
             </div>
           </td>
+          <td><button class="action-btn-sm" onclick="event.stopPropagation(); filterIsolationBySubject('${subj}')">Filter Students</button></td>
         </tr>`;
     });
 
@@ -1135,19 +1141,30 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     isolateStudentChoices();
   }
 
+  function filterIsolationBySubject(subjCode) {
+    const searchBox = document.getElementById('studentSearchInput');
+    searchBox.value = subjCode;
+    isolateStudentChoices();
+  }
+
   function isolateStudentChoices() {
     const query = document.getElementById('studentSearchInput').value.trim().toLowerCase();
     const output = document.getElementById('studentIsolationOutput');
 
     if (!query) {
-      output.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); italic;">Type a student name above to view their choice roster and active allocations.</p>`;
+      output.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); italic;">Type a student name or subject code above to isolate choice rosters and active allocations.</p>`;
       return;
     }
 
-    const matches = parsedStudentCache.filter(st => st.id.toLowerCase().includes(query));
+    // Filter students by name OR requested subject choices
+    const matches = parsedStudentCache.filter(st => {
+      const nameMatch = st.id.toLowerCase().includes(query);
+      const subjMatch = st.subjects.some(s => s.toLowerCase() === query);
+      return nameMatch || subjMatch;
+    });
 
     if (matches.length === 0) {
-      output.innerHTML = `<p style="font-size:0.85rem; color:var(--danger-text);">No student found matching "${query}".</p>`;
+      output.innerHTML = `<p style="font-size:0.85rem; color:var(--danger-text);">No students or subject choices found matching "${query}".</p>`;
       return;
     }
 
