@@ -145,9 +145,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Interactive 2-Line Capacity Planner & Cohort Optimiser</div>
+      <div class="subtitle">Interactive 2-Line Capacity Planner & Section Splitter</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict 2-Line Cap Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Parallel Section Separation Active</span>
   </header>
 
   <!-- Input Section -->
@@ -201,7 +201,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation Across Max 2 Full Lines</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation with Automatic Class Separation</button>
     </div>
   </div>
 
@@ -219,14 +219,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let currentSchedule = null;
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
-  let manualLocks = {}; // Tracks user click toggles per subject { "10ART1": ["Third 1", "Third 2"] }
+  let manualLocks = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v3', this.value);
+    localStorage.setItem('schola_csv_pseudo_v4', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v3');
+    const saved = localStorage.getItem('schola_csv_pseudo_v4');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -287,7 +287,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
-    // Initialise manual locks based on AI advice
     Object.keys(subjectDemandSummary).forEach(subj => {
       const data = subjectDemandSummary[subj];
       const suggestedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
@@ -339,7 +338,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     container.innerHTML = html;
     document.getElementById('lockCard').style.display = 'block';
 
-    // Update active button UI states and projection figures
     sortedSubjects.forEach(subj => updateRowUI(subj, bounds));
   }
 
@@ -349,9 +347,9 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     const index = manualLocks[subj].indexOf(term);
     if (index > -1) {
-      manualLocks[subj].splice(index, 1); // Remove term
+      manualLocks[subj].splice(index, 1);
     } else {
-      manualLocks[subj].push(term); // Add term
+      manualLocks[subj].push(term);
     }
 
     updateRowUI(subj, bounds);
@@ -359,8 +357,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function updateRowUI(subj, bounds) {
     const activeTerms = manualLocks[subj] || [];
-    
-    // Update button visual states
+
     ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
       const termCode = `T${idx + 1}`;
       const btn = document.getElementById(`btn_${subj}_${termCode}`);
@@ -373,7 +370,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       }
     });
 
-    // Update Dynamic Leftover Projection
     const data = subjectDemandSummary[subj];
     const projCell = document.getElementById(`projection_${subj}`);
     const offeredCapacity = activeTerms.length * bounds.opt;
@@ -384,7 +380,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
     } else if (netSpillover > 0) {
       if (data.total <= maxCapacity) {
-        projCell.innerHTML = `<span class="projection-pill proj-overcap">Absorbed via Larger Classes (${data.total}/${maxCapacity} Max)</span>`;
+        projCell.innerHTML = `<span class="projection-pill proj-overcap">Absorbed via Split Classes (${data.total}/${maxCapacity} Max)</span>`;
       } else {
         projCell.innerHTML = `<span class="projection-pill proj-spillover">${netSpillover} Unserved Choices</span>`;
       }
@@ -393,15 +389,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
   }
 
-  // STEP 2: EXECUTE SORTING CONSTRAINED TO MAX 2 LINES
+  // STEP 2: EXECUTE SORTING WITH AUTOMATIC CLASS SPLITTING
   function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
 
-    // Filter active subjects that have at least one term locked
     const activeSubjects = Object.keys(manualLocks).filter(s => manualLocks[s].length > 0).sort();
-
-    // Map subjects strictly across Line 1 and Line 2 (Maximum 2 Lines)
     const fixedLine = {};
     activeSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
 
@@ -423,19 +416,35 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       validChoices.forEach(subj => {
         const permittedThirds = manualLocks[subj] || [];
-        if (permittedThirds.length === 0) return; // Subject not offered
+        if (permittedThirds.length === 0) return;
 
         let candidateThirds = availThirds.filter(t => permittedThirds.includes(t));
-        if (candidateThirds.length === 0) return; // Clashes with off-campus rotation
+        if (candidateThirds.length === 0) return;
 
-        // Route student to candidate Third with lowest current load
         candidateThirds.sort((a, b) => termLoad[a] - termLoad[b]);
         const chosenThird = candidateThirds[0];
         termLoad[chosenThird]++;
 
         const line = fixedLine[subj] || "Line 1";
-        if (!schedule[chosenThird][line][subj]) schedule[chosenThird][line][subj] = [];
-        schedule[chosenThird][line][subj].push(st.id);
+
+        // Dynamic Section Splitting Logic (Sec A, Sec B, Sec C)
+        let sectionSuffix = "Sec A";
+        let targetKey = `${subj} (${sectionSuffix})`;
+
+        // Check if current primary section exceeds Max Class Size
+        if (schedule[chosenThird][line][targetKey] && schedule[chosenThird][line][targetKey].length >= bounds.max) {
+          sectionSuffix = "Sec B";
+          targetKey = `${subj} (${sectionSuffix})`;
+        }
+        if (schedule[chosenThird][line][targetKey] && schedule[chosenThird][line][targetKey].length >= bounds.max) {
+          sectionSuffix = "Sec C";
+          targetKey = `${subj} (${sectionSuffix})`;
+        }
+
+        if (!schedule[chosenThird][line][targetKey]) {
+          schedule[chosenThird][line][targetKey] = [];
+        }
+        schedule[chosenThird][line][targetKey].push(st.id);
       });
     });
 
@@ -452,18 +461,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       html += `<h3 style="color:#2b6cb0; border-bottom:1px solid #cbd5e0; padding-bottom:4px; margin-bottom:10px;">${thirdName}</h3>`;
       html += `<div class="third-grid">`;
 
-      // Enforce strict display of Line 1 and Line 2 only
       ["Line 1", "Line 2"].forEach(lineName => {
         const classes = lines[lineName] || {};
         html += `<div class="line-box">`;
         html += `<h4>${lineName}</h4>`;
 
-        const activeClasses = Object.keys(classes).filter(k => classes[k].length > 0);
+        const activeClasses = Object.keys(classes).filter(k => classes[k].length > 0).sort();
         if (activeClasses.length === 0) {
           html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active classes assigned to this line.</p>`;
         } else {
-          for (const subj of activeClasses) {
-            const roster = classes[subj];
+          for (const subjKey of activeClasses) {
+            const roster = classes[subjKey];
             let count = roster.length;
             let metricClass = "metric-good";
             let statusText = `${count} Enrolled`;
@@ -477,7 +485,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             }
 
             html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
-            html += `<div><span class="badge">${subj}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
+            html += `<div><span class="badge">${subjKey}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
             html += `<div style="margin-top:4px;">`;
             roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
             html += `</div></div>`;
@@ -496,14 +504,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function exportToCSV() {
     if (!currentSchedule) return;
-    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject,Student Full Name\n";
+    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject Section,Student Full Name\n";
 
     for (const [thirdName, lines] of Object.entries(currentSchedule)) {
       for (const [lineName, classes] of Object.entries(lines)) {
-        for (const [subj, roster] of Object.entries(classes)) {
+        for (const [subjKey, roster] of Object.entries(classes)) {
           if (roster.length > 0) {
             roster.forEach(studentId => {
-              csvContent += `"${thirdName}","${lineName}","${subj}","${studentId}"\n`;
+              csvContent += `"${thirdName}","${lineName}","${subjKey}","${studentId}"\n`;
             });
           }
         }
@@ -513,7 +521,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_2Line_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Separated_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
