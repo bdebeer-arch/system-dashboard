@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Predictive Capacity Planner & Cohort Optimiser</title>
+  <title>Schola Matrix — Interactive Line & Capacity Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -103,13 +103,6 @@
 
     .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
-    .third-card {
-      background: #f8fafc; border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center;
-    }
-
-    .third-card h3 { width: 100%; margin: 0 0 12px 0; color: #2b6cb0; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
-
     .line-box {
       background: white; border: 1px solid #e2e8f0; border-radius: 6px;
       padding: 12px; margin-bottom: 12px;
@@ -130,10 +123,31 @@
     .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
 
     table.lock-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
-    table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; }
+    table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
     table.lock-table th { background: #edf2f7; color: #2d3748; }
-    table.lock-table input[type="number"] { width: 60px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); font-weight: 600; }
-    .recommendation-tag { background: #e2e8f0; color: #2c5282; font-weight: 600; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+    .toggle-btn {
+      padding: 5px 10px; margin-right: 4px; border-radius: 6px; border: 1px solid #cbd5e0;
+      background: #edf2f7; color: #4a5568; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
+    .toggle-btn.advised { border: 2px solid var(--accent); }
+
+    .projection-pill { display: inline-block; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; }
+    .proj-balanced { background: var(--success-bg); color: var(--success-text); }
+    .proj-spillover { background: var(--danger-bg); color: var(--danger-text); }
+    .proj-overcap { background: var(--warning-bg); color: var(--warning-text); }
+
+    .unserved-card { border: 1px solid var(--danger-text); background: #fff5f5; border-radius: 8px; padding: 16px; margin-top: 20px; }
+    .unserved-card h3 { margin-top: 0; color: var(--danger-text); font-size: 1.05rem; }
+    .unserved-card.clear { border-color: #2f855a; background: #f0fff4; }
+    .unserved-card.clear h3 { color: #2f855a; }
+    table.unserved-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
+    table.unserved-table th, table.unserved-table td { padding: 6px 10px; border: 1px solid var(--border-color); text-align: left; }
+    table.unserved-table th { background: #fff; }
+    .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
+    .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
   </style>
 </head>
 <body>
@@ -142,9 +156,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Predictive Capacity Planner & Cohort Optimiser</div>
+      <div class="subtitle">Interactive 2-Line Capacity Planner & Cohort Optimiser</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Local Browser Storage</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict 2-Line Cap Active</span>
   </header>
 
   <!-- Input Section -->
@@ -189,23 +203,23 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   <!-- Pre-Sort Lock Section -->
   <div class="card" id="lockCard" style="display:none;">
     <div class="step-header">
-      <span>STEP 1: PRE-SORT CAPACITY LOCK & OPTIMAL THIRD ADVISOR</span>
+      <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Review student demand density per Third. Lock in the exact total number of sections to offer across the academic year. The advisor recommends optimal Third placement based on peak student availability.
+      Click term buttons to manually lock section placement. AI-advised terms carry an orange border (<span style="color:var(--accent); font-weight:bold;">T1</span>). Review real-time unserved spillover projections.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation with Locked Capacities</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation Across Max 2 Full Lines</button>
     </div>
   </div>
 
   <!-- Step 2 Schedule Output -->
   <div class="card" id="step2Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 2: FINAL OPTIMISED SCHEDULE</span>
+      <span>STEP 2: FINAL OPTIMISED 2-LINE SCHEDULE</span>
       <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
     </div>
     <div id="allocationOutput"></div>
@@ -213,16 +227,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 </div>
 
 <script>
+  const MAX_CONCURRENT_SECTIONS = 2; // hard cap: never more than 2 groups of the same subject running at once
+
   let currentSchedule = null;
+  let currentUnserved = [];
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
+  let manualLocks = {}; // Tracks user click toggles per subject { "10ART1": ["Third 1", "Third 2"] }
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v2', this.value);
+    localStorage.setItem('schola_csv_pseudo_v3', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v2');
+    const saved = localStorage.getItem('schola_csv_pseudo_v3');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -260,11 +278,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
   }
 
-  // STEP 1: PRE-SORT ANALYSIS & LOCK TABLE GENERATOR
+  // STEP 1: PRE-SORT ANALYSIS & INTERACTIVE LOCK MATRIX
   function generatePreSortLockTable() {
     parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
     const bounds = getBounds();
     subjectDemandSummary = {};
+    manualLocks = {};
 
     parsedStudentCache.forEach(st => {
       const tNum = extractTihoiTerm(st.tihoi);
@@ -282,6 +301,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
+    // Initialise manual locks based on AI advice
+    Object.keys(subjectDemandSummary).forEach(subj => {
+      const data = subjectDemandSummary[subj];
+      const suggestedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
+      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+      manualLocks[subj] = rankedThirds.slice(0, suggestedCount);
+    });
+
     renderLockTable(bounds);
   }
 
@@ -294,9 +321,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             <th>Subject Code</th>
             <th>Total Demand</th>
             <th>Term Availability (T1 / T2 / T3)</th>
-            <th>Suggested Annual Sections</th>
-            <th>Lock Total Sections</th>
-            <th>Optimal Placement Advice</th>
+            <th>Manual Click Lock</th>
+            <th>Dynamic Capacity Projection</th>
           </tr>
         </thead>
         <tbody>`;
@@ -305,21 +331,21 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     sortedSubjects.forEach(subj => {
       const data = subjectDemandSummary[subj];
-      // Corrected Formula: Calculates total annual sections needed based on target class size
-      const suggestedCount = Math.max(1, Math.ceil(data.total / bounds.opt));
+      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+      const advisedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
+      const advisedThirds = rankedThirds.slice(0, advisedCount);
 
       html += `
         <tr>
           <td><strong>${subj}</strong></td>
           <td>${data.total} choices</td>
           <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
-          <td>${suggestedCount} section(s) total</td>
           <td>
-            <input type="number" id="lock_${subj}" value="${suggestedCount}" min="0" max="9">
+            <button id="btn_${subj}_T1" class="toggle-btn ${advisedThirds.includes('Third 1') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 1')">T1</button>
+            <button id="btn_${subj}_T2" class="toggle-btn ${advisedThirds.includes('Third 2') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 2')">T2</button>
+            <button id="btn_${subj}_T3" class="toggle-btn ${advisedThirds.includes('Third 3') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 3')">T3</button>
           </td>
-          <td id="advice_${subj}">
-            <span class="recommendation-tag">Analyse on Lock</span>
-          </td>
+          <td id="projection_${subj}"></td>
         </tr>`;
     });
 
@@ -327,145 +353,401 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     container.innerHTML = html;
     document.getElementById('lockCard').style.display = 'block';
 
-    sortedSubjects.forEach(subj => {
-      const el = document.getElementById(`lock_${subj}`);
-      el.addEventListener('input', () => updateThirdAdvice(subj));
-      updateThirdAdvice(subj);
-    });
+    // Update active button UI states and projection figures
+    sortedSubjects.forEach(subj => updateRowUI(subj, bounds));
   }
 
-  function updateThirdAdvice(subj) {
-    const lockedCount = parseInt(document.getElementById(`lock_${subj}`).value) || 0;
-    const data = subjectDemandSummary[subj];
-    const adviceCell = document.getElementById(`advice_${subj}`);
-
-    if (lockedCount === 0) {
-      adviceCell.innerHTML = `<span class="recommendation-tag" style="background:#fed7d7; color:#9b2c2c;">Do Not Offer</span>`;
-      return;
-    }
-
-    const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-
-    if (lockedCount >= 3) {
-      adviceCell.innerHTML = `<span class="recommendation-tag">Run in All 3 Thirds</span>`;
-    } else if (lockedCount === 2) {
-      adviceCell.innerHTML = `<span class="recommendation-tag">Offer in ${rankedThirds[0]} & ${rankedThirds[1]}</span>`;
-    } else if (lockedCount === 1) {
-      adviceCell.innerHTML = `<span class="recommendation-tag">Offer in ${rankedThirds[0]} Only</span>`;
-    } else {
-      adviceCell.innerHTML = `<span class="recommendation-tag">Multi-section (${lockedCount}) split across Thirds</span>`;
-    }
-  }
-
-  // STEP 2: EXECUTE SORTING WITH LOCKED SECTION CAPACITIES
-  function executeLockedLineSorting() {
+  function toggleTermLock(subj, term) {
     const bounds = getBounds();
-    const students = parsedStudentCache;
+    if (!manualLocks[subj]) manualLocks[subj] = [];
 
-    const lockedSectionCounts = {};
-    const assignedThirdsPerSubject = {};
+    const index = manualLocks[subj].indexOf(term);
+    if (index > -1) {
+      manualLocks[subj].splice(index, 1); // Remove term
+    } else {
+      manualLocks[subj].push(term); // Add term
+    }
 
-    Object.keys(subjectDemandSummary).forEach(subj => {
-      const count = parseInt(document.getElementById(`lock_${subj}`).value) || 0;
-      lockedSectionCounts[subj] = count;
+    updateRowUI(subj, bounds);
+  }
 
-      const data = subjectDemandSummary[subj];
-      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+  function updateRowUI(subj, bounds) {
+    const activeTerms = manualLocks[subj] || [];
 
-      if (count >= 3) {
-        assignedThirdsPerSubject[subj] = ["Third 1", "Third 2", "Third 3"];
-      } else if (count === 2) {
-        assignedThirdsPerSubject[subj] = [rankedThirds[0], rankedThirds[1]];
-      } else if (count === 1) {
-        assignedThirdsPerSubject[subj] = [rankedThirds[0]];
-      } else {
-        assignedThirdsPerSubject[subj] = [];
+    // Update button visual states
+    ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
+      const termCode = `T${idx + 1}`;
+      const btn = document.getElementById(`btn_${subj}_${termCode}`);
+      if (btn) {
+        if (activeTerms.includes(term)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
       }
     });
 
-    const activeSubjects = Object.keys(lockedSectionCounts).filter(s => lockedSectionCounts[s] > 0).sort();
-    const fixedLine = {};
-    activeSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
+    // Update Dynamic Leftover Projection
+    // Each locked Third can hold up to MAX_CONCURRENT_SECTIONS physical
+    // classes of this subject running side-by-side (e.g. two teachers,
+    // two rooms) rather than one class growing past Max Class Size.
+    const data = subjectDemandSummary[subj];
+    const projCell = document.getElementById(`projection_${subj}`);
+    const offeredCapacity = activeTerms.length * bounds.opt;
+    const hardCeiling = activeTerms.length * bounds.max * MAX_CONCURRENT_SECTIONS;
+    const netSpillover = data.total - offeredCapacity;
 
+    if (activeTerms.length === 0) {
+      projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
+    } else if (netSpillover > 0) {
+      if (data.total <= hardCeiling) {
+        projCell.innerHTML = `<span class="projection-pill proj-overcap">Needs 2nd Concurrent Section (${data.total}/${hardCeiling} Max)</span>`;
+      } else {
+        projCell.innerHTML = `<span class="projection-pill proj-spillover">${data.total - hardCeiling} Unserved Choices (exceeds 2 sections)</span>`;
+      }
+    } else {
+      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${offeredCapacity} Opt)</span>`;
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // STEP 2: EXECUTE SORTING CONSTRAINED TO MAX 2 LINES
+  //
+  // A student has up to 4 subjects but only 2 available Thirds (their
+  // off-campus rotation Third is excluded). Each subject sits on a fixed
+  // Line, so a student really only has 2 Thirds x 2 Lines = 4 usable slots
+  // out of the 6 in the full matrix. The allocator enforces that a student
+  // can never hold two subjects in the same Third+Line slot.
+  //
+  // Within one Third+Line, a subject isn't a single roster — it's an array
+  // of up to MAX_CONCURRENT_SECTIONS physical class groups (e.g. two
+  // teachers running 10ART1 at once). A subject fills its first section
+  // toward Optimal Target before a second section is opened; once both
+  // sections are at Max Class Size, that slot is genuinely full.
+  //
+  // The allocator runs several randomised passes plus a swap-repair pass
+  // to push coverage as close to complete as the lock choices allow, and
+  // reports exactly what's left unplaced and why.
+  // ---------------------------------------------------------------------
+
+  function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function slotKey(third, line) { return `${third}|${line}`; }
+
+  // Place a student into a subject's roster for a given Third+Line,
+  // filling the first section toward Optimal Target, then opening a
+  // second concurrent section (capped at MAX_CONCURRENT_SECTIONS) once
+  // the first is at Max Class Size. Returns false if both sections are
+  // already at Max — a genuine capacity failure.
+  function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds) {
+    if (!schedule[third][line][subj]) schedule[third][line][subj] = [[]];
+    const sections = schedule[third][line][subj];
+
+    let target = sections.find(sec => sec.length < bounds.opt);
+    if (!target) target = sections.find(sec => sec.length < bounds.max);
+    if (!target) {
+      if (sections.length < MAX_CONCURRENT_SECTIONS) {
+        target = [];
+        sections.push(target);
+      } else {
+        return false;
+      }
+    }
+
+    target.push(studentId);
+    counts[subj][third] = (counts[subj][third] || 0) + 1;
+    return true;
+  }
+
+  function removeFromSubjectThird(schedule, counts, subj, third, line, studentId) {
+    const sections = schedule[third]?.[line]?.[subj];
+    if (!sections) return false;
+    for (const sec of sections) {
+      const idx = sec.indexOf(studentId);
+      if (idx > -1) {
+        sec.splice(idx, 1);
+        counts[subj][third]--;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Balance Lines by total projected enrolment, not just subject count
+  function assignLinesByLoad(activeSubjects) {
+    const order = activeSubjects.slice().sort(
+      (a, b) => (subjectDemandSummary[b]?.total || 0) - (subjectDemandSummary[a]?.total || 0)
+    );
+    const lineTotals = { "Line 1": 0, "Line 2": 0 };
+    const fixedLine = {};
+    order.forEach(subj => {
+      const target = lineTotals["Line 1"] <= lineTotals["Line 2"] ? "Line 1" : "Line 2";
+      fixedLine[subj] = target;
+      lineTotals[target] += (subjectDemandSummary[subj]?.total || 0);
+    });
+    return fixedLine;
+  }
+
+  function attemptAllocation(studentOrder, fixedLine, bounds) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
       "Third 2": { "Line 1": {}, "Line 2": {} },
       "Third 3": { "Line 1": {}, "Line 2": {} }
     };
+    const counts = {};
+    Object.keys(manualLocks).forEach(s => counts[s] = { "Third 1": 0, "Third 2": 0, "Third 3": 0 });
 
-    students.forEach(st => {
+    const studentSlots = {};
+    const placements = {};
+    const unserved = [];
+
+    studentOrder.forEach(st => {
       const tNum = extractTihoiTerm(st.tihoi);
       const tihoiThird = `Third ${tNum}`;
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      const termLoad = {};
-      availThirds.forEach(t => termLoad[t] = 0);
+      studentSlots[st.id] = studentSlots[st.id] || new Set();
+      placements[st.id] = placements[st.id] || [];
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      validChoices.forEach(subj => {
-        const permittedThirds = assignedThirdsPerSubject[subj] || [];
-        if (permittedThirds.length === 0) return;
+      // Most-constrained-first: place the subject with fewest legal Thirds first
+      const withScore = validChoices.map(subj => {
+        const permitted = manualLocks[subj] || [];
+        const legal = availThirds.filter(t => permitted.includes(t));
+        return { subj, legal };
+      }).sort((a, b) => a.legal.length - b.legal.length);
 
-        let candidateThirds = availThirds.filter(t => permittedThirds.includes(t));
-        if (candidateThirds.length === 0) candidateThirds = [...permittedThirds];
-
-        candidateThirds.sort((a, b) => termLoad[a] - termLoad[b]);
-        const chosenThird = candidateThirds[0];
-        termLoad[chosenThird]++;
-
+      withScore.forEach(({ subj, legal }) => {
+        if (legal.length === 0) {
+          unserved.push({ id: st.id, subj, reason: 'Not offered / clashes with off-campus term' });
+          return;
+        }
         const line = fixedLine[subj] || "Line 1";
-        if (!schedule[chosenThird][line][subj]) schedule[chosenThird][line][subj] = [];
-        schedule[chosenThird][line][subj].push(st.id);
+
+        // A student can never occupy the same Third+Line slot twice
+        const freeThirds = legal.filter(t => !studentSlots[st.id].has(slotKey(t, line)));
+        if (freeThirds.length === 0) {
+          unserved.push({ id: st.id, subj, reason: 'Line clash with another subject choice' });
+          return;
+        }
+
+        const hardCeiling = bounds.max * MAX_CONCURRENT_SECTIONS;
+        const underOpt = freeThirds.filter(t => (counts[subj][t] || 0) < bounds.opt);
+        const underCeiling = freeThirds.filter(t => (counts[subj][t] || 0) < hardCeiling);
+        const pool = underOpt.length ? underOpt : (underCeiling.length ? underCeiling : null);
+
+        if (!pool) {
+          unserved.push({ id: st.id, subj, reason: `At capacity in every legal Third (${MAX_CONCURRENT_SECTIONS} concurrent sections full)` });
+          return;
+        }
+
+        pool.sort((a, b) => (counts[subj][a] || 0) - (counts[subj][b] || 0));
+        const chosenThird = pool[0];
+
+        const placed = placeInSubjectThird(schedule, counts, subj, chosenThird, line, st.id, bounds);
+        if (!placed) {
+          unserved.push({ id: st.id, subj, reason: `At capacity in every legal Third (${MAX_CONCURRENT_SECTIONS} concurrent sections full)` });
+          return;
+        }
+
+        studentSlots[st.id].add(slotKey(chosenThird, line));
+        placements[st.id].push({ subj, third: chosenThird, line });
       });
     });
 
-    currentSchedule = schedule;
-    renderStep2(schedule, bounds);
+    return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function renderStep2(schedule, bounds) {
+  function scoreAttempt(result, bounds) {
+    let variance = 0, n = 0;
+    Object.values(result.counts).forEach(byThird => {
+      Object.values(byThird).forEach(c => {
+        if (c > 0) { variance += Math.pow(c - bounds.opt, 2); n++; }
+      });
+    });
+    return { unserved: result.unserved.length, variance: n ? variance / n : 0 };
+  }
+
+  // Local-search repair: for each remaining unserved student, look for a
+  // student already sitting in a full slot who has spare room in an
+  // alternate legal Third, and bump them to free the seat.
+  function repairSwaps(result, fixedLine, bounds, maxPasses = 4) {
+    for (let pass = 0; pass < maxPasses; pass++) {
+      let improved = false;
+
+      result.unserved = result.unserved.filter(u => {
+        const st = parsedStudentCache.find(s => s.id === u.id);
+        if (!st) return true;
+        const subj = u.subj;
+        const permitted = manualLocks[subj] || [];
+        const tNum = extractTihoiTerm(st.tihoi);
+        const tihoiThird = `Third ${tNum}`;
+        const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+        const line = fixedLine[subj] || "Line 1";
+        const legal = availThirds.filter(
+          t => permitted.includes(t) && !result.studentSlots[st.id].has(slotKey(t, line))
+        );
+
+        const hardCeiling = bounds.max * MAX_CONCURRENT_SECTIONS;
+
+        for (const third of legal) {
+          const sections = result.schedule[third][line][subj] || [];
+          const roster = sections.flat();
+
+          for (const occupantId of roster) {
+            const occ = parsedStudentCache.find(s => s.id === occupantId);
+            if (!occ) continue;
+            const occTNum = extractTihoiTerm(occ.tihoi);
+            const occTihoiThird = `Third ${occTNum}`;
+            const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== occTihoiThird);
+            const altThirds = occAvail.filter(t =>
+              t !== third && permitted.includes(t) &&
+              !result.studentSlots[occupantId].has(slotKey(t, line)) &&
+              (result.counts[subj][t] || 0) < hardCeiling
+            );
+
+            if (altThirds.length > 0) {
+              altThirds.sort((a, b) => (result.counts[subj][a] || 0) - (result.counts[subj][b] || 0));
+              const moveTo = altThirds[0];
+
+              // Move the existing occupant out, then into the alternate Third
+              removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
+              result.studentSlots[occupantId].delete(slotKey(third, line));
+              placeInSubjectThird(result.schedule, result.counts, subj, moveTo, line, occupantId, bounds);
+              result.studentSlots[occupantId].add(slotKey(moveTo, line));
+
+              // Seat the previously-unserved student in the freed slot
+              placeInSubjectThird(result.schedule, result.counts, subj, third, line, st.id, bounds);
+              result.studentSlots[st.id].add(slotKey(third, line));
+              result.placements[st.id].push({ subj, third, line });
+
+              improved = true;
+              return false; // resolved — drop from the unserved list
+            }
+          }
+        }
+        return true; // still unserved
+      });
+
+      if (!improved) break;
+    }
+    return result;
+  }
+
+  function executeLockedLineSorting() {
+    const bounds = getBounds();
+    const students = parsedStudentCache;
+    const activeSubjects = Object.keys(manualLocks).filter(s => manualLocks[s].length > 0).sort();
+    const fixedLine = assignLinesByLoad(activeSubjects);
+
+    const ATTEMPTS = 25;
+    let best = null;
+    let bestScore = null;
+
+    for (let i = 0; i < ATTEMPTS; i++) {
+      const order = i === 0 ? students.slice() : shuffleArray(students);
+      const result = attemptAllocation(order, fixedLine, bounds);
+      const score = scoreAttempt(result, bounds);
+      if (!bestScore ||
+          score.unserved < bestScore.unserved ||
+          (score.unserved === bestScore.unserved && score.variance < bestScore.variance)) {
+        best = result;
+        bestScore = score;
+      }
+    }
+
+    best = repairSwaps(best, fixedLine, bounds);
+
+    currentSchedule = best.schedule;
+    currentUnserved = best.unserved;
+    renderStep2(best.schedule, bounds, best.unserved, students.length);
+  }
+
+  function renderStep2(schedule, bounds, unserved, totalStudents) {
     const out = document.getElementById('allocationOutput');
     let html = '';
+
+    const totalChoices = parsedStudentCache.reduce(
+      (sum, st) => sum + st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4).length, 0
+    );
+    const placedChoices = totalChoices - unserved.length;
+    const coveragePct = totalChoices ? Math.round((placedChoices / totalChoices) * 100) : 100;
+
+    html += `<div class="stat-strip">
+      <div class="stat-chip">Students: <b>${totalStudents}</b></div>
+      <div class="stat-chip">Choices placed: <b>${placedChoices} / ${totalChoices}</b> (${coveragePct}%)</div>
+      <div class="stat-chip">Unplaced: <b>${unserved.length}</b></div>
+    </div>`;
 
     for (const [thirdName, lines] of Object.entries(schedule)) {
       html += `<div style="margin-bottom:20px;">`;
       html += `<h3 style="color:#2b6cb0; border-bottom:1px solid #cbd5e0; padding-bottom:4px; margin-bottom:10px;">${thirdName}</h3>`;
       html += `<div class="third-grid">`;
 
-      for (const [lineName, classes] of Object.entries(lines)) {
+      ["Line 1", "Line 2"].forEach(lineName => {
+        const classes = lines[lineName] || {};
         html += `<div class="line-box">`;
         html += `<h4>${lineName}</h4>`;
 
-        const activeClasses = Object.keys(classes).filter(k => classes[k].length > 0);
+        const activeClasses = Object.keys(classes).filter(k => classes[k].some(sec => sec.length > 0));
         if (activeClasses.length === 0) {
           html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active classes assigned to this line.</p>`;
         } else {
           for (const subj of activeClasses) {
-            const roster = classes[subj];
-            let count = roster.length;
-            let metricClass = "metric-good";
-            let statusText = `${count} Enrolled`;
+            const sections = classes[subj].filter(sec => sec.length > 0);
+            const multiSection = sections.length > 1;
 
-            if (count < bounds.min && count > 0) {
-              metricClass = "metric-danger";
-              statusText = `${count} (Below Min ${bounds.min})`;
-            } else if (count > bounds.max) {
-              metricClass = "metric-warn";
-              statusText = `${count} (Exceeds Max ${bounds.max})`;
-            }
+            sections.forEach((roster, secIdx) => {
+              const count = roster.length;
+              let metricClass = "metric-good";
+              let statusText = `${count} Enrolled`;
 
-            html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
-            html += `<div><span class="badge">${subj}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
-            html += `<div style="margin-top:4px;">`;
-            roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
-            html += `</div></div>`;
+              if (count < bounds.min) {
+                metricClass = "metric-danger";
+                statusText = `${count} (Below Min ${bounds.min})`;
+              } else if (count > bounds.max) {
+                metricClass = "metric-warn";
+                statusText = `${count} (Exceeds Max ${bounds.max})`;
+              }
+
+              const label = multiSection ? `${subj} — Group ${String.fromCharCode(65 + secIdx)}` : subj;
+
+              html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
+              html += `<div><span class="badge">${label}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
+              html += `<div style="margin-top:4px;">`;
+              roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
+              html += `</div></div>`;
+            });
           }
         }
 
         html += `</div>`;
-      }
+      });
+
       html += `</div></div>`;
+    }
+
+    if (unserved.length === 0) {
+      html += `<div class="unserved-card clear"><h3>✓ Every subject choice was placed</h3>
+        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit within the current locks and bounds.</p></div>`;
+    } else {
+      html += `<div class="unserved-card"><h3>⚠ ${unserved.length} choice(s) could not be placed</h3>
+        <table class="unserved-table"><thead><tr><th>Student</th><th>Subject</th><th>Reason</th></tr></thead><tbody>`;
+      unserved.forEach(u => {
+        html += `<tr><td>${u.id}</td><td>${u.subj}</td><td>${u.reason}</td></tr>`;
+      });
+      html += `</tbody></table>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; margin-bottom:0;">
+          Try opening an extra Term lock for the affected subject, or raising Max Class Size, then re-run Step 2.
+        </p></div>`;
     }
 
     out.innerHTML = html;
@@ -474,24 +756,30 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function exportToCSV() {
     if (!currentSchedule) return;
-    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject,Student Full Name\n";
+    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject,Group,Student Full Name,Status\n";
 
     for (const [thirdName, lines] of Object.entries(currentSchedule)) {
       for (const [lineName, classes] of Object.entries(lines)) {
-        for (const [subj, roster] of Object.entries(classes)) {
-          if (roster.length > 0) {
+        for (const [subj, sections] of Object.entries(classes)) {
+          sections.forEach((roster, secIdx) => {
+            const groupLabel = sections.filter(s => s.length > 0).length > 1
+              ? `Group ${String.fromCharCode(65 + secIdx)}` : "";
             roster.forEach(studentId => {
-              csvContent += `"${thirdName}","${lineName}","${subj}","${studentId}"\n`;
+              csvContent += `"${thirdName}","${lineName}","${subj}","${groupLabel}","${studentId}","Placed"\n`;
             });
-          }
+          });
         }
       }
     }
 
+    (currentUnserved || []).forEach(u => {
+      csvContent += `"—","—","${u.subj}","${u.id}","Unplaced: ${u.reason}"\n`;
+    });
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Optimised_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_2Line_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
