@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Pre-Allocated Closed-Set Planner</title>
+  <title>Schola Matrix — Equalised & Auto-Purged Senior Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -124,7 +124,6 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    /* 6-LINE MASTER GRID DISPLAY */
     .master-grid-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -153,7 +152,6 @@
 
     .class-badges-flex { display: flex; flex-wrap: wrap; gap: 8px; }
 
-    /* HOVER TOOLTIP CLASS BADGE */
     .class-badge {
       position: relative;
       display: inline-flex;
@@ -190,7 +188,6 @@
       color: #2b6cb0;
     }
 
-    /* FLOATING ROSTER TOOLTIP CARD */
     .class-badge .tooltip-card {
       visibility: hidden;
       opacity: 0;
@@ -247,7 +244,7 @@
     .action-btn-sm:hover { background: #553c9a; }
     .btn-danger-sm { background: #e53e3e; }
     .btn-danger-sm:hover { background: #c53030; }
-    .badge-disabled { background: #e2e8f0; color: #a0aec0; text-decoration: line-through; }
+    .badge-disabled { background: #e2e8f0; color: #e53e3e; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -256,11 +253,11 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Pre-Allocated Closed-Set Container Architecture</div>
+      <div class="subtitle">Water-Filling Roster Equaliser & Auto-Purge ($N \le 5$) Engine</div>
     </div>
     <div>
       <span class="build-badge">
-        <span>●</span> Build v3.0.0 — Aug 12, 2026 (20:44)
+        <span>●</span> Build v3.1.0 — Aug 12, 2026 (20:50)
       </span>
     </div>
   </header>
@@ -279,7 +276,7 @@
       Paste tab-delimited spreadsheet data: <code>First Name \t Last Name \t Subj1 \t Subj2 \t Subj3 \t Subj4 \t Subj5 \t Subj6</code>
     </p>
 
-    <!-- PSEUDONYMISED TEXTAREAS -->
+    <!-- PSEUDONYMISED TEXTAREAS WITH LOCAL STORAGE SYNC -->
     <textarea id="csvInput_Y11" oninput="saveLocalState()">Avery	Alpha	11ENG_A	11MAT_A	11SCI_A	11HIS_A	11ART_A	11TEC_A
 Blake	Beta	11ENG_B	11MAT_B	11SCI_A	11BUS_A	11MUS_A	11HIS_A
 Cameron	Gamma	11ENG_A	11MAT_A	11SCI_B	11TEC_A	11DIG_A	11ART_A
@@ -314,7 +311,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     </div>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="parseAndFilterBorderlines()">Step 1: Parse Cohort & Lock Containers</button>
+      <button class="btn-step1" onclick="parseAndFilterBorderlines()">Step 1: Parse Cohort & Review Enrolments</button>
       <button class="btn-reset" onclick="resetLocalState()">Clear Saved Cache & Reset Defaults</button>
     </div>
   </div>
@@ -322,14 +319,14 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
   <!-- Step 1.5 Decision & Selective Call-Up Panel -->
   <div class="card" id="borderlineCard" style="display:none;">
     <div class="step-header">
-      <span>STEP 1.5: CLOSED-SET CONTAINER LOCKS & TARGETED LINE RESTRICTIONS</span>
+      <span>STEP 1.5: AUTOMATED LOW-ENROLMENT PURGE ($N \le 5$) & LINE LOCKS</span>
     </div>
 
     <!-- Borderline Alert Box -->
     <div class="borderline-box">
-      <h4>⚠️ Class Container Review (Set to 0 to disable miscoded subjects)</h4>
+      <h4>⚠️ Subject Section Review ($N \le 5$ Auto-Purged to 0 Sections)</h4>
       <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:8px;">
-        Define exact class section counts. Phase 1 instantiates these containers permanently prior to student processing [source: 1]:
+        Courses with 5 or fewer total choices ($N \le 5$) are automatically set to 0 sections. Affected students are re-routed to alternative choices:
       </p>
       <div id="borderlineListContainer"></div>
     </div>
@@ -352,21 +349,21 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     <div id="activeConstraintsBadgeContainer" style="margin-top:8px;"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeClosedSetSorting()">Step 2: Execute Closed-Set Enrolment Engine</button>
+      <button class="btn-step2" onclick="executeClosedSetSorting()">Step 2: Generate Equalised Master Grid</button>
     </div>
   </div>
 
   <!-- Telemetry Progress Card -->
   <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong style="color:var(--primary);">Closed-Set Enrolment Engine in Progress...</strong>
+      <strong style="color:var(--primary);">Equalising Roster Densities...</strong>
       <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Trial 0 / 15</span>
     </div>
     <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
       <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
     </div>
     <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
-      Enrolling Students strictly into Pre-Allocated Containers...
+      Water-Filling Equalisation across Active Parallel Sections...
     </div>
   </div>
 
@@ -406,7 +403,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
   let currentSchedule = null;
   let currentUnserved = [];
 
-  const STORAGE_KEY = 'schola_matrix_v300_state';
+  const STORAGE_KEY = 'schola_matrix_v310_state';
 
   function saveLocalState() {
     const state = {
@@ -508,16 +505,23 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
       const demand = subjectDemandSummary[subj];
       const opt = bounds.opt;
 
+      // AUTOMATED LOW-ENROLMENT PURGE RULE: If total demand <= 5, auto-set sections to 0
       if (manualLocks[subj] === undefined) {
-        manualLocks[subj] = Math.max(1, Math.ceil(demand / opt));
+        if (demand <= 5) {
+          manualLocks[subj] = 0; // Auto-cancel non-viable courses
+        } else {
+          manualLocks[subj] = Math.max(1, Math.ceil(demand / opt));
+        }
       }
 
       const currentCount = manualLocks[subj];
-      const statusBadge = currentCount === 0 ? `<span class="badge badge-disabled">DISABLED (0 Sections)</span>` : `<b>${currentCount} Section(s)</b>`;
+      const statusBadge = currentCount === 0 
+        ? `<span class="badge badge-disabled">AUTO-CANCELLED (N ≤ 5)</span>` 
+        : `<b>${currentCount} Section(s)</b>`;
 
       html += `<li style="margin-bottom:6px;">
         <strong>${subj}</strong>: ${demand} student choice(s) → ${statusBadge}
-        <button class="action-btn-sm" style="margin-left:8px;" onclick="setCustomSectionCount('${subj}')">Set Custom Sections</button>
+        <button class="action-btn-sm" style="margin-left:8px;" onclick="setCustomSectionCount('${subj}')">Override Section Count</button>
       </li>`;
     });
 
@@ -528,7 +532,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
 
   function setCustomSectionCount(subj) {
     const current = manualLocks[subj] !== undefined ? manualLocks[subj] : 1;
-    const input = prompt(`Enter section count for ${subj} (Set to 0 to disable miscoded subjects):`, current);
+    const input = prompt(`Enter section count for ${subj} (Set to 0 to cancel/disable course):`, current);
     if (input !== null) {
       const parsed = parseInt(input, 10);
       if (!isNaN(parsed) && parsed >= 0) {
@@ -575,7 +579,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     const students = cohortData[activeTab];
 
     progressBar.style.width = '50%';
-    statusText.innerText = 'Phase 1: Pre-Instantiating Closed Class Containers...';
+    statusText.innerText = 'Phase 1: Pre-Instantiating Closed Containers...';
     await new Promise(res => setTimeout(res, 100));
 
     const { schedule, unserved } = runTwoPhaseClosedSetEngine(students, bounds);
@@ -591,7 +595,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     renderDiagnostics();
   }
 
-  // TWO-PHASE PRE-ALLOCATED CLOSED-SET CONTAINER ENGINE
+  // TWO-PHASE PRE-ALLOCATED CLOSED-SET CONTAINER ENGINE WITH WATER-FILLING EQUALISATION
   function runTwoPhaseClosedSetEngine(students, bounds) {
     // =========================================================================
     // PHASE 1: STATIC CLASS CONTAINER INSTANTIATION (Pre-Allocation)
@@ -599,10 +603,9 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     const schedule = {};
     LINES.forEach(l => schedule[l] = {});
     
-    // Track total line counts to balance initial container placement
     const lineContainerCounts = { "Line 1": 0, "Line 2": 0, "Line 3": 0, "Line 4": 0, "Line 5": 0, "Line 6": 0 };
 
-    // Sort active subjects by demand descending to place scarce/high-demand subjects first
+    // Ignore courses with manualLocks === 0 (cancelled or N <= 5)
     const activeSubjects = Object.keys(manualLocks)
       .filter(s => manualLocks[s] > 0)
       .sort((a, b) => (subjectDemandSummary[b] || 0) - (subjectDemandSummary[a] || 0));
@@ -611,23 +614,16 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
       const totalSections = manualLocks[subj];
       let assignedLines = [];
 
-      // If user specified an explicit line lock
       if (selectiveConstraints[subj]?.lock) {
         assignedLines.push(selectiveConstraints[subj].lock);
       } else {
-        // Pick eligible lines that are not forbidden
         let eligibleLines = LINES.filter(l => selectiveConstraints[subj]?.forbid !== l);
-        
-        // Sort eligible lines by lowest current container density
         eligibleLines.sort((a, b) => lineContainerCounts[a] - lineContainerCounts[b]);
-        
-        // Pick the top 'totalSections' lines
         assignedLines = eligibleLines.slice(0, totalSections);
       }
 
-      // Instantiate exact class arrays in Phase 1
       assignedLines.forEach(line => {
-        schedule[line][subj] = [[]]; // Pre-allocated container
+        schedule[line][subj] = [[]]; // Instantiate closed container
         lineContainerCounts[line]++;
       });
     });
@@ -642,9 +638,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     students.forEach(st => {
       const validChoices = st.subjects.filter(s => manualLocks[s] > 0);
 
-      // Rank student choices by Relative Scarcity Index (RSI)
       const ranked = validChoices.map(s => {
-        // Find pre-allocated lines that contain a container for this subject
         const preAllocatedLines = LINES.filter(l => 
           schedule[l][s] && schedule[l][s].length > 0 && !studentSlots[st.id].has(l)
         );
@@ -653,30 +647,53 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
       }).sort((a, b) => a.available.length - b.available.length || b.demand - a.demand);
 
       ranked.forEach(({ subj, available }) => {
-        // If no pre-allocated container is reachable on student's open lines, flag clash
         if (available.length === 0) {
           const targetLine = Object.keys(schedule).find(l => schedule[l][subj]);
           unserved.push({ 
             id: st.id, 
             subj, 
-            reason: targetLine ? `Line clash on pre-allocated class line (${targetLine})` : 'Course not offered' 
+            reason: targetLine ? `Line clash on pre-allocated line (${targetLine})` : 'Course cancelled/not offered' 
           });
           return;
         }
 
-        // Sort candidate lines by current student enrolment (Equalise Section Enrolments)
         available.sort((l1, l2) => getLineLoad(schedule, l1) - getLineLoad(schedule, l2));
         const chosenLine = available[0];
-        const container = schedule[chosenLine][subj][0]; // Target pre-allocated container
+        const container = schedule[chosenLine][subj][0];
 
-        // Enrolment Check: Target Optimal -> Soft Overflow to Hard Max
         if (container.length < bounds.max) {
           container.push(st.id);
           studentSlots[st.id].add(chosenLine);
         } else {
-          unserved.push({ id: st.id, subj, reason: 'Pre-allocated class container at hard maximum capacity' });
+          unserved.push({ id: st.id, subj, reason: 'Pre-allocated class container at maximum capacity' });
         }
       });
+    });
+
+    // =========================================================================
+    // PHASE 3: CROSS-LINE WATER-FILLING ROSTER EQUALISATION (Section Smoothing)
+    // =========================================================================
+    activeSubjects.forEach(subj => {
+      // Find all pre-allocated sections for this subject across all lines
+      const activeSections = [];
+      LINES.forEach(line => {
+        if (schedule[line][subj] && schedule[line][subj][0]) {
+          activeSections.push(schedule[line][subj][0]);
+        }
+      });
+
+      if (activeSections.length > 1) {
+        const pooledStudents = activeSections.flat();
+        const k = activeSections.length;
+
+        // Clear existing section rosters
+        activeSections.forEach(sec => sec.length = 0);
+
+        // Redistribute round-robin to guarantee |Size_i - Size_j| <= 1
+        pooledStudents.forEach((studentId, idx) => {
+          activeSections[idx % k].push(studentId);
+        });
+      }
     });
 
     return { schedule, unserved };
