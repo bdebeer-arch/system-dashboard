@@ -101,15 +101,24 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    .chart-row { margin-bottom: 12px; }
-    .chart-label { font-size: 0.85rem; font-weight: 600; color: #4a5568; display: flex; justify-content: space-between; margin-bottom: 3px; }
-    .chart-bar-bg { background: #e2e8f0; height: 16px; border-radius: 8px; overflow: hidden; position: relative; }
-    .chart-bar-fill { background: linear-gradient(90deg, #4299e1, #3182ce); height: 100%; border-radius: 8px; transition: width 0.4s ease; }
+    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+
+    .third-card {
+      background: #f8fafc; border: 1px solid var(--border-color);
+      border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center;
+    }
+
+    .third-card h3 { width: 100%; margin: 0 0 12px 0; color: #2b6cb0; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+
+    .pie-container { position: relative; width: 160px; height: 160px; margin: 10px 0; }
+    .pie-container svg { width: 100%; height: 100%; transform: rotate(-90deg); border-radius: 50%; }
+
+    .chart-legend { width: 100%; margin-top: 10px; font-size: 0.82rem; }
+    .legend-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .legend-color { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; }
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
     .badge-ent { background: #e9d8fd; color: #44337a; }
-
-    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 
     .line-box {
       background: white; border: 1px solid #e2e8f0; border-radius: 6px;
@@ -127,10 +136,6 @@
     .metric-good { background: var(--success-bg); color: var(--success-text); }
     .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
     .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
-
-    table.viability-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.88rem; }
-    table.viability-table th, table.viability-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
-    table.viability-table th { background: #edf2f7; color: #4a5568; }
   </style>
 </head>
 <body>
@@ -177,7 +182,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     </div>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise Total On-Campus Demand</button>
+      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise On-Campus Demand (Pie Charts)</button>
       <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Fixed-Line Allocation</button>
     </div>
   </div>
@@ -185,13 +190,13 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
   <!-- Step 1 Display -->
   <div class="card" id="step1Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 1: PRE-SORT ELECTIVE DEMAND & CONSOLIDATION ASSESSMENT</span>
+      <span>STEP 1: PRE-SORT ON-CAMPUS DEMAND BY THIRD (EXCLUDING TIHOI COHORTS)</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Evaluates overall demand against your minimum threshold (<span id="minThresholdLabel">6</span> students) to determine whether courses run full-year or consolidate into 1 or 2 Thirds.
+      Pie charts reflect exact elective requests per Third for on-campus students. Hover over legend items to inspect choice volumes.
     </p>
 
-    <div id="viabilityOutput"></div>
+    <div id="demandOutput" class="third-grid"></div>
   </div>
 
   <!-- Step 2 Display -->
@@ -209,13 +214,14 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
 
 <script>
   let currentSchedule = null;
+  const colorPalette = ['#3182ce', '#dd6b20', '#38a169', '#805ad5', '#d69e2e', '#e53e3e', '#319795', '#d6bcfa'];
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v18', this.value);
+    localStorage.setItem('schola_csv_v19', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v18');
+    const saved = localStorage.getItem('schola_csv_v19');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix();
   });
@@ -232,11 +238,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     return text.trim().split('\n').filter(l => l.trim().length > 0).map(line => {
       const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
       const studentName = `${parts[0]} ${parts[1]}`;
-      return { 
-        id: studentName, 
-        tihoi: parts[2], 
-        subjects: parts.slice(3) 
-      };
+      return { id: studentName, tihoi: parts[2], subjects: parts.slice(3) };
     });
   }
 
@@ -250,73 +252,86 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     return /10ent|ent1/i.test(subj);
   }
 
+  // STEP 1: PIE CHART DEMAND RENDERER PER THIRD
   function generateDemandMatrix() {
-    const bounds = getBounds();
-    document.getElementById('minThresholdLabel').textContent = bounds.min;
     const students = parseCSV(document.getElementById('csvInput').value);
-    
-    const totalSubjectDemand = {};
+    const demandPerThird = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
 
     students.forEach(st => {
-      st.subjects.forEach(subj => {
+      const tNum = extractTihoiTerm(st.tihoi);
+      const tihoiThird = `Third ${tNum}`;
+      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+
+      st.subjects.forEach((subj, idx) => {
         if (subj.toLowerCase() !== "tihoi") {
-          totalSubjectDemand[subj] = (totalSubjectDemand[subj] || 0) + 1;
+          const targetThird = availThirds[idx % availThirds.length];
+          demandPerThird[targetThird][subj] = (demandPerThird[targetThird][subj] || 0) + 1;
         }
       });
     });
 
-    renderStep1Heatmap(totalSubjectDemand, bounds);
+    renderPieCharts(demandPerThird);
   }
 
-  function renderStep1Heatmap(totalDemand, bounds) {
-    const out = document.getElementById('viabilityOutput');
-    let html = `
-      <table class="viability-table">
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th>Total On-Campus Requests</th>
-            <th>Demand Chart</th>
-            <th>Operational Viability & Consolidation Status</th>
-          </tr>
-        </thead>
-        <tbody>`;
+  function renderPieCharts(demandPerThird) {
+    const out = document.getElementById('demandOutput');
+    let html = '';
 
-    const sortedSubjs = Object.keys(totalDemand).sort();
-    const maxCount = Math.max(...Object.values(totalDemand), 1);
-    const minFor3Thirds = bounds.min * 3;
-    const minFor2Thirds = bounds.min * 2;
+    for (let t = 1; t <= 3; t++) {
+      const tKey = `Third ${t}`;
+      const thirdData = demandPerThird[tKey];
+      const totalRequests = Object.values(thirdData).reduce((a, b) => a + b, 0);
 
-    sortedSubjs.forEach(subj => {
-      const count = totalDemand[subj];
-      const barPct = Math.round((count / maxCount) * 100);
-      const isEnt = isEnterpriseSubject(subj);
+      html += `<div class="third-card"><h3>${tKey}</h3>`;
 
-      let statusBadge = '';
-      if (count >= minFor3Thirds) {
-        statusBadge = `<span class="badge" style="background:var(--success-bg); color:var(--success-text);">Full Spread (Operates All 3 Thirds)</span>`;
-      } else if (count >= minFor2Thirds) {
-        statusBadge = `<span class="badge" style="background:var(--warning-bg); color:var(--warning-text);">Consolidates to 2 Thirds</span>`;
-      } else if (count >= bounds.min) {
-        statusBadge = `<span class="badge" style="background:var(--warning-bg); color:var(--warning-text);">Consolidates to 1 Third</span>`;
+      if (totalRequests === 0) {
+        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No on-campus elective requests.</p>`;
       } else {
-        statusBadge = `<span class="badge" style="background:var(--danger-bg); color:var(--danger-text);">Below Minimum (${count}/${bounds.min}) — Requires Waiver</span>`;
+        // SVG Pie Chart Calculation
+        let cumulativePercent = 0;
+        let svgSlices = '';
+        let legendHTML = '<div class="chart-legend">';
+
+        const sortedSubjects = Object.keys(thirdData).sort();
+
+        sortedSubjects.forEach((subj, i) => {
+          const count = thirdData[subj];
+          const percent = count / totalRequests;
+          const color = colorPalette[i % colorPalette.length];
+
+          // Calculate SVG strokeDasharray & strokeDashoffset for circle overlay
+          const strokeDash = `${percent * 100} 100`;
+          const strokeOffset = -cumulativePercent * 100;
+
+          svgSlices += `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" 
+            stroke="${color}" stroke-width="8" 
+            stroke-dasharray="${strokeDash}" stroke-dashoffset="${strokeOffset}">
+            <title>${subj}: ${count} requests (${Math.round(percent * 100)}%)</title>
+          </circle>`;
+
+          cumulativePercent += percent;
+
+          legendHTML += `
+            <div class="legend-item">
+              <span><span class="legend-color" style="background:${color};"></span><strong>${subj}</strong></span>
+              <span>${count} choices</span>
+            </div>`;
+        });
+
+        legendHTML += '</div>';
+
+        html += `
+          <div class="pie-container">
+            <svg viewBox="0 0 42 42">
+              ${svgSlices}
+            </svg>
+          </div>
+          ${legendHTML}`;
       }
 
-      html += `
-        <tr>
-          <td style="width:18%;"><strong>${subj}</strong> ${isEnt ? '<span class="badge badge-ent">Compulsory</span>' : ''}</td>
-          <td style="width:15%;">${count} requests</td>
-          <td style="width:32%;">
-            <div class="chart-bar-bg">
-              <div class="chart-bar-fill" style="width: ${barPct}%; ${isEnt ? 'background: linear-gradient(90deg, #9f7aea, #805ad5);' : ''}"></div>
-            </div>
-          </td>
-          <td style="width:35%;">${statusBadge}</td>
-        </tr>`;
-    });
+      html += `</div>`;
+    }
 
-    html += `</tbody></table>`;
     out.innerHTML = html;
     document.getElementById('step1Card').style.display = 'block';
   }
@@ -326,7 +341,6 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     const bounds = getBounds();
     const students = parseCSV(document.getElementById('csvInput').value);
     
-    // 1. Establish deterministic global subject-to-line locks
     const subjectTotals = {};
     students.forEach(st => {
       st.subjects.forEach(subj => {
@@ -339,12 +353,10 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     const uniqueSubjects = Object.keys(subjectTotals).sort();
     const fixedLineAssignments = {};
 
-    // Assign subjects permanently to Line 1 or Line 2 across the entire year
     uniqueSubjects.forEach((subj, idx) => {
       fixedLineAssignments[subj] = (idx % 2 === 0) ? "Line 1" : "Line 2";
     });
 
-    // 2. Determine active terms per subject based on demand thresholds
     const allowedThirdsPerSubject = {};
     uniqueSubjects.forEach(subj => {
       const count = subjectTotals[subj];
@@ -374,7 +386,6 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
           const validThirds = availThirds.filter(t => permittedThirds.includes(t));
           const chosenThird = (validThirds.length > 0) ? validThirds[0] : availThirds[0];
           
-          // Enforce permanent line assignment for the subject
           const lockedLine = fixedLineAssignments[subj] || "Line 1";
 
           let targetSubjKey = subj;
