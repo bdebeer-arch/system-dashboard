@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Equalised Line & Capacity Planner</title>
+  <title>Schola Matrix — Adaptive RLNS Planner & Diagnostic Dashboard</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -148,9 +148,6 @@
     table.unserved-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
     table.unserved-table th, table.unserved-table td { padding: 6px 10px; border: 1px solid var(--border-color); text-align: left; }
     table.unserved-table th { background: #fff; }
-    .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
-    .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
-    .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
 
     table.accounting-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.88rem; }
     table.accounting-table th, table.accounting-table td { padding: 10px 14px; border: 1px solid var(--border-color); text-align: center; }
@@ -164,6 +161,9 @@
     .isolation-panel { background: white; border: 1px solid #d6bcfa; border-radius: 8px; padding: 16px; margin-top: 15px; }
     .clash-meter-bg { background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; width: 100%; }
     .clash-meter-fill { height: 100%; background: #e53e3e; }
+    .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
+    .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
   </style>
 </head>
 <body>
@@ -172,9 +172,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Equalised Line & Term-Isolated Demand Planner</div>
+      <div class="subtitle">Non-Blocking Adaptive RLNS Planner & Diagnostic Dashboard</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Equalised Line Balancing Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Non-Blocking Micro-Task Engine</span>
   </header>
 
   <!-- Input Section -->
@@ -211,7 +211,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       </div>
       <div class="config-item">
         <label for="lineTrialsInput">Line-Trial Permutations</label>
-        <input type="number" id="lineTrialsInput" value="20" min="1" max="100">
+        <input type="number" id="lineTrialsInput" value="15" min="1" max="100">
       </div>
       <div class="config-item">
         <label for="rlnsCyclesInput">RLNS Cycles / Trial</label>
@@ -230,34 +230,34 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. High-demand subjects like <code>10ENT1</code> automatically calculate term-specific section needs ($\lceil \text{Demand}_t / 16 \rceil$) to ensure 4 sections per Third where required.
+      Lock section counts. Step 2 executes a non-blocking asynchronous search to prevent UI freezing during soft-overflow operations.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Audit Line Accounting</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Phase 3 Diagnostics</button>
     </div>
   </div>
 
   <!-- Telemetry Progress Card -->
   <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong style="color:var(--primary);">Dynamic Line-Equalised Solver in Progress...</strong>
-      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Trial 0 / 20</span>
+      <strong style="color:var(--primary);">Dynamic Line-Trial Search & RLNS Solver in Progress...</strong>
+      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Line Trial 0 / 15</span>
     </div>
     <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
       <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
     </div>
     <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
-      Equalising Line 1 vs Line 2 Enrolment Density...
+      Testing Line Bipartition 1 | Best Placed: 0
     </div>
   </div>
 
   <!-- Step 2 Schedule Output -->
   <div class="card" id="step2Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 2: FINAL OPTIMISED SCHEDULE & LINE ACCOUNTING</span>
+      <span>STEP 2: FINAL OPTIMISED SCHEDULE</span>
       <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
     </div>
     <div id="allocationOutput"></div>
@@ -296,11 +296,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v18', this.value);
+    localStorage.setItem('schola_csv_pseudo_v19', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v18');
+    const saved = localStorage.getItem('schola_csv_pseudo_v19');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -320,7 +320,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       min: parseInt(document.getElementById('minInput').value) || 9,
       opt: parseInt(document.getElementById('optInput').value) || 16,
       max: parseInt(document.getElementById('maxInput').value) || 20,
-      lineTrials: parseInt(document.getElementById('lineTrialsInput').value) || 20,
+      lineTrials: parseInt(document.getElementById('lineTrialsInput').value) || 15,
       rlnsCycles: parseInt(document.getElementById('rlnsCyclesInput').value) || 30
     };
   }
@@ -376,7 +376,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
-  // REFACTORED PRE-SORT LOCK CALCULATOR: Evaluates Third-specific demand directly
   function generatePreSortLockTable() {
     parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
     const bounds = getBounds();
@@ -401,7 +400,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
-    // Auto-calculate exact required sections per Third (e.g. 10ENT1 with 60 choices -> 4 sections in Third)
     Object.keys(subjectDemandSummary).forEach(subj => {
       const data = subjectDemandSummary[subj];
       manualLocks[subj] = { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
@@ -648,7 +646,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
-  // REFACTORED SOLVER: Enforces real-time Line 1 vs Line 2 student count equalisation
   function attemptAllocation(studentOrder, perThirdPrimaryLines, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
@@ -691,11 +688,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
           return;
         }
 
-        // Sort candidate options to equalise Line 1 vs Line 2 enrolment count in that Third
         options.sort((a, b) => {
           const l1Load = getLineEnrolmentCount(schedule, a.third, a.line);
           const l2Load = getLineEnrolmentCount(schedule, b.third, b.line);
-          if (l1Load !== l2Load) return l1Load - l2Load; // Pick line with lower current student count
+          if (l1Load !== l2Load) return l1Load - l2Load;
           return (counts[subj][a.third] || 0) - (counts[subj][b.third] || 0);
         });
 
@@ -817,7 +813,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               for (const altT of availThirds) {
                 for (const altL of ["Line 1", "Line 2"]) {
                   const altKey = slotKey(altT, altL);
-                  const altValidLines = getSubjectLinesForTerm(clash.subj, altT, primaryLines);
+                  const altValidLines = getSubjectLinesForTerm(clash.subj, altT, perThirdPrimaryLines);
                   if (altValidLines.includes(altL) && !result.studentSlots[st.id].has(altKey)) {
                     const placed = placeInSubjectThird(result.schedule, result.counts, clash.subj, altT, altL, st.id, bounds, true);
                     if (placed) {
@@ -844,6 +840,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
+  // NON-BLOCKING ASYNCHRONOUS SOLVER WITH FULL MICRO-TASK YIELDING
   async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -872,7 +869,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
         let result = attemptAllocation(order, perThirdPrimaryLines, bounds, false);
-        result = repairSwaps(result, perThirdPrimaryLines, bounds);
+        result = repairSwaps(result, perThirdPrimaryLines, bounds, 3); // Bounded repair pass count
 
         if (result.unserved.length < trialBestUnserved) {
           trialBest = result;
@@ -890,15 +887,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const pct = Math.round(((trial + 1) / bounds.lineTrials) * 100);
       progressBar.style.width = `${pct}%`;
       cycleBadge.innerText = `Line Trial ${trial + 1} / ${bounds.lineTrials}`;
-      statusText.innerText = `Equalising Line 1 vs Line 2 Enrolments | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
+      statusText.innerText = `Equalising Line Enrolments | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
       await new Promise(resolve => setTimeout(resolve, 20));
 
       if (globalBestUnserved === 0) break;
     }
 
+    // NON-BLOCKING SOFT-OVERFLOW PASS
     if (globalBestUnserved > 0) {
       statusText.innerText = "Executing final Soft-Overflow repair pass...";
-      await new Promise(resolve => setTimeout(resolve, 50));
+      progressBar.style.width = "95%";
+      await new Promise(resolve => setTimeout(resolve, 50)); // Yield to paint DOM
 
       const fallbackLines = {
         "Third 1": optimizeLineBipartitionPerThird("Third 1", 0),
@@ -907,11 +906,9 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       };
 
       let overflowResult = attemptAllocation(students, fallbackLines, bounds, true);
+      await new Promise(resolve => setTimeout(resolve, 20)); // Secondary yield
 
-      statusText.innerText = "Optimising soft-overflow allocations...";
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      overflowResult = repairSwaps(overflowResult, fallbackLines, bounds);
+      overflowResult = repairSwaps(overflowResult, fallbackLines, bounds, 2); // Bounded repair pass count
       if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
@@ -1209,7 +1206,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Equalised_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_NonBlocking_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
