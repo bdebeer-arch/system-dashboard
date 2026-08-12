@@ -336,29 +336,80 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
 
   // STEP 2: DYNAMIC BALANCED ALLOCATION ENGINE
   function executeLineSorting() {
-    const bounds = getBounds();
-    const students = parseCSV(document.getElementById('csvInput').value);
-    
-    const subjectTotals = {};
-    const subjectDemandByThird = {};
+  const bounds = getBounds();
+  const students = parseCSV(document.getElementById('csvInput').value);
+  
+  // 1. Line Assignment (Alternating subjects across Line 1 and Line 2)
+  const allSubjects = new Set();
+  students.forEach(st => st.subjects.forEach(s => { if(s.toLowerCase() !== 'tihoi') allSubjects.add(s); }));
+  const sortedSubjects = Array.from(allSubjects).sort();
+  const fixedLine = {};
+  sortedSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
 
-    students.forEach(st => {
-      const tNum = extractTihoiTerm(st.tihoi);
-      const tihoiThird = `Third ${tNum}`;
-      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+  // Schedule Container
+  const schedule = {
+    "Third 1": { "Line 1": {}, "Line 2": {} },
+    "Third 2": { "Line 1": {}, "Line 2": {} },
+    "Third 3": { "Line 1": {}, "Line 2": {} }
+  };
 
-      st.subjects.forEach(subj => {
-        if (subj.toLowerCase() !== "tihoi") {
-          subjectTotals[subj] = (subjectTotals[subj] || 0) + 1;
-          
-          if (!subjectDemandByThird[subj]) {
-            subjectDemandByThird[subj] = { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
-          }
-          
-          availThirds.forEach(t => subjectDemandByThird[subj][t]++);
-        }
-      });
+  // PASS 1: Strict Load-Balanced Student Allocation (2 subjects per active Third)
+  students.forEach(st => {
+    const tNum = extractTihoiTerm(st.tihoi);
+    const tihoiThird = `Third ${tNum}`;
+    const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+
+    const termLoad = {};
+    availThirds.forEach(t => termLoad[t] = 0);
+
+    const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+
+    validChoices.forEach(subj => {
+      // Pick active Third with lowest student load to enforce 2 subjects per term
+      const targetThird = availThirds.sort((a, b) => termLoad[a] - termLoad[b])[0];
+      termLoad[targetThird]++;
+
+      const line = fixedLine[subj] || "Line 1";
+      if (!schedule[targetThird][line][subj]) schedule[targetThird][line][subj] = [];
+      schedule[targetThird][line][subj].push(st.id);
     });
+  });
+
+  // PASS 2: Per-Third Viability Audit & Local Reallocation
+  for (const [thirdName, lines] of Object.entries(schedule)) {
+    for (const [lineName, classes] of Object.entries(lines)) {
+      for (const [subj, roster] of Object.entries(classes)) {
+        // If a section in a specific Third fails minimum viability
+        if (roster.length > 0 && roster.length < bounds.min) {
+          const strandedStudents = [...roster];
+          classes[subj] = []; // Collapse section in this Third
+
+          // Find alternative viable Third for each stranded student
+          strandedStudents.forEach(stId => {
+            const stObj = students.find(s => s.id === stId);
+            const tNum = extractTihoiTerm(stObj.tihoi);
+            const altThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${tNum}` && t !== thirdName);
+            
+            // Reallocate to another active Third where the subject runs or has space
+            let reallocated = false;
+            for (const altT of altThirds) {
+              if (schedule[altT][lineName][subj]) {
+                schedule[altT][lineName][subj].push(stId);
+                reallocated = true;
+                break;
+              }
+            }
+            // Fallback: Retain in original section if no viable shift exists (flagged in red)
+            if (!reallocated) classes[subj].push(stId);
+          });
+        }
+      }
+    }
+  }
+
+  currentSchedule = schedule;
+  renderStep2(schedule, bounds);
+}
 
     const uniqueSubjects = Object.keys(subjectTotals).sort();
     const fixedLineAssignments = {};
