@@ -1,227 +1,13 @@
-<!DOCTYPE html>
-<html lang="en-GB">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Timetable & Cohort Line Optimiser</title>
-  <style>
-    :root {
-      --bg-main: #f4f6f9;
-      --card-bg: #ffffff;
-      --primary: #2b6cb0;
-      --primary-dark: #2c5282;
-      --accent: #ed8936;
-      --text-main: #2d3748;
-      --text-muted: #718096;
-      --border-color: #e2e8f0;
-      --success-bg: #c6f6d5;
-      --success-text: #22543d;
-      --warning-bg: #feebc8;
-      --warning-text: #744210;
-      --danger-bg: #fed7d7;
-      --danger-text: #9b2c2c;
-      --radius: 12px;
-      --shadow: 0 4px 15px rgba(0,0,0,0.05);
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      margin: 0;
-      padding: 30px;
-      line-height: 1.6;
-    }
-
-    .container { max-width: 1200px; margin: 0 auto; }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 25px;
-      padding-bottom: 15px;
-      border-bottom: 2px dashed var(--border-color);
-    }
-
-    h1 { font-size: 1.8rem; color: #1a202c; margin: 0; display: flex; align-items: center; gap: 10px; }
-    .sparkle { color: var(--accent); font-size: 1.4rem; }
-    .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 24px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border-color);
-      margin-bottom: 25px;
-    }
-
-    .card h2 { margin-top: 0; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-
-    textarea {
-      width: 100%; height: 130px; box-sizing: border-box;
-      border: 1px solid var(--border-color); border-radius: 8px;
-      padding: 12px; font-family: monospace; font-size: 0.85rem;
-      background: #faf5ff; color: #4a5568; resize: vertical;
-    }
-
-    .config-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-      margin-top: 15px;
-      background: #f7fafc;
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-    }
-
-    .config-item { display: flex; flex-direction: column; gap: 4px; }
-    .config-item label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-    .config-item input { padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; }
-
-    .btn-group { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
-
-    button {
-      border: none; padding: 10px 20px; border-radius: 8px;
-      font-weight: 600; cursor: pointer; transition: all 0.15s ease;
-    }
-
-    .btn-step1 { background: #319795; color: white; box-shadow: 0 2px 8px rgba(49, 151, 149, 0.3); }
-    .btn-step1:hover { background: #2c7a7b; }
-    .btn-step2 { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3); }
-    .btn-step2:hover { background: #2c5282; }
-    .btn-export { background: #38a169; color: white; box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3); }
-    .btn-export:hover { background: #2f855a; }
-
-    .step-header {
-      background: #edf2f7; padding: 8px 14px; border-radius: 6px;
-      font-weight: 700; font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-
-    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-
-    .third-card {
-      background: #f8fafc; border: 1px solid var(--border-color);
-      border-radius: 8px; padding: 16px; display: flex; flex-direction: column; align-items: center;
-    }
-
-    .third-card h3 { width: 100%; margin: 0 0 12px 0; color: #2b6cb0; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
-
-    .pie-container { position: relative; width: 160px; height: 160px; margin: 10px 0; }
-    .pie-container svg { width: 100%; height: 100%; transform: rotate(-90deg); border-radius: 50%; }
-
-    .chart-legend { width: 100%; margin-top: 10px; font-size: 0.82rem; }
-    .legend-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .legend-color { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; }
-
-    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
-    .badge-ent { background: #e9d8fd; color: #44337a; }
-
-    .line-box {
-      background: white; border: 1px solid #e2e8f0; border-radius: 6px;
-      padding: 12px; margin-bottom: 12px;
-    }
-
-    .line-box h4 { margin: 0 0 8px 0; font-size: 0.9rem; color: #4a5568; }
-
-    .student-tag {
-      display: inline-block; background: #edf2f7; border: 1px solid #cbd5e0;
-      padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 0.8rem;
-    }
-
-    .metric-pill { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; float: right; font-weight: 600; }
-    .metric-good { background: var(--success-bg); color: var(--success-text); }
-    .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
-    .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <header>
-    <div>
-      <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Two-Step Interactive Timetable & Cohort Planner</div>
-    </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Local Browser Storage</span>
-  </header>
-
-  <!-- Input & Controls Section -->
-  <div class="card">
-    <h2>1. Cohort Data & Parameters</h2>
-    <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 10px;">
-      Format: <code>First Name, Last Name, Tihoi Term (1-3), Subject 1, Subject 2, Subject 3, Subject 4</code> (Accepts commas or tabs)
-    </p>
-    <textarea id="csvInput">Joe, Grigg, 1, 10ENT1, Tec1, ATD1, Mus1
-Aria, Smith, 2, Art1, 10ENT1, Mat1, Sci1
-Liam, Patel, 3, Tec1, His1, 10ENT1, Mus1
-Emma, Brown, 1, Mat1, Sci1, His1, 10ENT1
-Noah, Wilson, 2, 10ENT1, Tec1, Art1, His1
-Olivia, Taylor, 3, Mat1, 10ENT1, ATD1, Sci1
-Lucas, Martin, 1, Mus1, Tec1, 10ENT1, Art1
-Sophia, Anderson, 2, Sci1, His1, ATD1, 10ENT1
-Mason, Thomas, 3, 10ENT1, Mat1, Tec1, Art1
-Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
-
-    <div class="config-grid">
-      <div class="config-item">
-        <label for="minInput">Min Class Size</label>
-        <input type="number" id="minInput" value="6" min="1">
-      </div>
-      <div class="config-item">
-        <label for="optInput">Optimal Target</label>
-        <input type="number" id="optInput" value="16" min="1">
-      </div>
-      <div class="config-item">
-        <label for="maxInput">Max Class Size</label>
-        <input type="number" id="maxInput" value="21" min="1">
-      </div>
-    </div>
-
-    <div class="btn-group">
-      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise On-Campus Demand (Pie Charts)</button>
-      <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Dynamic Line Allocation</button>
-    </div>
-  </div>
-
-  <!-- Step 1 Display -->
-  <div class="card" id="step1Card" style="display:none;">
-    <div class="step-header">
-      <span>STEP 1: PRE-SORT ON-CAMPUS DEMAND BY THIRD (EXCLUDING TIHOI COHORTS)</span>
-    </div>
-    <p style="font-size:0.88rem; color: var(--text-muted);">
-      Pie charts reflect exact elective requests per Third for on-campus students. Hover over legend items to inspect choice volumes.
-    </p>
-
-    <div id="demandOutput" class="third-grid"></div>
-  </div>
-
-  <!-- Step 2 Display -->
-  <div class="card" id="step2Card" style="display:none;">
-    <div class="step-header">
-      <span>STEP 2: OPTIMISED CLASS LISTS & LINE SCHEDULE BY THIRD (DYNAMIC DEMAND ALLOCATION)</span>
-      <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
-    </div>
-    <p style="font-size:0.88rem; color: var(--text-muted);">
-      Final sorted cohort distributions. Electives are placed dynamically into the Thirds with balanced student loading.
-    </p>
-    <div id="allocationOutput"></div>
-  </div>
-</div>
-
 <script>
   let currentSchedule = null;
   const colorPalette = ['#3182ce', '#dd6b20', '#38a169', '#805ad5', '#d69e2e', '#e53e3e', '#319795', '#d6bcfa'];
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v21', this.value);
+    localStorage.setItem('schola_csv_v22', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v21');
+    const saved = localStorage.getItem('schola_csv_v22');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix();
   });
@@ -234,12 +20,50 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     };
   }
 
+  // Robust Parser handling unformatted, concatenated streams and Excel errors
   function parseCSV(text) {
-    return text.trim().split('\n').filter(l => l.trim().length > 0).map(line => {
-      const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
-      const studentName = `${parts[0]} ${parts[1]}`;
-      return { id: studentName, tihoi: parts[2], subjects: parts.slice(3) };
+    // 1. Sanitize Excel Formula Errors
+    let cleanText = text.replace(/#VALUE!|#N\/A|#REF!|#NAME\?/g, ' ');
+    
+    // 2. Identify individual student entry boundaries using Name + Tihoi Term pattern
+    const studentEntries = cleanText.split(/(?=[A-Z][a-z]+(?:[A-Z][a-z]+)+[1-3])/g);
+    const parsedStudents = [];
+
+    studentEntries.forEach(entry => {
+      const trimmed = entry.trim();
+      if (!trimmed) return;
+
+      // Match: Name, Tihoi Term (1-3), and all 5-6 character Subject Codes
+      const match = trimmed.match(/^([A-Za-z\s-]+?)([1-3])((?:[0-9]?[A-Z]{2,4}[0-9]?)+)$/);
+      
+      if (match) {
+        const studentName = match[1].trim();
+        const tihoiTerm = match[2];
+        const rawSubjects = match[3];
+        
+        // Extract individual subject codes (e.g., 10ATD1, 10ENT1, 910TE1)
+        const subjects = rawSubjects.match(/(?:10|910|[A-Z]{3})[A-Z0-9]+/g) || [];
+
+        if (studentName && subjects.length > 0) {
+          parsedStudents.push({
+            id: studentName,
+            tihoi: tihoiTerm,
+            subjects: subjects
+          });
+        }
+      } else {
+        // Fallback for standard CSV/Tab delimited rows
+        const parts = trimmed.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
+        if (parts.length >= 3) {
+          const studentName = `${parts[0]} ${parts[1]}`.replace(/[0-9]/g, '').trim();
+          const tihoiTerm = parts[2].replace(/\D/g, '') || "1";
+          const subjects = parts.slice(3).filter(s => !s.includes('#'));
+          parsedStudents.push({ id: studentName, tihoi: tihoiTerm, subjects: subjects });
+        }
+      }
     });
+
+    return parsedStudents;
   }
 
   function extractTihoiTerm(tihoiVal) {
@@ -252,7 +76,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     return /10ent|ent1/i.test(subj);
   }
 
-  // STEP 1: PIE CHART DEMAND RENDERER PER THIRD
+  // STEP 1: PRE-SORT ON-CAMPUS DEMAND (Strict 2-Choice Load Balancing per Active Term)
   function generateDemandMatrix() {
     const students = parseCSV(document.getElementById('csvInput').value);
     const demandPerThird = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
@@ -262,11 +86,16 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
       const tihoiThird = `Third ${tNum}`;
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      st.subjects.forEach((subj, idx) => {
-        if (subj.toLowerCase() !== "tihoi") {
-          const targetThird = availThirds[idx % availThirds.length];
-          demandPerThird[targetThird][subj] = (demandPerThird[targetThird][subj] || 0) + 1;
-        }
+      const load = {};
+      availThirds.forEach(t => load[t] = 0);
+
+      const validSubjects = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+
+      validSubjects.forEach(subj => {
+        // Distribute choices 2:2 evenly across the two available terms
+        const targetThird = availThirds.sort((a, b) => load[a] - load[b])[0];
+        load[targetThird]++;
+        demandPerThird[targetThird][subj] = (demandPerThird[targetThird][subj] || 0) + 1;
       });
     });
 
@@ -282,10 +111,10 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
       const thirdData = demandPerThird[tKey];
       const totalRequests = Object.values(thirdData).reduce((a, b) => a + b, 0);
 
-      html += `<div class="third-card"><h3>${tKey}</h3>`;
+      html += `<div class="third-card"><h3>${tKey} <span style="font-size:0.8rem; color:var(--text-muted);">(${totalRequests} Total Choices)</span></h3>`;
 
       if (totalRequests === 0) {
-        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No on-campus elective requests.</p>`;
+        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No on-campus elective requests parsed.</p>`;
       } else {
         let cumulativePercent = 0;
         let svgSlices = '';
@@ -304,7 +133,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
           svgSlices += `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" 
             stroke="${color}" stroke-width="8" 
             stroke-dasharray="${strokeDash}" stroke-dashoffset="${strokeOffset}">
-            <title>${subj}: ${count} requests (${Math.round(percent * 100)}%)</title>
+            <title>${subj}: ${count} choices (${Math.round(percent * 100)}%)</title>
           </circle>`;
 
           cumulativePercent += percent;
@@ -334,105 +163,17 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     document.getElementById('step1Card').style.display = 'block';
   }
 
-  // STEP 2: DYNAMIC BALANCED ALLOCATION ENGINE
+  // STEP 2: TWO-PASS LOCAL SEARCH WITH PER-THIRD VIABILITY PRUNING
   function executeLineSorting() {
-  const bounds = getBounds();
-  const students = parseCSV(document.getElementById('csvInput').value);
-  
-  // 1. Line Assignment (Alternating subjects across Line 1 and Line 2)
-  const allSubjects = new Set();
-  students.forEach(st => st.subjects.forEach(s => { if(s.toLowerCase() !== 'tihoi') allSubjects.add(s); }));
-  const sortedSubjects = Array.from(allSubjects).sort();
-  const fixedLine = {};
-  sortedSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
-
-  // Schedule Container
-  const schedule = {
-    "Third 1": { "Line 1": {}, "Line 2": {} },
-    "Third 2": { "Line 1": {}, "Line 2": {} },
-    "Third 3": { "Line 1": {}, "Line 2": {} }
-  };
-
-  // PASS 1: Strict Load-Balanced Student Allocation (2 subjects per active Third)
-  students.forEach(st => {
-    const tNum = extractTihoiTerm(st.tihoi);
-    const tihoiThird = `Third ${tNum}`;
-    const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
-
-    const termLoad = {};
-    availThirds.forEach(t => termLoad[t] = 0);
-
-    const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
-
-    validChoices.forEach(subj => {
-      // Pick active Third with lowest student load to enforce 2 subjects per term
-      const targetThird = availThirds.sort((a, b) => termLoad[a] - termLoad[b])[0];
-      termLoad[targetThird]++;
-
-      const line = fixedLine[subj] || "Line 1";
-      if (!schedule[targetThird][line][subj]) schedule[targetThird][line][subj] = [];
-      schedule[targetThird][line][subj].push(st.id);
-    });
-  });
-
-  // PASS 2: Per-Third Viability Audit & Local Reallocation
-  for (const [thirdName, lines] of Object.entries(schedule)) {
-    for (const [lineName, classes] of Object.entries(lines)) {
-      for (const [subj, roster] of Object.entries(classes)) {
-        // If a section in a specific Third fails minimum viability
-        if (roster.length > 0 && roster.length < bounds.min) {
-          const strandedStudents = [...roster];
-          classes[subj] = []; // Collapse section in this Third
-
-          // Find alternative viable Third for each stranded student
-          strandedStudents.forEach(stId => {
-            const stObj = students.find(s => s.id === stId);
-            const tNum = extractTihoiTerm(stObj.tihoi);
-            const altThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${tNum}` && t !== thirdName);
-            
-            // Reallocate to another active Third where the subject runs or has space
-            let reallocated = false;
-            for (const altT of altThirds) {
-              if (schedule[altT][lineName][subj]) {
-                schedule[altT][lineName][subj].push(stId);
-                reallocated = true;
-                break;
-              }
-            }
-            // Fallback: Retain in original section if no viable shift exists (flagged in red)
-            if (!reallocated) classes[subj].push(stId);
-          });
-        }
-      }
-    }
-  }
-
-  currentSchedule = schedule;
-  renderStep2(schedule, bounds);
-}
-
-    const uniqueSubjects = Object.keys(subjectTotals).sort();
-    const fixedLineAssignments = {};
-
-    uniqueSubjects.forEach((subj, idx) => {
-      fixedLineAssignments[subj] = (idx % 2 === 0) ? "Line 1" : "Line 2";
-    });
-
-    const allowedThirdsPerSubject = {};
-
-    uniqueSubjects.forEach(subj => {
-      const count = subjectTotals[subj];
-      const demandProfile = subjectDemandByThird[subj];
-      const rankedThirds = Object.keys(demandProfile).sort((a, b) => demandProfile[b] - demandProfile[a]);
-
-      if (count >= bounds.min * 3) {
-        allowedThirdsPerSubject[subj] = ["Third 1", "Third 2", "Third 3"];
-      } else if (count >= bounds.min * 2) {
-        allowedThirdsPerSubject[subj] = [rankedThirds[0], rankedThirds[1]];
-      } else {
-        allowedThirdsPerSubject[subj] = [rankedThirds[0]];
-      }
-    });
+    const bounds = getBounds();
+    const students = parseCSV(document.getElementById('csvInput').value);
+    
+    // Assign Lines (Alternating subjects across Line 1 and Line 2)
+    const allSubjects = new Set();
+    students.forEach(st => st.subjects.forEach(s => { if(s.toLowerCase() !== 'tihoi') allSubjects.add(s); }));
+    const sortedSubjects = Array.from(allSubjects).sort();
+    const fixedLine = {};
+    sortedSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
 
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
@@ -440,49 +181,57 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
       "Third 3": { "Line 1": {}, "Line 2": {} }
     };
 
+    // PASS 1: Balanced Initial Allocation
     students.forEach(st => {
       const tNum = extractTihoiTerm(st.tihoi);
       const tihoiThird = `Third ${tNum}`;
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      // Student-level load balancer to track individual subject count per available Third
-      const studentLoad = {};
-      availThirds.forEach(t => studentLoad[t] = 0);
+      const termLoad = {};
+      availThirds.forEach(t => termLoad[t] = 0);
 
-      st.subjects.forEach((subj, idx) => {
-        if (idx < 4 && subj.toLowerCase() !== "tihoi") {
-          const permittedThirds = allowedThirdsPerSubject[subj] || ["Third 1", "Third 2", "Third 3"];
-          let validThirds = availThirds.filter(t => permittedThirds.includes(t));
+      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-          if (validThirds.length === 0) {
-            validThirds = [...availThirds];
-          }
+      validChoices.forEach(subj => {
+        const targetThird = availThirds.sort((a, b) => termLoad[a] - termLoad[b])[0];
+        termLoad[targetThird]++;
 
-          // Dynamic Sort: Pick the available Third where this student currently has the FEWEST classes assigned
-          validThirds.sort((a, b) => studentLoad[a] - studentLoad[b]);
-
-          const chosenThird = validThirds[0];
-          studentLoad[chosenThird]++;
-
-          const lockedLine = fixedLineAssignments[subj] || "Line 1";
-
-          let targetSubjKey = subj;
-          let currentCount = 0;
-          if (schedule[chosenThird][lockedLine][subj]) {
-            currentCount = schedule[chosenThird][lockedLine][subj].length;
-          }
-
-          if (currentCount >= bounds.max) {
-            targetSubjKey = `${subj} (Sec B)`;
-          }
-
-          if (!schedule[chosenThird][lockedLine][targetSubjKey]) {
-            schedule[chosenThird][lockedLine][targetSubjKey] = [];
-          }
-          schedule[chosenThird][lockedLine][targetSubjKey].push(st.id);
-        }
+        const line = fixedLine[subj] || "Line 1";
+        if (!schedule[targetThird][line][subj]) schedule[targetThird][line][subj] = [];
+        schedule[targetThird][line][subj].push(st.id);
       });
     });
+
+    // PASS 2: Local Search Viability Pruning per Third
+    for (const [thirdName, lines] of Object.entries(schedule)) {
+      for (const [lineName, classes] of Object.entries(lines)) {
+        for (const [subj, roster] of Object.entries(classes)) {
+          // Check localized section viability
+          if (roster.length > 0 && roster.length < bounds.min) {
+            const strandedStudents = [...roster];
+            classes[subj] = []; // Collapse unviable local section
+
+            // Reallocate stranded students to an alternative viable Third
+            strandedStudents.forEach(stId => {
+              const stObj = students.find(s => s.id === stId);
+              const tNum = extractTihoiTerm(stObj.tihoi);
+              const altThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${tNum}` && t !== thirdName);
+              
+              let reallocated = false;
+              for (const altT of altThirds) {
+                if (schedule[altT][lineName][subj]) {
+                  schedule[altT][lineName][subj].push(stId);
+                  reallocated = true;
+                  break;
+                }
+              }
+              // Fallback: Retain in section if no alternate viable option exists
+              if (!reallocated) classes[subj].push(stId);
+            });
+          }
+        }
+      }
+    }
 
     currentSchedule = schedule;
     renderStep2(schedule, bounds);
@@ -501,14 +250,14 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
         html += `<div class="line-box">`;
         html += `<h4>${lineName}</h4>`;
 
-        const activeClasses = Object.keys(classes);
+        const activeClasses = Object.keys(classes).filter(k => classes[k].length > 0);
         if (activeClasses.length === 0) {
           html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active classes assigned to this line.</p>`;
         } else {
-          for (const [subj, roster] of Object.entries(classes)) {
+          for (const subj of activeClasses) {
+            const roster = classes[subj];
             let badgeStyle = "badge";
-            const isEnt = isEnterpriseSubject(subj);
-            if (isEnt) badgeStyle += " badge-ent";
+            if (isEnterpriseSubject(subj)) badgeStyle += " badge-ent";
 
             let count = roster.length;
             let metricClass = "metric-good";
@@ -525,11 +274,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
             html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
             html += `<div><span class="${badgeStyle}">${subj}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
             html += `<div style="margin-top:4px;">`;
-            if (roster.length === 0) {
-              html += `<em style="font-size:0.8rem; color:var(--text-muted);">No students assigned to this section.</em>`;
-            } else {
-              roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
-            }
+            roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
             html += `</div></div>`;
           }
         }
@@ -563,12 +308,9 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_OnCampus_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Optimised_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 </script>
-
-</body>
-</html>
