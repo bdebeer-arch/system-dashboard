@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Adaptive RLNS Planner & Diagnostic Dashboard</title>
+  <title>Schola Matrix — Equalised Roster & RLNS Capacity Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -172,9 +172,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Non-Blocking Adaptive RLNS Planner & Diagnostic Dashboard</div>
+      <div class="subtitle">Adaptive RLNS Planner & Universal Roster Equaliser</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Non-Blocking Micro-Task Engine</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Water-Filling Roster Equalisation Active</span>
   </header>
 
   <!-- Input Section -->
@@ -230,13 +230,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 executes a non-blocking asynchronous search to prevent UI freezing during soft-overflow operations.
+      Lock section counts. Step 2 automatically equalises student numbers across parallel sections of the same subject to eliminate group size disparities.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Phase 3 Diagnostics</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Equalise Parallel Rosters</button>
     </div>
   </div>
 
@@ -296,11 +296,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v19', this.value);
+    localStorage.setItem('schola_csv_pseudo_v20', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v19');
+    const saved = localStorage.getItem('schola_csv_pseudo_v20');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -840,7 +840,29 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
-  // NON-BLOCKING ASYNCHRONOUS SOLVER WITH FULL MICRO-TASK YIELDING
+  // UNIVERSAL ROSTER EQUALISATION (Water-Filling Rule: Eliminates section size disparities like 21 vs 4)
+  function equaliseParallelRosters(schedule) {
+    for (const [thirdName, lines] of Object.entries(schedule)) {
+      for (const [lineName, classes] of Object.entries(lines)) {
+        for (const [subj, sections] of Object.entries(classes)) {
+          const activeSections = sections.filter(sec => sec.length > 0);
+          if (activeSections.length > 1) {
+            const pooledStudents = activeSections.flat();
+            const k = activeSections.length;
+            const newSections = Array.from({ length: k }, () => []);
+            
+            // Round-robin redistribution guarantees |Size_i - Size_j| <= 1
+            pooledStudents.forEach((studentId, idx) => {
+              newSections[idx % k].push(studentId);
+            });
+
+            schedule[thirdName][lineName][subj] = newSections;
+          }
+        }
+      }
+    }
+  }
+
   async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -869,7 +891,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
         let result = attemptAllocation(order, perThirdPrimaryLines, bounds, false);
-        result = repairSwaps(result, perThirdPrimaryLines, bounds, 3); // Bounded repair pass count
+        result = repairSwaps(result, perThirdPrimaryLines, bounds, 3);
 
         if (result.unserved.length < trialBestUnserved) {
           trialBest = result;
@@ -893,11 +915,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       if (globalBestUnserved === 0) break;
     }
 
-    // NON-BLOCKING SOFT-OVERFLOW PASS
     if (globalBestUnserved > 0) {
       statusText.innerText = "Executing final Soft-Overflow repair pass...";
       progressBar.style.width = "95%";
-      await new Promise(resolve => setTimeout(resolve, 50)); // Yield to paint DOM
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       const fallbackLines = {
         "Third 1": optimizeLineBipartitionPerThird("Third 1", 0),
@@ -906,15 +927,15 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       };
 
       let overflowResult = attemptAllocation(students, fallbackLines, bounds, true);
-      await new Promise(resolve => setTimeout(resolve, 20)); // Secondary yield
+      await new Promise(resolve => setTimeout(resolve, 20));
 
-      overflowResult = repairSwaps(overflowResult, fallbackLines, bounds, 2); // Bounded repair pass count
+      overflowResult = repairSwaps(overflowResult, fallbackLines, bounds, 2);
       if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
     }
 
-    statusText.innerText = "Verifying zero slot double-bookings...";
+    statusText.innerText = "Verifying zero slot double-bookings & smoothing rosters...";
     await new Promise(resolve => setTimeout(resolve, 30));
 
     const finalLines = {
@@ -923,6 +944,9 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       "Third 3": optimizeLineBipartitionPerThird("Third 3", 0)
     };
     enforceSlotUniqueness(globalBest, finalLines, bounds);
+
+    // Apply Universal Water-Filling Roster Equalisation
+    equaliseParallelRosters(globalBest.schedule);
 
     progressBar.style.width = "100%";
     cycleBadge.innerText = "Complete!";
@@ -1206,7 +1230,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_NonBlocking_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Equalised_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
