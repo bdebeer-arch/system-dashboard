@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Interactive Phase 3 Clash Diagnostics</title>
+  <title>Schola Matrix — Inverse-Popularity Priority & RLNS Optimiser</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -155,7 +155,6 @@
     .line-balance-good { color: var(--success-text); font-weight: 700; }
     .line-balance-warn { color: #c05621; font-weight: 700; }
 
-    /* Phase 3 Diagnostic Dashboard Styling */
     .phase3-card { background: #faf5ff; border: 2px solid #805ad5; }
     .phase3-card h2 { color: #553c9a; }
     .search-box { width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; margin-bottom: 15px; }
@@ -178,9 +177,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Planner & Phase 3 Diagnostic Dashboard</div>
+      <div class="subtitle">Adaptive RLNS Planner & Inverse-Popularity Allocation Engine</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Interactive Phase 3 Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Inverse-Popularity Rule Active</span>
   </header>
 
   <!-- Input Section -->
@@ -236,7 +235,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 calculates placement yield and populates the Phase 3 Diagnostics Dashboard for clash isolation.
+      Lock section counts. Step 2 prioritises lowest-demand subjects during placement to protect niche course viability.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -277,7 +276,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     <h3>1. Subject-Level Clash % & Resolution Matrix</h3>
     <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-      Click any row to filter affected students below. Use the action button to apply immediate section lock recommendations.
+      Click any row to filter affected students below. Use the action button to isolate specific subject choices.
     </p>
     <div id="subjectClashMetricsContainer"></div>
 
@@ -302,11 +301,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v21', this.value);
+    localStorage.setItem('schola_csv_pseudo_v22', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v21');
+    const saved = localStorage.getItem('schola_csv_pseudo_v22');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -652,6 +651,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
+  // SOLVER WITH INVERSE-POPULARITY PLACEMENT PRIORITY
   function attemptAllocation(studentOrder, perThirdPrimaryLines, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
@@ -675,6 +675,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
+      // INVERSE-POPULARITY SORTING: Lowest total demand subjects placed FIRST
       const withScore = validChoices.map(subj => {
         const options = [];
         availThirds.forEach(t => {
@@ -685,8 +686,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             }
           });
         });
-        return { subj, options };
-      }).sort((a, b) => a.options.length - b.options.length);
+
+        const totalDemand = subjectDemandSummary[subj]?.total || 999;
+        return { subj, options, totalDemand };
+      }).sort((a, b) => {
+        // Priority 1: Fewest legal options (most constrained slot)
+        if (a.options.length !== b.options.length) {
+          return a.options.length - b.options.length;
+        }
+        // Priority 2: Inverse Popularity (Least popular subject gets priority)
+        return a.totalDemand - b.totalDemand;
+      });
 
       withScore.forEach(({ subj, options }) => {
         if (options.length === 0) {
@@ -913,7 +923,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const pct = Math.round(((trial + 1) / bounds.lineTrials) * 100);
       progressBar.style.width = `${pct}%`;
       cycleBadge.innerText = `Line Trial ${trial + 1} / ${bounds.lineTrials}`;
-      statusText.innerText = `Equalising Line Enrolments | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
+      statusText.innerText = `Prioritising Niche Subjects | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
       await new Promise(resolve => setTimeout(resolve, 20));
 
       if (globalBestUnserved === 0) break;
@@ -1092,7 +1102,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     document.getElementById('step2Card').style.display = 'block';
   }
 
-  // PHASE 3 DIAGNOSTIC DASHBOARD WITH CLICKABLE SUBJECT FILTER
   function renderPhase3Diagnostics(schedule, unserved) {
     const container = document.getElementById('subjectClashMetricsContainer');
     let html = `
@@ -1156,7 +1165,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       return;
     }
 
-    // Filter students by name OR requested subject choices
     const matches = parsedStudentCache.filter(st => {
       const nameMatch = st.id.toLowerCase().includes(query);
       const subjMatch = st.subjects.some(s => s.toLowerCase() === query);
@@ -1247,7 +1255,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Equalised_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_InversePopularity_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
