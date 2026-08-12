@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Emergent Energy & RSI Optimiser</title>
+  <title>Schola Matrix — Structurally Bounded RLNS Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -177,9 +177,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Emergent Energy Minimiser & Relative Scarcity Solver</div>
+      <div class="subtitle">Structurally Bounded Greedy Planner & RLNS Solver</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Emergent Optimisation Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Bounded Structural Invariants Active</span>
   </header>
 
   <!-- Input Section -->
@@ -216,7 +216,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       </div>
       <div class="config-item">
         <label for="lineTrialsInput">Line-Trial Permutations</label>
-        <input type="number" id="lineTrialsInput" value="20" min="1" max="100">
+        <input type="number" id="lineTrialsInput" value="15" min="1" max="100">
       </div>
       <div class="config-item">
         <label for="rlnsCyclesInput">RLNS Cycles / Trial</label>
@@ -235,27 +235,27 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 evaluates schedules using an emergent energy function ($E$), naturally maintaining teacher line stability and protecting niche subjects without rigid constraints.
+      Lock section counts. Step 2 enforces hard annual line locks for single-section courses and symmetric 2:2 line splits for 4-section courses.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Minimise Schedule Energy</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Phase 3 Diagnostics</button>
     </div>
   </div>
 
   <!-- Telemetry Progress Card -->
   <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong style="color:var(--primary);">Emergent Energy Minimiser & RSI Solver in Progress...</strong>
-      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Trial 0 / 20</span>
+      <strong style="color:var(--primary);">Structurally Bounded RLNS Solver in Progress...</strong>
+      <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Line Trial 0 / 15</span>
     </div>
     <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
       <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
     </div>
     <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
-      Evaluating Schedule Energy Landscapes...
+      Enforcing Annual Line Locks & 2:2 Symmetric Caps...
     </div>
   </div>
 
@@ -299,13 +299,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let subjectDemandSummary = {};
   let manualLocks = {};
   let perThirdClashMatrices = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
+  let annualPrimaryLinesMap = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v23', this.value);
+    localStorage.setItem('schola_csv_pseudo_v24', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v23');
+    const saved = localStorage.getItem('schola_csv_pseudo_v24');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -325,7 +326,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       min: parseInt(document.getElementById('minInput').value) || 9,
       opt: parseInt(document.getElementById('optInput').value) || 16,
       max: parseInt(document.getElementById('maxInput').value) || 20,
-      lineTrials: parseInt(document.getElementById('lineTrialsInput').value) || 20,
+      lineTrials: parseInt(document.getElementById('lineTrialsInput').value) || 15,
       rlnsCycles: parseInt(document.getElementById('rlnsCyclesInput').value) || 30
     };
   }
@@ -381,6 +382,28 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
+  // BIND ANNUAL PRIMARY LINES FOR SINGLE-SECTION COURSES
+  function generateAnnualPrimaryLines(activeSubjects) {
+    const annualMap = {};
+    const sorted = activeSubjects.slice().sort((a, b) => (subjectDemandSummary[b]?.total || 0) - (subjectDemandSummary[a]?.total || 0));
+
+    let l1Demand = 0;
+    let l2Demand = 0;
+
+    sorted.forEach(subj => {
+      const totalDemand = subjectDemandSummary[subj]?.total || 0;
+      if (l1Demand <= l2Demand) {
+        annualMap[subj] = "Line 1";
+        l1Demand += totalDemand;
+      } else {
+        annualMap[subj] = "Line 2";
+        l2Demand += totalDemand;
+      }
+    });
+
+    return annualMap;
+  }
+
   function generatePreSortLockTable() {
     parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
     const bounds = getBounds();
@@ -415,6 +438,9 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         manualLocks[subj][third] = requiredSections;
       });
     });
+
+    const activeSubjects = Object.keys(manualLocks).filter(s => Object.values(manualLocks[s]).some(c => c > 0));
+    annualPrimaryLinesMap = generateAnnualPrimaryLines(activeSubjects);
 
     renderLockTable(bounds);
   }
@@ -552,6 +578,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       let l2Demand = 0;
 
       sorted.forEach(subj => {
+        // Enforce Annual Primary Line Lock for single-section subjects
+        if ((manualLocks[subj]?.[thirdName] || 0) === 1 && annualPrimaryLinesMap[subj]) {
+          lineAssignment[subj] = annualPrimaryLinesMap[subj];
+          if (annualPrimaryLinesMap[subj] === "Line 1") line1.push(subj);
+          else line2.push(subj);
+          return;
+        }
+
         const demand = (subjectDemandSummary[subj]?.[thirdName] || 0);
         let clash1 = 0;
         let clash2 = 0;
@@ -574,19 +608,24 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     } else {
       runningSubjects.forEach(subj => {
-        lineAssignment[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
+        if ((manualLocks[subj]?.[thirdName] || 0) === 1 && annualPrimaryLinesMap[subj]) {
+          lineAssignment[subj] = annualPrimaryLinesMap[subj]; // Strict annual lock
+        } else {
+          lineAssignment[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
+        }
       });
     }
 
     return lineAssignment;
   }
 
+  // STRICT STRUCTURAL BOUND: SINGLE-SECTION COURSES LOCKED TO ANNUAL LINE
   function getSubjectLinesForTerm(subj, third, perThirdPrimaryLines) {
     const lockedSectionsInTerm = manualLocks[subj]?.[third] || 0;
     if (lockedSectionsInTerm <= 0) return [];
     
     if (lockedSectionsInTerm === 1) {
-      return [perThirdPrimaryLines[third]?.[subj] || "Line 1"];
+      return [annualPrimaryLinesMap[subj] || perThirdPrimaryLines[third]?.[subj] || "Line 1"];
     }
 
     return ["Line 1", "Line 2"];
@@ -601,6 +640,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return count;
   }
 
+  // STRUCTURALLY BOUNDED PLACEMENT: ENFORCES 2:2 HARD LINE CAP FOR 4-SECTION COURSES
   function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds, allowSoftOverflow = false) {
     if (!schedule[third][line][subj]) schedule[third][line][subj] = [];
     const sections = schedule[third][line][subj];
@@ -608,10 +648,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const maxAllowedSectionsInTerm = manualLocks[subj]?.[third] || 0;
     if (maxAllowedSectionsInTerm <= 0) return false;
 
-    const line1Sections = schedule[third]["Line 1"][subj] || [];
-    const line2Sections = schedule[third]["Line 2"][subj] || [];
-    const totalActiveSectionsInTerm = (line === "Line 1" ? sections.length : line1Sections.length) + 
-                                       (line === "Line 2" ? sections.length : line2Sections.length);
+    // Hard Section-per-Line Cap: Enforces maximum 2 sections per line when total term locks = 4 (Symmetric 2:2)
+    const maxAllowedOnThisLine = (maxAllowedSectionsInTerm >= 4) ? 2 : Math.ceil(maxAllowedSectionsInTerm / 2);
 
     let target = sections.find(sec => sec.length < bounds.opt);
 
@@ -620,7 +658,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
 
     if (!target) {
-      if (totalActiveSectionsInTerm < maxAllowedSectionsInTerm) {
+      if (sections.length < maxAllowedOnThisLine) {
         target = [];
         sections.push(target);
       }
@@ -651,7 +689,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
-  // SOLVER WITH RELATIVE SCARCITY INDEX (RSI) CHOICE PRIORITISATION
   function attemptAllocation(studentOrder, perThirdPrimaryLines, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
@@ -691,16 +728,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         });
 
         const demand = subjectDemandSummary[subj]?.total || 1;
-        const rsi = totalOfferedCap > 0 ? (demand / totalOfferedCap) : 999; // Higher RSI = Scarcest Subject
+        const rsi = totalOfferedCap > 0 ? (demand / totalOfferedCap) : 999;
 
         return { subj, options, rsi };
       }).sort((a, b) => {
-        // Priority 1: Fewest legal slot options (most constrained)
         if (a.options.length !== b.options.length) {
           return a.options.length - b.options.length;
         }
-        // Priority 2: Highest Relative Scarcity Index (RSI) placed first
-        return b.rsi - a.rsi;
+        return b.rsi - a.rsi; // Highest Scarcity Index First
       });
 
       withScore.forEach(({ subj, options }) => {
@@ -882,56 +917,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
   }
 
-  // CALCULATE SCHEDULE ENERGY: Evaluates Unplaced, Under-Min, Line Shift, and Imbalance Penalties
-  function calculateScheduleEnergy(result, perThirdPrimaryLines, bounds) {
-    const unplacedPenalty = result.unserved.length * 1000;
-    let underMinPenalty = 0;
-    let lineShiftPenalty = 0;
-    let balancePenalty = 0;
-
-    // 1. Under-Min Penalty ($N < Min$)
-    for (const [thirdName, lines] of Object.entries(result.schedule)) {
-      let l1Count = 0;
-      let l2Count = 0;
-
-      for (const [lineName, classes] of Object.entries(lines)) {
-        for (const [subj, sections] of Object.entries(classes)) {
-          sections.forEach(sec => {
-            if (sec.length > 0) {
-              if (lineName === "Line 1") l1Count += sec.length;
-              if (lineName === "Line 2") l2Count += sec.length;
-
-              if (sec.length < bounds.min) {
-                underMinPenalty += 500;
-              }
-            }
-          });
-        }
-      }
-
-      balancePenalty += Math.abs(l1Count - l2Count) * 10;
-    }
-
-    // 2. Cross-Term Line Shift Penalty for Single-Section Subjects
-    const singleSectionSubjects = Object.keys(manualLocks).filter(subj => {
-      const locks = Object.values(manualLocks[subj]);
-      return locks.every(c => c <= 1) && locks.some(c => c === 1);
-    });
-
-    singleSectionSubjects.forEach(subj => {
-      const assignedLines = ["Third 1", "Third 2", "Third 3"]
-        .filter(t => (manualLocks[subj]?.[t] || 0) === 1)
-        .map(t => perThirdPrimaryLines[t]?.[subj]);
-
-      const uniqueLines = new Set(assignedLines.filter(Boolean));
-      if (uniqueLines.size > 1) {
-        lineShiftPenalty += 100; // Penalises shifting a single-section teacher between Line 1 & Line 2
-      }
-    });
-
-    return unplacedPenalty + underMinPenalty + lineShiftPenalty + balancePenalty;
-  }
-
   async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -945,7 +930,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     progressCard.style.display = 'block';
 
     let globalBest = null;
-    let globalBestEnergy = Infinity;
+    let globalBestUnserved = Infinity;
 
     for (let trial = 0; trial < bounds.lineTrials; trial++) {
       const perThirdPrimaryLines = {
@@ -955,38 +940,36 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       };
 
       let trialBest = null;
-      let trialBestEnergy = Infinity;
+      let trialBestUnserved = Infinity;
 
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
         let result = attemptAllocation(order, perThirdPrimaryLines, bounds, false);
         result = repairSwaps(result, perThirdPrimaryLines, bounds, 3);
 
-        const energy = calculateScheduleEnergy(result, perThirdPrimaryLines, bounds);
-
-        if (energy < trialBestEnergy) {
+        if (result.unserved.length < trialBestUnserved) {
           trialBest = result;
-          trialBestEnergy = energy;
+          trialBestUnserved = result.unserved.length;
         }
 
-        if (result.unserved.length === 0 && energy < 50) break;
+        if (trialBestUnserved === 0) break;
       }
 
-      if (trialBestEnergy < globalBestEnergy) {
+      if (trialBestUnserved < globalBestUnserved) {
         globalBest = trialBest;
-        globalBestEnergy = trialBestEnergy;
+        globalBestUnserved = trialBestUnserved;
       }
 
       const pct = Math.round(((trial + 1) / bounds.lineTrials) * 100);
       progressBar.style.width = `${pct}%`;
       cycleBadge.innerText = `Line Trial ${trial + 1} / ${bounds.lineTrials}`;
-      statusText.innerText = `Minimising Schedule Energy | Placed: ${totalChoices - globalBest.unserved.length} / ${totalChoices}`;
+      statusText.innerText = `Enforcing 2:2 Caps & Line Locks | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
       await new Promise(resolve => setTimeout(resolve, 20));
 
-      if (globalBest.unserved.length === 0 && globalBestEnergy < 50) break;
+      if (globalBestUnserved === 0) break;
     }
 
-    if (globalBest.unserved.length > 0) {
+    if (globalBestUnserved > 0) {
       statusText.innerText = "Executing final Soft-Overflow repair pass...";
       progressBar.style.width = "95%";
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -1001,9 +984,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       await new Promise(resolve => setTimeout(resolve, 20));
 
       overflowResult = repairSwaps(overflowResult, fallbackLines, bounds, 2);
-      const overflowEnergy = calculateScheduleEnergy(overflowResult, fallbackLines, bounds);
-
-      if (overflowEnergy < globalBestEnergy) {
+      if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
     }
@@ -1314,7 +1295,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Emergent_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_StructurallyBounded_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
