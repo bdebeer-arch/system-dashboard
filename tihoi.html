@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Adaptive RLNS Planner & Phase 3 Inspector</title>
+  <title>Schola Matrix — Dynamic Line-Trial RLNS Optimiser</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -152,7 +152,6 @@
     .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
     .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
 
-    /* Phase 3 Diagnostic Dashboard Styling */
     .phase3-card { background: #faf5ff; border: 2px solid #805ad5; }
     .phase3-card h2 { color: #553c9a; }
     .search-box { width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; margin-bottom: 15px; }
@@ -167,9 +166,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Capacity Planner & Phase 3 Inspector</div>
+      <div class="subtitle">Adaptive RLNS Planner & Strict Term-Line Pinning Engine</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Phase 3 Clash Isolation Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict Term-Specific Line Pinning Active</span>
   </header>
 
   <!-- Input Section -->
@@ -225,7 +224,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 calculates placement yield, feeding into Phase 3 for subject clash % metrics and individual student choice isolation.
+      Lock section counts. Single-section offerings in a Third are strictly pinned to a single line; multi-section offerings spread across Line 1 and Line 2.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -291,11 +290,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let coOccurrenceMatrix = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v12', this.value);
+    localStorage.setItem('schola_csv_pseudo_v14', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v12');
+    const saved = localStorage.getItem('schola_csv_pseudo_v14');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -345,7 +344,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
   }
 
-  // STEP 1: PRE-SORT ANALYSIS
   function generatePreSortLockTable() {
     parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
     const bounds = getBounds();
@@ -510,7 +508,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
   }
 
-  // STEP 2: DYNAMIC LINE-TRIAL SEARCH & RLNS SOLVER
   function shuffleArray(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -546,7 +543,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         }
       });
     } else {
-      activeSubjects.forEach((subj, idx) => {
+      activeSubjects.forEach(subj => {
         primaryLine[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
       });
     }
@@ -554,10 +551,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return primaryLine;
   }
 
+  // CORRECTED BUG-FIX: Evaluates term-specific locks to strictly pin single-section subjects to primaryLine
   function getSubjectLinesForTerm(subj, third, primaryLine) {
-    const lockedSections = manualLocks[subj]?.[third] || 0;
-    if (lockedSections <= 0) return [];
-    if (lockedSections === 1) return [primaryLine[subj] || "Line 1"];
+    const lockedSectionsInTerm = manualLocks[subj]?.[third] || 0;
+    if (lockedSectionsInTerm <= 0) return [];
+    
+    // Strict Pinning: If exactly 1 section is locked in THIS Third, return ONLY primaryLine
+    if (lockedSectionsInTerm === 1) {
+      return [primaryLine[subj] || "Line 1"];
+    }
+    
+    // Spread across both lines ONLY if 2 or more sections are locked in THIS specific Third
     return ["Line 1", "Line 2"];
   }
 
@@ -662,7 +666,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function repairSwaps(result, primaryLine, bounds, maxPasses = 6) {
+  function repairSwaps(result, primaryLine, bounds, maxPasses = 4) {
     for (let pass = 0; pass < maxPasses; pass++) {
       let improved = false;
 
@@ -840,14 +844,22 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     if (globalBestUnserved > 0) {
       statusText.innerText = "Executing final Soft-Overflow repair pass...";
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const fallbackLine = generateCandidateLineTrial(activeSubjects, 0);
       let overflowResult = attemptAllocation(students, fallbackLine, bounds, true);
+
+      statusText.innerText = "Optimising soft-overflow allocations...";
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       overflowResult = repairSwaps(overflowResult, fallbackLine, bounds);
       if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
     }
 
+    statusText.innerText = "Verifying zero slot double-bookings...";
+    await new Promise(resolve => setTimeout(resolve, 30));
     enforceSlotUniqueness(globalBest, generateCandidateLineTrial(activeSubjects, 0), bounds);
 
     progressBar.style.width = "100%";
@@ -940,7 +952,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     document.getElementById('step2Card').style.display = 'block';
   }
 
-  // PHASE 3 DIAGNOSTICS & STUDENT ISOLATION INSPECTOR
   function renderPhase3Diagnostics(schedule, unserved) {
     const container = document.getElementById('subjectClashMetricsContainer');
     let html = `
@@ -984,7 +995,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     html += `</tbody></table>`;
     container.innerHTML = html;
     document.getElementById('phase3Card').style.display = 'block';
-    isolateStudentChoices(); // Reset student isolation inspector
+    isolateStudentChoices();
   }
 
   function isolateStudentChoices() {
@@ -1009,9 +1020,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const tNum = extractTihoiTerm(st.tihoi);
       const offCampusThird = `Third ${tNum}`;
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== offCampusThird);
-      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      // Find placements in current schedule
       const placements = [];
       for (const [thirdName, lines] of Object.entries(currentSchedule || {})) {
         for (const [lineName, classes] of Object.entries(lines)) {
@@ -1033,7 +1042,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:10px;">`;
 
-      // Column 1: Placed Subjects
       html += `<div><strong>Placed Electives (${placements.length}):</strong><ul style="padding-left:20px; font-size:0.85rem; margin-top:4px;">`;
       if (placements.length === 0) {
         html += `<li style="color:var(--danger-text);">No choices placed</li>`;
@@ -1044,7 +1052,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       }
       html += `</ul></div>`;
 
-      // Column 2: Unplaced Choices
       html += `<div><strong>Unplaced Choices (${unplaced.length}):</strong><ul style="padding-left:20px; font-size:0.85rem; margin-top:4px;">`;
       if (unplaced.length === 0) {
         html += `<li style="color:var(--success-text); font-weight:600;">✓ All requested choices placed</li>`;
@@ -1086,7 +1093,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Phase3_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_StrictPinning_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
