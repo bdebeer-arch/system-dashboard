@@ -185,10 +185,10 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
   <!-- Step 1 Display -->
   <div class="card" id="step1Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 1: PRE-SORT ELECTIVE DEMAND (ALL ON-CAMPUS CHOICES)</span>
+      <span>STEP 1: PRE-SORT ELECTIVE DEMAND & CONSOLIDATION ASSESSMENT</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Displays total un-sorted subject choice demand across all students while on campus (Tihoi term choices excluded). Accepts comma or tab-delimited inputs.
+      Evaluates overall demand against your minimum threshold (<span id="minThresholdLabel">6</span> students) to determine whether courses run full-year or consolidate into 1 or 2 Thirds.
     </p>
 
     <div id="viabilityOutput"></div>
@@ -201,7 +201,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
       <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Final sorted cohort distributions per line (2 lines per Third). Multi-section splitting is dynamically applied to any course exceeding capacity bounds.
+      Final sorted cohort distributions per line (2 lines per Third). Low-demand electives are automatically consolidated into viable Thirds.
     </p>
     <div id="allocationOutput"></div>
   </div>
@@ -211,11 +211,11 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
   let currentSchedule = null;
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v16', this.value);
+    localStorage.setItem('schola_csv_v17', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v16');
+    const saved = localStorage.getItem('schola_csv_v17');
     if (saved) document.getElementById('csvInput').value = saved;
     generateDemandMatrix();
   });
@@ -250,9 +250,10 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     return /10ent|ent1/i.test(subj);
   }
 
-  // STEP 1: UNIFIED ON-CAMPUS DEMAND
+  // STEP 1: UNIFIED ON-CAMPUS DEMAND & CONSOLIDATION CALCULATOR
   function generateDemandMatrix() {
     const bounds = getBounds();
+    document.getElementById('minThresholdLabel').textContent = bounds.min;
     const students = parseCSV(document.getElementById('csvInput').value);
     
     const totalSubjectDemand = {};
@@ -277,7 +278,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
             <th>Subject</th>
             <th>Total On-Campus Requests</th>
             <th>Demand Chart</th>
-            <th>Operational Viability Assessment</th>
+            <th>Operational Viability & Consolidation Status</th>
           </tr>
         </thead>
         <tbody>`;
@@ -285,6 +286,7 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     const sortedSubjs = Object.keys(totalDemand).sort();
     const maxCount = Math.max(...Object.values(totalDemand), 1);
     const minFor3Thirds = bounds.min * 3;
+    const minFor2Thirds = bounds.min * 2;
 
     sortedSubjs.forEach(subj => {
       const count = totalDemand[subj];
@@ -293,24 +295,25 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
 
       let statusBadge = '';
       if (count >= minFor3Thirds) {
-        statusBadge = `<span class="badge" style="background:var(--success-bg); color:var(--success-text);">Full Year (Operates All 3 Thirds)</span>`;
+        statusBadge = `<span class="badge" style="background:var(--success-bg); color:var(--success-text);">Full Spread (Operates All 3 Thirds)</span>`;
+      } else if (count >= minFor2Thirds) {
+        statusBadge = `<span class="badge" style="background:var(--warning-bg); color:var(--warning-text);">Consolidates to 2 Thirds</span>`;
       } else if (count >= bounds.min) {
-        const possibleThirds = Math.floor(count / bounds.min);
-        statusBadge = `<span class="badge" style="background:var(--warning-bg); color:var(--warning-text);">Partial Year (${possibleThirds} Third${possibleThirds > 1 ? 's' : ''})</span>`;
+        statusBadge = `<span class="badge" style="background:var(--warning-bg); color:var(--warning-text);">Consolidates to 1 Third</span>`;
       } else {
-        statusBadge = `<span class="badge" style="background:var(--danger-bg); color:var(--danger-text);">Below Minimum (${count}/${bounds.min})</span>`;
+        statusBadge = `<span class="badge" style="background:var(--danger-bg); color:var(--danger-text);">Below Minimum (${count}/${bounds.min}) — Requires Waiver</span>`;
       }
 
       html += `
         <tr>
-          <td style="width:15%;"><strong>${subj}</strong> ${isEnt ? '<span class="badge badge-ent">Compulsory</span>' : ''}</td>
-          <td style="width:18%;">${count} requests</td>
-          <td style="width:37%;">
+          <td style="width:18%;"><strong>${subj}</strong> ${isEnt ? '<span class="badge badge-ent">Compulsory</span>' : ''}</td>
+          <td style="width:15%;">${count} requests</td>
+          <td style="width:32%;">
             <div class="chart-bar-bg">
               <div class="chart-bar-fill" style="width: ${barPct}%; ${isEnt ? 'background: linear-gradient(90deg, #9f7aea, #805ad5);' : ''}"></div>
             </div>
           </td>
-          <td style="width:30%;">${statusBadge}</td>
+          <td style="width:35%;">${statusBadge}</td>
         </tr>`;
     });
 
@@ -319,11 +322,34 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
     document.getElementById('step1Card').style.display = 'block';
   }
 
-  // STEP 2: FLEXIBLE LINE ALLOCATION WITH DYNAMIC SPLITTING
+  // STEP 2: DYNAMIC CONSOLIDATION & LINE ALLOCATION
   function executeLineSorting() {
     const bounds = getBounds();
     const students = parseCSV(document.getElementById('csvInput').value);
     
+    // 1. Pre-calculate subject totals to establish active terms per subject
+    const subjectTotals = {};
+    students.forEach(st => {
+      st.subjects.forEach(subj => {
+        if (subj.toLowerCase() !== "tihoi") {
+          subjectTotals[subj] = (subjectTotals[subj] || 0) + 1;
+        }
+      });
+    });
+
+    // 2. Assign permitted Thirds per subject based on demand thresholds
+    const allowedThirdsPerSubject = {};
+    Object.keys(subjectTotals).forEach(subj => {
+      const count = subjectTotals[subj];
+      if (count >= bounds.min * 3) {
+        allowedThirdsPerSubject[subj] = ["Third 1", "Third 2", "Third 3"];
+      } else if (count >= bounds.min * 2) {
+        allowedThirdsPerSubject[subj] = ["Third 1", "Third 2"]; // Consolidate to 2 terms
+      } else {
+        allowedThirdsPerSubject[subj] = ["Third 1"]; // Consolidate to 1 term
+      }
+    });
+
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
       "Third 2": { "Line 1": {}, "Line 2": {} },
@@ -335,33 +361,33 @@ Isabella, Jackson, 1, Sci1, 10ENT1, ATD1, Mus1</textarea>
       const tihoiThird = `Third ${tNum}`;
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      // Student has 4 candidate slots (2 Thirds x 2 Lines)
-      const slots = [
-        { third: availThirds[0], line: "Line 1" },
-        { third: availThirds[0], line: "Line 2" },
-        { third: availThirds[1], line: "Line 1" },
-        { third: availThirds[1], line: "Line 2" }
-      ];
-
       st.subjects.forEach((subj, idx) => {
-        if (idx < 4) {
-          const slot = slots[idx];
+        if (idx < 4 && subj.toLowerCase() !== "tihoi") {
+          const permittedThirds = allowedThirdsPerSubject[subj] || ["Third 1"];
+          // Intersect student's on-campus terms with subject's permitted terms
+          const validThirds = availThirds.filter(t => permittedThirds.includes(t));
           
-          // Determine section allocation (Section A or Section B if class exceeds capacity)
+          // Fallback to first available on-campus third if no intersection (prevents unassigned students)
+          const chosenThird = (validThirds.length > 0) ? validThirds[0] : availThirds[0];
+          
+          // Alternate lines to balance load
+          const targetLine = (idx % 2 === 0) ? "Line 1" : "Line 2";
+
           let targetSubjKey = subj;
           let currentCount = 0;
-          if (schedule[slot.third][slot.line][subj]) {
-            currentCount = schedule[slot.third][slot.line][subj].length;
+          if (schedule[chosenThird][targetLine][subj]) {
+            currentCount = schedule[chosenThird][targetLine][subj].length;
           }
 
+          // Split section if max bounds breached
           if (currentCount >= bounds.max) {
             targetSubjKey = `${subj} (Sec B)`;
           }
 
-          if (!schedule[slot.third][slot.line][targetSubjKey]) {
-            schedule[slot.third][slot.line][targetSubjKey] = [];
+          if (!schedule[chosenThird][targetLine][targetSubjKey]) {
+            schedule[chosenThird][targetLine][targetSubjKey] = [];
           }
-          schedule[slot.third][slot.line][targetSubjKey].push(st.id);
+          schedule[chosenThird][targetLine][targetSubjKey].push(st.id);
         }
       });
     });
