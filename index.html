@@ -1,9 +1,11 @@
+```html
 <!DOCTYPE html>
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Interactive Line & Capacity Planner</title>
+  <title>Schola Matrix — Constraint-Based Line & Capacity Planner</title>
+
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -11,17 +13,29 @@
       --primary: #2b6cb0;
       --primary-dark: #2c5282;
       --accent: #ed8936;
+      --teal: #319795;
       --text-main: #2d3748;
       --text-muted: #718096;
       --border-color: #e2e8f0;
+
       --success-bg: #c6f6d5;
       --success-text: #22543d;
+
       --warning-bg: #feebc8;
       --warning-text: #744210;
+
       --danger-bg: #fed7d7;
       --danger-text: #9b2c2c;
+
+      --info-bg: #ebf8ff;
+      --info-text: #2a4365;
+
       --radius: 12px;
       --shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
@@ -33,7 +47,10 @@
       line-height: 1.6;
     }
 
-    .container { max-width: 1200px; margin: 0 auto; }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
 
     header {
       display: flex;
@@ -42,11 +59,28 @@
       margin-bottom: 25px;
       padding-bottom: 15px;
       border-bottom: 2px dashed var(--border-color);
+      gap: 20px;
     }
 
-    h1 { font-size: 1.8rem; color: #1a202c; margin: 0; display: flex; align-items: center; gap: 10px; }
-    .sparkle { color: var(--accent); font-size: 1.4rem; }
-    .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+    h1 {
+      font-size: 1.8rem;
+      color: #1a202c;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sparkle {
+      color: var(--accent);
+      font-size: 1.4rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
 
     .card {
       background: var(--card-bg);
@@ -57,13 +91,26 @@
       margin-bottom: 25px;
     }
 
-    .card h2 { margin-top: 0; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     textarea {
-      width: 100%; height: 160px; box-sizing: border-box;
-      border: 1px solid var(--border-color); border-radius: 8px;
-      padding: 12px; font-family: monospace; font-size: 0.85rem;
-      background: #faf5ff; color: #4a5568; resize: vertical;
+      width: 100%;
+      height: 180px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: #faf5ff;
+      color: #4a5568;
+      resize: vertical;
     }
 
     .config-grid {
@@ -77,456 +124,2582 @@
       border: 1px solid var(--border-color);
     }
 
-    .config-item { display: flex; flex-direction: column; gap: 4px; }
-    .config-item label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-    .config-item input { padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-weight: 600; }
+    .config-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-    .btn-group { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
+    .config-item label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .config-item input {
+      padding: 7px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
 
     button {
-      border: none; padding: 10px 20px; border-radius: 8px;
-      font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
 
-    .btn-step1 { background: #319795; color: white; box-shadow: 0 2px 8px rgba(49, 151, 149, 0.3); }
-    .btn-step1:hover { background: #2c7a7b; }
-    .btn-step2 { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3); }
-    .btn-step2:hover { background: #2c5282; }
-    .btn-export { background: #38a169; color: white; box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3); }
-    .btn-export:hover { background: #2f855a; }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-step1 {
+      background: var(--teal);
+      color: white;
+      box-shadow: 0 2px 8px rgba(49, 151, 149, 0.3);
+    }
+
+    .btn-step1:hover:not(:disabled) {
+      background: #2c7a7b;
+    }
+
+    .btn-step2 {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3);
+    }
+
+    .btn-step2:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .btn-export {
+      background: #38a169;
+      color: white;
+      box-shadow: 0 2px 8px rgba(56, 161, 105, 0.3);
+    }
+
+    .btn-export:hover:not(:disabled) {
+      background: #2f855a;
+    }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+      border: 1px solid #cbd5e0;
+    }
 
     .step-header {
-      background: #edf2f7; padding: 8px 14px; border-radius: 6px;
-      font-weight: 700; font-size: 0.9rem; color: #4a5568; margin-bottom: 15px;
-      display: flex; justify-content: space-between; align-items: center;
+      background: #edf2f7;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #4a5568;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
     }
 
-    .third-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .third-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
 
     .line-box {
-      background: white; border: 1px solid #e2e8f0; border-radius: 6px;
-      padding: 12px; margin-bottom: 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
 
-    .line-box h4 { margin: 0 0 8px 0; font-size: 0.9rem; color: #4a5568; }
+    .line-box h4 {
+      margin: 0 0 8px 0;
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
 
     .student-tag {
-      display: inline-block; background: #edf2f7; border: 1px solid #cbd5e0;
-      padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 0.8rem;
+      display: inline-block;
+      background: #edf2f7;
+      border: 1px solid #cbd5e0;
+      padding: 2px 6px;
+      margin: 2px;
+      border-radius: 4px;
+      font-size: 0.8rem;
     }
 
-    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #e2e8f0;
+    }
 
-    .metric-pill { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; float: right; font-weight: 600; }
-    .metric-good { background: var(--success-bg); color: var(--success-text); }
-    .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
-    .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
+    .metric-pill {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      float: right;
+      font-weight: 600;
+    }
 
-    table.lock-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
-    table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
-    table.lock-table th { background: #edf2f7; color: #2d3748; }
-    
+    .metric-good {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .metric-warn {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+
+    .metric-danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+    }
+
+    .metric-info {
+      background: var(--info-bg);
+      color: var(--info-text);
+    }
+
+    table.lock-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.88rem;
+    }
+
+    table.lock-table th,
+    table.lock-table td {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    table.lock-table th {
+      background: #edf2f7;
+      color: #2d3748;
+    }
+
     .toggle-btn {
-      padding: 5px 10px; margin-right: 4px; border-radius: 6px; border: 1px solid #cbd5e0;
-      background: #edf2f7; color: #4a5568; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      padding: 5px 10px;
+      margin-right: 4px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e0;
+      background: #edf2f7;
+      color: #4a5568;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
     }
-    .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
-    .toggle-btn.advised { border: 2px solid var(--accent); }
 
-    .projection-pill { display: inline-block; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; }
-    .proj-balanced { background: var(--success-bg); color: var(--success-text); }
-    .proj-spillover { background: var(--danger-bg); color: var(--danger-text); }
-    .proj-overcap { background: var(--warning-bg); color: var(--warning-text); }
+    .toggle-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary-dark);
+    }
+
+    .toggle-btn.advised {
+      border: 2px solid var(--accent);
+    }
+
+    .projection-pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+
+    .proj-balanced {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .proj-spillover {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+    }
+
+    .proj-overcap {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+
+    .proj-info {
+      background: var(--info-bg);
+      color: var(--info-text);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-box {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+      background: #f7fafc;
+    }
+
+    .summary-label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .summary-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .status-banner {
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      border: 1px solid transparent;
+    }
+
+    .status-success {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border-color: #9ae6b4;
+    }
+
+    .status-warning {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      border-color: #f6ad55;
+    }
+
+    .status-danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border-color: #fc8181;
+    }
+
+    .status-title {
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .student-audit {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .audit-card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      background: white;
+    }
+
+    .audit-complete {
+      border-left: 5px solid #38a169;
+    }
+
+    .audit-incomplete {
+      border-left: 5px solid #e53e3e;
+    }
+
+    .audit-name {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .audit-slots {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .reason-list {
+      margin: 8px 0 0 18px;
+      padding: 0;
+      font-size: 0.82rem;
+    }
+
+    .small-note {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .empty-message {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      background: #f7fafc;
+      border-radius: 8px;
+    }
+
+    .allocation-section {
+      margin-bottom: 24px;
+    }
+
+    .allocation-section h3 {
+      color: var(--primary);
+      border-bottom: 1px solid #cbd5e0;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+
+    .student-timetable {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    .student-timetable table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .student-timetable th,
+    .student-timetable td {
+      border: 1px solid var(--border-color);
+      padding: 7px 8px;
+      text-align: left;
+    }
+
+    .student-timetable th {
+      background: #edf2f7;
+    }
+
+    .student-timetable td.filled {
+      background: #f0fff4;
+    }
+
+    .student-timetable td.empty {
+      background: #fff5f5;
+      color: #c53030;
+      font-weight: 700;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid #cbd5e0;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 15px;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      table.lock-table {
+        font-size: 0.78rem;
+      }
+    }
   </style>
 </head>
+
 <body>
 
 <div class="container">
+
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Interactive 2-Line Capacity Planner & Section Splitter</div>
+      <div class="subtitle">
+        Constraint-Based 2-Line Capacity Planner & Cohort Optimiser
+      </div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Parallel Section Separation Active</span>
+
+    <span class="badge" style="background:#eafbe8;color:#1e7e34;">
+      ● Strict 2-Line Cap Active
+    </span>
   </header>
 
-  <!-- Input Section -->
+
+  <!-- ========================================================= -->
+  <!-- STEP 1: INPUT -->
+  <!-- ========================================================= -->
+
   <div class="card">
+
     <h2>1. Cohort Data & Class Bounds</h2>
-    <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 10px;">
-      Format: <code>First Name, Last Name, Off-Campus Rotation Term (1-3), Subject 1, Subject 2, Subject 3, Subject 4</code>
+
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:10px;">
+      Format:
+      <code>
+        First Name, Last Name, Off-Campus Rotation Term (1-3),
+        Subject 1, Subject 2, Subject 3, Subject 4
+      </code>
     </p>
-    <textarea id="csvInput">Alex, Smith, 1, 10ART1, 10SCI1, 10MAT1, 10HIS1
-Jordan, Taylor, 2, 10ART1, 10TEC1, 10MUS1, 10HIS1
-Morgan, Lee, 3, 10SCI1, 10MAT1, 10TEC1, 10MUS1
-Sam, Patel, 1, 10ART1, 10TEC1, 10HIS1, 10DRA1
-Chris, Wong, 2, 10MAT1, 10SCI1, 10ART1, 10DRA1
-Taylor, Brown, 3, 10TEC1, 10HIS1, 10MUS1, 10ART1
-Casey, Davis, 1, 10SCI1, 10MAT1, 10DRA1, 10MUS1
-Riley, Wilson, 2, 10ART1, 10HIS1, 10TEC1, 10SCI1
-Jamie, Miller, 3, 10MAT1, 10TEC1, 10DRA1, 10ART1
-Avery, Clark, 1, 10SCI1, 10HIS1, 10MUS1, 10DRA1
-Quinn, Adams, 2, 10ART1, 10MAT1, 10TEC1, 10HIS1
-Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
+
+    <textarea id="csvInput">First1, Last1, 2, 10ATD1, 10ENT1, 910TE1
+First2, Last2, 2, 10ATD1, 10DIG1, 10ENT1, 910DV1
+First3, Last3, 3, 10ATD1, 10ENT1, 910AR1, 910DV1</textarea>
 
     <div class="config-grid">
+
       <div class="config-item">
-        <label for="minInput">Min Class Size</label>
+        <label for="minInput">Minimum Class Size</label>
         <input type="number" id="minInput" value="9" min="1">
       </div>
+
       <div class="config-item">
-        <label for="optInput">Optimal Target</label>
+        <label for="optInput">Optimal Class Size</label>
         <input type="number" id="optInput" value="16" min="1">
       </div>
+
       <div class="config-item">
-        <label for="maxInput">Max Class Size</label>
+        <label for="maxInput">Maximum Class Size</label>
         <input type="number" id="maxInput" value="20" min="1">
       </div>
+
+      <div class="config-item">
+        <label for="searchLimit">Maximum Search Nodes</label>
+        <input type="number" id="searchLimit" value="150000" min="1000">
+      </div>
+
     </div>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="generatePreSortLockTable()">Step 1: Parse Data & Analyse Optimal Thirds</button>
+      <button class="btn-step1" onclick="generatePreSortLockTable()">
+        Step 1: Analyse Cohort & Suggest Subject Offerings
+      </button>
     </div>
+
   </div>
 
-  <!-- Pre-Sort Lock Section -->
+
+  <!-- ========================================================= -->
+  <!-- STEP 1: OFFERINGS -->
+  <!-- ========================================================= -->
+
   <div class="card" id="lockCard" style="display:none;">
+
     <div class="step-header">
-      <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
+      <span>
+        STEP 1: SUBJECT OFFERINGS
+      </span>
+
+      <span class="badge">
+        Orange border = advised
+      </span>
     </div>
-    <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to manually lock section placement. AI-advised terms carry an orange border (<span style="color:var(--accent); font-weight:bold;">T1</span>). Review real-time unserved spillover projections.
+
+    <p style="font-size:0.88rem;color:var(--text-muted);">
+      Select the thirds in which each subject may be offered.
+      The scheduler will determine the actual line placement and
+      student allocation. It will not simply alternate subjects
+      between Line 1 and Line 2.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation with Automatic Class Separation</button>
+      <button class="btn-step2" onclick="executeConstraintSolver()">
+        Step 2: Find Complete 2-Line Schedule
+      </button>
+
+      <button class="btn-secondary" onclick="generatePreSortLockTable()">
+        Recalculate Advice
+      </button>
     </div>
+
   </div>
 
-  <!-- Step 2 Schedule Output -->
+
+  <!-- ========================================================= -->
+  <!-- STEP 2 -->
+  <!-- ========================================================= -->
+
   <div class="card" id="step2Card" style="display:none;">
+
     <div class="step-header">
-      <span>STEP 2: FINAL OPTIMISED 2-LINE SCHEDULE</span>
-      <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
+      <span>
+        STEP 2: SOLVED 2-LINE SCHEDULE
+      </span>
+
+      <button class="btn-export" onclick="exportToCSV()">
+        Export Schedule (CSV)
+      </button>
     </div>
+
     <div id="allocationOutput"></div>
+
   </div>
+
 </div>
 
+
 <script>
+
+  /* ============================================================
+     GLOBAL STATE
+     ============================================================ */
+
   let currentSchedule = null;
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
   let manualLocks = {};
+  let lastSolverResult = null;
 
-  document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v4', this.value);
+
+  /* ============================================================
+     LOCAL STORAGE
+     ============================================================ */
+
+  document.getElementById('csvInput').addEventListener('input', function () {
+    localStorage.setItem('schola_csv_constraint_v1', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v4');
-    if (saved) document.getElementById('csvInput').value = saved;
+
+    const saved = localStorage.getItem('schola_csv_constraint_v1');
+
+    if (saved) {
+      document.getElementById('csvInput').value = saved;
+    }
+
     generatePreSortLockTable();
+
   });
 
+
+  /* ============================================================
+     BASIC CONFIG
+     ============================================================ */
+
   function getBounds() {
+
     return {
       min: parseInt(document.getElementById('minInput').value) || 9,
       opt: parseInt(document.getElementById('optInput').value) || 16,
-      max: parseInt(document.getElementById('maxInput').value) || 20
+      max: parseInt(document.getElementById('maxInput').value) || 20,
+      searchLimit: parseInt(document.getElementById('searchLimit').value) || 150000
     };
+
   }
 
+
+  /* ============================================================
+     CSV PARSING
+     ============================================================ */
+
   function parseCSV(text) {
+
     if (!text) return [];
-    let cleanText = text.replace(/#(?:VALUE!|N\/A|REF!|NAME\?)/gi, ' ');
-    const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+    let cleanText = text
+      .replace(/#(?:VALUE!|N\/A|REF!|NAME\?)/gi, ' ');
+
+    const lines = cleanText
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
     const parsedStudents = [];
 
-    lines.forEach(line => {
-      const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
-      if (parts.length >= 3) {
-        const studentName = `${parts[0]} ${parts[1]}`.replace(/[0-9]/g, '').trim();
-        const tihoiTerm = parts[2].replace(/\D/g, '') || "1";
-        const subjects = parts.slice(3).map(s => s.toUpperCase()).filter(s => s.length > 0);
-        if (studentName) parsedStudents.push({ id: studentName, tihoi: tihoiTerm, subjects: subjects });
-      }
+    lines.forEach((line, lineIndex) => {
+
+      const parts = line
+        .split(/[\t,]+/)
+        .map(s => s.trim());
+
+      if (parts.length < 4) return;
+
+      const firstName = parts[0];
+      const lastName = parts[1];
+
+      if (!firstName || !lastName) return;
+
+      const studentName =
+        `${firstName} ${lastName}`
+          .replace(/[0-9]/g, '')
+          .trim();
+
+      const tihoiTerm =
+        extractTihoiTerm(parts[2]);
+
+      const subjects = parts
+        .slice(3)
+        .map(s => s.trim().toUpperCase())
+        .filter(s => s.length > 0)
+        .filter(s => s.toLowerCase() !== 'tihoi');
+
+      /*
+       * Remove accidental duplicate subjects while preserving order.
+       */
+      const uniqueSubjects = [...new Set(subjects)];
+
+      parsedStudents.push({
+        id: studentName,
+        tihoi: tihoiTerm,
+        subjects: uniqueSubjects,
+        sourceLine: lineIndex + 1
+      });
+
     });
 
     return parsedStudents;
+
   }
 
-  function extractTihoiTerm(tihoiVal) {
-    if (!tihoiVal) return "1";
-    const cleaned = tihoiVal.toString().replace(/\D/g, '');
-    return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
+
+  function extractTihoiTerm(value) {
+
+    if (!value) return "1";
+
+    const cleaned =
+      value.toString().replace(/\D/g, '');
+
+    if (
+      cleaned === "1" ||
+      cleaned === "2" ||
+      cleaned === "3"
+    ) {
+      return cleaned;
+    }
+
+    return "1";
+
   }
 
-  // STEP 1: PRE-SORT ANALYSIS & INTERACTIVE LOCK MATRIX
-  function generatePreSortLockTable() {
-    parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
-    const bounds = getBounds();
+
+  /* ============================================================
+     SLOT HELPERS
+     ============================================================ */
+
+  const THIRDS = [
+    "Third 1",
+    "Third 2",
+    "Third 3"
+  ];
+
+  const LINES = [
+    "Line 1",
+    "Line 2"
+  ];
+
+
+  function slotKey(third, line) {
+    return `${third}|${line}`;
+  }
+
+
+  function allSlots() {
+
+    const slots = [];
+
+    THIRDS.forEach(third => {
+
+      LINES.forEach(line => {
+
+        slots.push({
+          third,
+          line,
+          key: slotKey(third, line)
+        });
+
+      });
+
+    });
+
+    return slots;
+
+  }
+
+
+  function availableSlotsForStudent(student) {
+
+    const unavailableThird =
+      `Third ${extractTihoiTerm(student.tihoi)}`;
+
+    return allSlots()
+      .filter(slot => slot.third !== unavailableThird);
+
+  }
+
+
+  /* ============================================================
+     SUBJECT DEMAND ANALYSIS
+     ============================================================ */
+
+  function analyseSubjectDemand() {
+
     subjectDemandSummary = {};
+
+    parsedStudentCache.forEach(student => {
+
+      student.subjects.forEach(subject => {
+
+        if (!subjectDemandSummary[subject]) {
+
+          subjectDemandSummary[subject] = {
+            total: 0,
+            "Third 1": 0,
+            "Third 2": 0,
+            "Third 3": 0,
+            students: []
+          };
+
+        }
+
+        subjectDemandSummary[subject].total++;
+
+        subjectDemandSummary[subject].students.push(student.id);
+
+        availableSlotsForStudent(student)
+          .forEach(slot => {
+            subjectDemandSummary[subject][slot.third]++;
+          });
+
+      });
+
+    });
+
+  }
+
+
+  /* ============================================================
+     OFFERING ADVICE
+     ============================================================ */
+
+  /*
+   * Find the smallest set of thirds that can cover the subject
+   * demand, based on actual student availability.
+   *
+   * This is deliberately more intelligent than simply:
+   *
+   *     ceil(total demand / optimal class size)
+   *
+   * because availability matters.
+   */
+
+  function calculateAdvisedThirds(subject) {
+
+    const data = subjectDemandSummary[subject];
+
+    if (!data) return [];
+
+    const students =
+      parsedStudentCache.filter(
+        st => st.subjects.includes(subject)
+      );
+
+    /*
+     * Try all non-empty subsets of the three thirds.
+     */
+    const subsets = [
+      ["Third 1"],
+      ["Third 2"],
+      ["Third 3"],
+
+      ["Third 1", "Third 2"],
+      ["Third 1", "Third 3"],
+      ["Third 2", "Third 3"],
+
+      ["Third 1", "Third 2", "Third 3"]
+    ];
+
+    const bounds = getBounds();
+
+    let candidates = [];
+
+    subsets.forEach(subset => {
+
+      let possible = true;
+
+      students.forEach(student => {
+
+        const available = availableSlotsForStudent(student);
+
+        const canUse = available.some(
+          slot => subset.includes(slot.third)
+        );
+
+        if (!canUse) {
+          possible = false;
+        }
+
+      });
+
+      if (!possible) return;
+
+      /*
+       * Calculate the total theoretical capacity.
+       */
+      const capacity =
+        subset.length * bounds.max;
+
+      const optimalCapacity =
+        subset.length * bounds.opt;
+
+      /*
+       * We prefer fewer offerings, but reject a subset that
+       * cannot theoretically hold the demand.
+       */
+      if (capacity < data.total) return;
+
+      candidates.push({
+        subset,
+        capacity,
+        optimalCapacity,
+        count: subset.length
+      });
+
+    });
+
+    if (candidates.length === 0) {
+
+      /*
+       * Fall back to all thirds that have at least one possible
+       * student.
+       */
+      return THIRDS.filter(third =>
+        data[third] > 0
+      );
+
+    }
+
+    /*
+     * Prefer:
+     * 1. fewer offerings
+     * 2. less excess capacity
+     */
+    candidates.sort((a, b) => {
+
+      if (a.count !== b.count) {
+        return a.count - b.count;
+      }
+
+      return a.capacity - b.capacity;
+
+    });
+
+    return candidates[0].subset;
+
+  }
+
+
+  /* ============================================================
+     STEP 1
+     ============================================================ */
+
+  function generatePreSortLockTable() {
+
+    parsedStudentCache =
+      parseCSV(
+        document.getElementById('csvInput').value
+      );
+
+    if (parsedStudentCache.length === 0) {
+
+      alert("No valid student data was found.");
+
+      return;
+
+    }
+
+    analyseSubjectDemand();
+
+    /*
+     * Initialise the offering choices with the intelligent advice.
+     */
     manualLocks = {};
 
-    parsedStudentCache.forEach(st => {
-      const tNum = extractTihoiTerm(st.tihoi);
-      const tihoiThird = `Third ${tNum}`;
-      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
+    Object.keys(subjectDemandSummary)
+      .forEach(subject => {
 
-      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+        manualLocks[subject] =
+          calculateAdvisedThirds(subject);
 
-      validChoices.forEach(subj => {
-        if (!subjectDemandSummary[subj]) {
-          subjectDemandSummary[subj] = { total: 0, "Third 1": 0, "Third 2": 0, "Third 3": 0 };
-        }
-        subjectDemandSummary[subj].total++;
-        availThirds.forEach(t => subjectDemandSummary[subj][t]++);
       });
-    });
 
-    Object.keys(subjectDemandSummary).forEach(subj => {
-      const data = subjectDemandSummary[subj];
-      const suggestedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
-      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-      manualLocks[subj] = rankedThirds.slice(0, suggestedCount);
-    });
+    renderLockTable();
 
-    renderLockTable(bounds);
   }
 
-  function renderLockTable(bounds) {
-    const container = document.getElementById('lockTableContainer');
+
+  /* ============================================================
+     STEP 1 UI
+     ============================================================ */
+
+  function renderLockTable() {
+
+    const container =
+      document.getElementById('lockTableContainer');
+
+    const bounds = getBounds();
+
     let html = `
       <table class="lock-table">
+
         <thead>
           <tr>
-            <th>Subject Code</th>
-            <th>Total Demand</th>
-            <th>Term Availability (T1 / T2 / T3)</th>
-            <th>Manual Click Lock</th>
-            <th>Dynamic Capacity Projection</th>
+            <th>Subject</th>
+            <th>Demand</th>
+            <th>Availability</th>
+            <th>Offer In</th>
+            <th>Projection</th>
           </tr>
         </thead>
-        <tbody>`;
 
-    const sortedSubjects = Object.keys(subjectDemandSummary).sort();
+        <tbody>
+    `;
 
-    sortedSubjects.forEach(subj => {
-      const data = subjectDemandSummary[subj];
-      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-      const advisedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
-      const advisedThirds = rankedThirds.slice(0, advisedCount);
+    const sortedSubjects =
+      Object.keys(subjectDemandSummary).sort();
+
+    sortedSubjects.forEach(subject => {
+
+      const data =
+        subjectDemandSummary[subject];
+
+      const advised =
+        calculateAdvisedThirds(subject);
+
+      const active =
+        manualLocks[subject] || [];
+
+      const offeredCapacity =
+        active.length * bounds.max;
+
+      const theoreticalShortfall =
+        Math.max(
+          0,
+          data.total - offeredCapacity
+        );
 
       html += `
         <tr>
-          <td><strong>${subj}</strong></td>
-          <td>${data.total} choices</td>
-          <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
+
           <td>
-            <button id="btn_${subj}_T1" class="toggle-btn ${advisedThirds.includes('Third 1') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 1')">T1</button>
-            <button id="btn_${subj}_T2" class="toggle-btn ${advisedThirds.includes('Third 2') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 2')">T2</button>
-            <button id="btn_${subj}_T3" class="toggle-btn ${advisedThirds.includes('Third 3') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 3')">T3</button>
+            <strong>${escapeHtml(subject)}</strong>
           </td>
-          <td id="projection_${subj}"></td>
-        </tr>`;
+
+          <td>
+            ${data.total} student${data.total === 1 ? '' : 's'}
+          </td>
+
+          <td>
+            T1: ${data["Third 1"]}
+            |
+            T2: ${data["Third 2"]}
+            |
+            T3: ${data["Third 3"]}
+          </td>
+
+          <td>
+
+            <button
+              id="btn_${safeId(subject)}_T1"
+              class="toggle-btn ${active.includes("Third 1") ? "active" : ""} ${advised.includes("Third 1") ? "advised" : ""}"
+              onclick="toggleTermLock('${escapeJs(subject)}','Third 1')">
+              T1
+            </button>
+
+            <button
+              id="btn_${safeId(subject)}_T2"
+              class="toggle-btn ${active.includes("Third 2") ? "active" : ""} ${advised.includes("Third 2") ? "advised" : ""}"
+              onclick="toggleTermLock('${escapeJs(subject)}','Third 2')">
+              T2
+            </button>
+
+            <button
+              id="btn_${safeId(subject)}_T3"
+              class="toggle-btn ${active.includes("Third 3") ? "active" : ""} ${advised.includes("Third 3") ? "advised" : ""}"
+              onclick="toggleTermLock('${escapeJs(subject)}','Third 3')">
+              T3
+            </button>
+
+          </td>
+
+          <td id="projection_${safeId(subject)}"></td>
+
+        </tr>
+      `;
+
     });
 
-    html += `</tbody></table>`;
+    html += `
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <div class="legend-item">
+          <span
+            class="legend-swatch"
+            style="border:2px solid var(--accent);">
+          </span>
+          Advised
+        </div>
+
+        <div class="legend-item">
+          <span
+            class="legend-swatch"
+            style="background:var(--primary);">
+          </span>
+          Selected
+        </div>
+
+        <div class="legend-item">
+          The scheduler may use any selected third and will determine
+          the two line assignments.
+        </div>
+      </div>
+    `;
+
     container.innerHTML = html;
-    document.getElementById('lockCard').style.display = 'block';
 
-    sortedSubjects.forEach(subj => updateRowUI(subj, bounds));
+    document.getElementById('lockCard')
+      .style.display = 'block';
+
+    sortedSubjects.forEach(subject =>
+      updateRowUI(subject)
+    );
+
   }
 
-  function toggleTermLock(subj, term) {
-    const bounds = getBounds();
-    if (!manualLocks[subj]) manualLocks[subj] = [];
 
-    const index = manualLocks[subj].indexOf(term);
-    if (index > -1) {
-      manualLocks[subj].splice(index, 1);
-    } else {
-      manualLocks[subj].push(term);
+  function toggleTermLock(subject, term) {
+
+    if (!manualLocks[subject]) {
+      manualLocks[subject] = [];
     }
 
-    updateRowUI(subj, bounds);
-  }
+    const index =
+      manualLocks[subject].indexOf(term);
 
-  function updateRowUI(subj, bounds) {
-    const activeTerms = manualLocks[subj] || [];
-
-    ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
-      const termCode = `T${idx + 1}`;
-      const btn = document.getElementById(`btn_${subj}_${termCode}`);
-      if (btn) {
-        if (activeTerms.includes(term)) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      }
-    });
-
-    const data = subjectDemandSummary[subj];
-    const projCell = document.getElementById(`projection_${subj}`);
-    const offeredCapacity = activeTerms.length * bounds.opt;
-    const maxCapacity = activeTerms.length * bounds.max;
-    const netSpillover = data.total - offeredCapacity;
-
-    if (activeTerms.length === 0) {
-      projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
-    } else if (netSpillover > 0) {
-      if (data.total <= maxCapacity) {
-        projCell.innerHTML = `<span class="projection-pill proj-overcap">Absorbed via Split Classes (${data.total}/${maxCapacity} Max)</span>`;
-      } else {
-        projCell.innerHTML = `<span class="projection-pill proj-spillover">${netSpillover} Unserved Choices</span>`;
-      }
+    if (index >= 0) {
+      manualLocks[subject].splice(index, 1);
     } else {
-      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${offeredCapacity} Opt)</span>`;
+      manualLocks[subject].push(term);
     }
+
+    updateRowUI(subject);
+
   }
 
-  // STEP 2: EXECUTE SORTING WITH AUTOMATIC CLASS SPLITTING
-  function executeLockedLineSorting() {
+
+  function updateRowUI(subject) {
+
+    const active =
+      manualLocks[subject] || [];
+
+    const data =
+      subjectDemandSummary[subject];
+
+    const bounds =
+      getBounds();
+
+    ["Third 1", "Third 2", "Third 3"]
+      .forEach((term, index) => {
+
+        const button =
+          document.getElementById(
+            `btn_${safeId(subject)}_T${index + 1}`
+          );
+
+        if (!button) return;
+
+        button.classList.toggle(
+          "active",
+          active.includes(term)
+        );
+
+      });
+
+    const projection =
+      document.getElementById(
+        `projection_${safeId(subject)}`
+      );
+
+    if (!projection) return;
+
+    if (active.length === 0) {
+
+      projection.innerHTML =
+        `<span class="projection-pill proj-spillover">
+          Not Offered
+        </span>`;
+
+      return;
+
+    }
+
+    const capacity =
+      active.length * bounds.max;
+
+    if (capacity < data.total) {
+
+      projection.innerHTML =
+        `<span class="projection-pill proj-spillover">
+          ${data.total - capacity} theoretical overflow
+        </span>`;
+
+    } else {
+
+      projection.innerHTML =
+        `<span class="projection-pill proj-balanced">
+          ${active.length} offering${active.length === 1 ? '' : 's'}
+          · ${capacity} max capacity
+        </span>`;
+
+    }
+
+  }
+
+
+  /* ============================================================
+     CONSTRAINT SOLVER
+     ============================================================ */
+
+  function executeConstraintSolver() {
+
     const bounds = getBounds();
-    const students = parsedStudentCache;
 
-    const activeSubjects = Object.keys(manualLocks).filter(s => manualLocks[s].length > 0).sort();
-    const fixedLine = {};
-    activeSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
+    /*
+     * Validate that every subject is offered somewhere.
+     */
+    const unofferedSubjects =
+      Object.keys(subjectDemandSummary)
+        .filter(subject =>
+          !manualLocks[subject] ||
+          manualLocks[subject].length === 0
+        );
 
-    const schedule = {
-      "Third 1": { "Line 1": {}, "Line 2": {} },
-      "Third 2": { "Line 1": {}, "Line 2": {} },
-      "Third 3": { "Line 1": {}, "Line 2": {} }
-    };
+    if (unofferedSubjects.length > 0) {
+
+      renderFailure(
+        "Some subjects are not offered.",
+        unofferedSubjects.map(
+          s => `${s} has no selected third.`
+        )
+      );
+
+      return;
+
+    }
+
+    const result =
+      solveSchedule(bounds);
+
+    lastSolverResult = result;
+
+    if (!result.success) {
+
+      currentSchedule = null;
+
+      renderFailure(
+        "No complete timetable could be found.",
+        result.reasons
+      );
+
+      return;
+
+    }
+
+    currentSchedule =
+      result.schedule;
+
+    renderSuccessfulSchedule(
+      result,
+      bounds
+    );
+
+  }
+
+
+  /* ============================================================
+     CORE SOLVER
+     ============================================================ */
+
+  function solveSchedule(bounds) {
+
+    const students =
+      parsedStudentCache.map(st => ({
+        ...st,
+        slots: availableSlotsForStudent(st)
+      }));
+
+    const studentAssignments = {};
 
     students.forEach(st => {
-      const tNum = extractTihoiTerm(st.tihoi);
-      const tihoiThird = `Third ${tNum}`;
-      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
-
-      const termLoad = {};
-      availThirds.forEach(t => termLoad[t] = 0);
-
-      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
-
-      validChoices.forEach(subj => {
-        const permittedThirds = manualLocks[subj] || [];
-        if (permittedThirds.length === 0) return;
-
-        let candidateThirds = availThirds.filter(t => permittedThirds.includes(t));
-        if (candidateThirds.length === 0) return;
-
-        candidateThirds.sort((a, b) => termLoad[a] - termLoad[b]);
-        const chosenThird = candidateThirds[0];
-        termLoad[chosenThird]++;
-
-        const line = fixedLine[subj] || "Line 1";
-
-        // Dynamic Section Splitting Logic (Sec A, Sec B, Sec C)
-        let sectionSuffix = "Sec A";
-        let targetKey = `${subj} (${sectionSuffix})`;
-
-        // Check if current primary section exceeds Max Class Size
-        if (schedule[chosenThird][line][targetKey] && schedule[chosenThird][line][targetKey].length >= bounds.max) {
-          sectionSuffix = "Sec B";
-          targetKey = `${subj} (${sectionSuffix})`;
-        }
-        if (schedule[chosenThird][line][targetKey] && schedule[chosenThird][line][targetKey].length >= bounds.max) {
-          sectionSuffix = "Sec C";
-          targetKey = `${subj} (${sectionSuffix})`;
-        }
-
-        if (!schedule[chosenThird][line][targetKey]) {
-          schedule[chosenThird][line][targetKey] = [];
-        }
-        schedule[chosenThird][line][targetKey].push(st.id);
-      });
+      studentAssignments[st.id] = {};
     });
 
-    currentSchedule = schedule;
-    renderStep2(schedule, bounds);
-  }
+    /*
+     * classRosters[slotKey][subject] = Set(student IDs)
+     */
+    const classRosters = {};
 
-  function renderStep2(schedule, bounds) {
-    const out = document.getElementById('allocationOutput');
-    let html = '';
+    allSlots().forEach(slot => {
+      classRosters[slot.key] = {};
+    });
 
-    for (const [thirdName, lines] of Object.entries(schedule)) {
-      html += `<div style="margin-bottom:20px;">`;
-      html += `<h3 style="color:#2b6cb0; border-bottom:1px solid #cbd5e0; padding-bottom:4px; margin-bottom:10px;">${thirdName}</h3>`;
-      html += `<div class="third-grid">`;
+    let nodes = 0;
+    let bestSolution = null;
+    let bestScore = Infinity;
+    let aborted = false;
 
-      ["Line 1", "Line 2"].forEach(lineName => {
-        const classes = lines[lineName] || {};
-        html += `<div class="line-box">`;
-        html += `<h4>${lineName}</h4>`;
 
-        const activeClasses = Object.keys(classes).filter(k => classes[k].length > 0).sort();
-        if (activeClasses.length === 0) {
-          html += `<p style="font-size:0.8rem; color:var(--text-muted);">No active classes assigned to this line.</p>`;
-        } else {
-          for (const subjKey of activeClasses) {
-            const roster = classes[subjKey];
-            let count = roster.length;
-            let metricClass = "metric-good";
-            let statusText = `${count} Enrolled`;
+    /*
+     * A student's remaining subjects are ordered by the number
+     * of legal slots they have.
+     */
+    function getSubjectOptions(student, subject) {
 
-            if (count < bounds.min && count > 0) {
-              metricClass = "metric-danger";
-              statusText = `${count} (Below Min ${bounds.min})`;
-            } else if (count > bounds.max) {
-              metricClass = "metric-warn";
-              statusText = `${count} (Exceeds Max ${bounds.max})`;
-            }
+      const allowedThirds =
+        manualLocks[subject] || [];
 
-            html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
-            html += `<div><span class="badge">${subjKey}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
-            html += `<div style="margin-top:4px;">`;
-            roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
-            html += `</div></div>`;
-          }
+      return student.slots.filter(slot => {
+
+        if (!allowedThirds.includes(slot.third)) {
+          return false;
         }
 
-        html += `</div>`;
+        /*
+         * A student can only have one subject in a slot.
+         */
+        if (
+          studentAssignments[student.id][slot.key]
+        ) {
+          return false;
+        }
+
+        /*
+         * Class capacity.
+         */
+        const roster =
+          classRosters[slot.key][subject] || new Set();
+
+        if (roster.size >= bounds.max) {
+          return false;
+        }
+
+        return true;
+
       });
 
-      html += `</div></div>`;
     }
+
+
+    /*
+     * Find the next unassigned student/subject with the fewest
+     * legal choices. This is the critical difference from the
+     * old greedy algorithm.
+     */
+    function chooseNextVariable() {
+
+      let best = null;
+
+      students.forEach(student => {
+
+        const assigned =
+          Object.keys(
+            studentAssignments[student.id]
+          ).length;
+
+        if (assigned >= student.subjects.length) {
+          return;
+        }
+
+        student.subjects.forEach(subject => {
+
+          if (
+            studentAssignments[student.id]
+              .hasOwnProperty(subject)
+          ) {
+            return;
+          }
+
+          const options =
+            getSubjectOptions(student, subject);
+
+          if (
+            !best ||
+            options.length < best.options.length
+          ) {
+
+            best = {
+              student,
+              subject,
+              options
+            };
+
+          }
+
+        });
+
+      });
+
+      return best;
+
+    }
+
+
+    /*
+     * Score a complete timetable.
+     *
+     * Coverage is a hard constraint and therefore never gets
+     * traded away for a prettier class-size score.
+     */
+    function calculateScore() {
+
+      let score = 0;
+
+      allSlots().forEach(slot => {
+
+        const classes =
+          classRosters[slot.key];
+
+        Object.values(classes)
+          .forEach(roster => {
+
+            const size = roster.size;
+
+            /*
+             * Strong preference towards optimal class size.
+             */
+            score +=
+              Math.pow(
+                size - bounds.opt,
+                2
+              );
+
+            /*
+             * Additional penalty below minimum.
+             */
+            if (
+              size > 0 &&
+              size < bounds.min
+            ) {
+
+              score +=
+                1000 +
+                (bounds.min - size) * 100;
+
+            }
+
+          });
+
+      });
+
+      /*
+       * Slight preference for fewer subject offerings.
+       */
+      Object.keys(manualLocks)
+        .forEach(subject => {
+
+          const offered =
+            manualLocks[subject].length;
+
+          score +=
+            offered * 2;
+
+        });
+
+      return score;
+
+    }
+
+
+    /*
+     * Check whether a complete student timetable exists.
+     */
+    function allStudentsComplete() {
+
+      return students.every(student => {
+
+        return student.subjects.every(subject =>
+          studentAssignments[student.id]
+            .hasOwnProperty(subject)
+        );
+
+      });
+
+    }
+
+
+    /*
+     * Place a subject.
+     */
+    function place(variable, slot) {
+
+      const student =
+        variable.student;
+
+      const subject =
+        variable.subject;
+
+      if (
+        studentAssignments[student.id]
+          .hasOwnProperty(subject)
+      ) {
+        return false;
+      }
+
+      const roster =
+        classRosters[slot.key][subject] ||
+        new Set();
+
+      if (roster.size >= bounds.max) {
+        return false;
+      }
+
+      studentAssignments[student.id][subject] =
+        slot.key;
+
+      if (!classRosters[slot.key][subject]) {
+        classRosters[slot.key][subject] =
+          new Set();
+      }
+
+      classRosters[slot.key][subject]
+        .add(student.id);
+
+      return true;
+
+    }
+
+
+    /*
+     * Undo a placement.
+     */
+    function remove(variable, slot) {
+
+      const student =
+        variable.student;
+
+      const subject =
+        variable.subject;
+
+      delete studentAssignments[student.id][subject];
+
+      if (
+        classRosters[slot.key][subject]
+      ) {
+
+        classRosters[slot.key][subject]
+          .delete(student.id);
+
+        if (
+          classRosters[slot.key][subject]
+            .size === 0
+        ) {
+
+          delete classRosters[slot.key][subject];
+
+        }
+
+      }
+
+    }
+
+
+    /*
+     * Forward checking:
+     *
+     * After every placement, make sure that every remaining
+     * subject for every student still has at least one legal
+     * slot.
+     */
+    function passesForwardCheck() {
+
+      for (const student of students) {
+
+        for (const subject of student.subjects) {
+
+          if (
+            studentAssignments[student.id]
+              .hasOwnProperty(subject)
+          ) {
+            continue;
+          }
+
+          const options =
+            getSubjectOptions(
+              student,
+              subject
+            );
+
+          if (options.length === 0) {
+            return false;
+          }
+
+        }
+
+      }
+
+      return true;
+
+    }
+
+
+    /*
+     * Recursive global search.
+     */
+    function search() {
+
+      nodes++;
+
+      if (nodes > bounds.searchLimit) {
+        aborted = true;
+        return;
+      }
+
+      const variable =
+        chooseNextVariable();
+
+      if (!variable) {
+
+        if (allStudentsComplete()) {
+
+          const score =
+            calculateScore();
+
+          if (score < bestScore) {
+
+            bestScore = score;
+
+            bestSolution = {
+              assignments:
+                JSON.parse(
+                  JSON.stringify(studentAssignments)
+                ),
+
+              rosters:
+                cloneRosters(classRosters)
+            };
+
+          }
+
+        }
+
+        return;
+
+      }
+
+
+      if (variable.options.length === 0) {
+        return;
+      }
+
+
+      /*
+       * Prefer slots where the class is currently closest to
+       * the optimal size.
+       */
+      variable.options.sort((a, b) => {
+
+        const aSize =
+          classRosters[a.key][variable.subject]?.size || 0;
+
+        const bSize =
+          classRosters[b.key][variable.subject]?.size || 0;
+
+        const aDistance =
+          Math.abs(bounds.opt - aSize);
+
+        const bDistance =
+          Math.abs(bounds.opt - bSize);
+
+        return aDistance - bDistance;
+
+      });
+
+
+      for (const slot of variable.options) {
+
+        if (aborted) return;
+
+        place(variable, slot);
+
+        if (passesForwardCheck()) {
+          search();
+        }
+
+        remove(variable, slot);
+
+      }
+
+    }
+
+
+    search();
+
+
+    if (!bestSolution) {
+
+      return {
+        success: false,
+        nodes,
+        aborted,
+        reasons: diagnoseFailure(students, bounds)
+      };
+
+    }
+
+
+    const schedule =
+      convertRostersToSchedule(
+        bestSolution.rosters
+      );
+
+
+    return {
+      success: true,
+      nodes,
+      aborted,
+      score: bestScore,
+      schedule,
+      assignments:
+        bestSolution.assignments
+    };
+
+  }
+
+
+  /* ============================================================
+     CLONE ROSTERS
+     ============================================================ */
+
+  function cloneRosters(rosters) {
+
+    const result = {};
+
+    Object.keys(rosters).forEach(slotKey => {
+
+      result[slotKey] = {};
+
+      Object.keys(rosters[slotKey])
+        .forEach(subject => {
+
+          result[slotKey][subject] =
+            [...rosters[slotKey][subject]];
+
+        });
+
+    });
+
+    return result;
+
+  }
+
+
+  /* ============================================================
+     CONVERT TO DISPLAY SCHEDULE
+     ============================================================ */
+
+  function convertRostersToSchedule(rosters) {
+
+    const schedule = {
+      "Third 1": {
+        "Line 1": {},
+        "Line 2": {}
+      },
+
+      "Third 2": {
+        "Line 1": {},
+        "Line 2": {}
+      },
+
+      "Third 3": {
+        "Line 1": {},
+        "Line 2": {}
+      }
+    };
+
+
+    Object.keys(rosters).forEach(slotKey => {
+
+      const [third, line] =
+        slotKey.split("|");
+
+      Object.keys(rosters[slotKey])
+        .forEach(subject => {
+
+          schedule[third][line][subject] =
+            [...rosters[slotKey][subject]];
+
+        });
+
+    });
+
+    return schedule;
+
+  }
+
+
+  /* ============================================================
+     FAILURE DIAGNOSIS
+     ============================================================ */
+
+  function diagnoseFailure(students, bounds) {
+
+    const reasons = [];
+
+    /*
+     * Subjects with no offering.
+     */
+    Object.keys(subjectDemandSummary)
+      .forEach(subject => {
+
+        const offered =
+          manualLocks[subject] || [];
+
+        if (offered.length === 0) {
+
+          reasons.push(
+            `${subject}: no third has been selected.`
+          );
+
+        }
+
+      });
+
+
+    /*
+     * Students whose subjects have no legal offering.
+     */
+    students.forEach(student => {
+
+      student.subjects.forEach(subject => {
+
+        const offered =
+          manualLocks[subject] || [];
+
+        const possible =
+          student.slots.some(
+            slot => offered.includes(slot.third)
+          );
+
+        if (!possible) {
+
+          reasons.push(
+            `${student.id}: ${subject} has no available offered third because of the student's Tihoi rotation.`
+          );
+
+        }
+
+      });
+
+    });
+
+
+    /*
+     * If there are no obvious individual failures, give a
+     * general structural diagnosis.
+     */
+    if (reasons.length === 0) {
+
+      reasons.push(
+        "The selected subject offerings create a timetable clash that cannot be resolved within two lines."
+      );
+
+      reasons.push(
+        "Try offering one or more high-demand subjects in an additional third."
+      );
+
+      reasons.push(
+        "Alternatively, increase the maximum class size if that is operationally acceptable."
+      );
+
+    }
+
+    return [...new Set(reasons)];
+
+  }
+
+
+  /* ============================================================
+     SUCCESS OUTPUT
+     ============================================================ */
+
+  function renderSuccessfulSchedule(result, bounds) {
+
+    const out =
+      document.getElementById('allocationOutput');
+
+    const totalStudents =
+      parsedStudentCache.length;
+
+    let completeStudents = 0;
+
+    parsedStudentCache.forEach(student => {
+
+      const assigned =
+        result.assignments[student.id] || {};
+
+      if (
+        student.subjects.every(
+          subject =>
+            Object.prototype.hasOwnProperty.call(
+              assigned,
+              subject
+            )
+        )
+      ) {
+        completeStudents++;
+      }
+
+    });
+
+
+    let classCount = 0;
+    let goodClasses = 0;
+    let smallClasses = 0;
+    let overClasses = 0;
+
+    Object.values(result.schedule)
+      .forEach(lines => {
+
+        Object.values(lines)
+          .forEach(classes => {
+
+            Object.values(classes)
+              .forEach(roster => {
+
+                classCount++;
+
+                const size = roster.length;
+
+                if (
+                  size >= bounds.min &&
+                  size <= bounds.max
+                ) {
+                  goodClasses++;
+                }
+
+                if (
+                  size > 0 &&
+                  size < bounds.min
+                ) {
+                  smallClasses++;
+                }
+
+                if (size > bounds.max) {
+                  overClasses++;
+                }
+
+              });
+
+          });
+
+      });
+
+
+    let statusClass =
+      completeStudents === totalStudents &&
+      overClasses === 0
+        ? "status-success"
+        : "status-warning";
+
+
+    let statusTitle =
+      completeStudents === totalStudents
+        ? "Complete timetable found"
+        : "Incomplete timetable";
+
+
+    let html = `
+
+      <div class="status-banner ${statusClass}">
+
+        <div class="status-title">
+          ${statusTitle}
+        </div>
+
+        ${completeStudents} / ${totalStudents}
+        students have every subject assigned.
+
+        <div class="small-note" style="margin-top:4px;">
+          Solver examined ${result.nodes.toLocaleString()}
+          search nodes.
+          ${result.aborted ? "Search limit reached after finding the best solution found so far." : ""}
+        </div>
+
+      </div>
+
+
+      <div class="summary-grid">
+
+        <div class="summary-box">
+          <span class="summary-label">
+            Student Coverage
+          </span>
+          <span class="summary-value">
+            ${Math.round(
+              completeStudents /
+              Math.max(1,totalStudents) *
+              100
+            )}%
+          </span>
+        </div>
+
+        <div class="summary-box">
+          <span class="summary-label">
+            Students Complete
+          </span>
+          <span class="summary-value">
+            ${completeStudents}/${totalStudents}
+          </span>
+        </div>
+
+        <div class="summary-box">
+          <span class="summary-label">
+            Active Classes
+          </span>
+          <span class="summary-value">
+            ${classCount}
+          </span>
+        </div>
+
+        <div class="summary-box">
+          <span class="summary-label">
+            Within Bounds
+          </span>
+          <span class="summary-value">
+            ${goodClasses}
+          </span>
+        </div>
+
+        <div class="summary-box">
+          <span class="summary-label">
+            Below Minimum
+          </span>
+          <span class="summary-value">
+            ${smallClasses}
+          </span>
+        </div>
+
+        <div class="summary-box">
+          <span class="summary-label">
+            Above Maximum
+          </span>
+          <span class="summary-value">
+            ${overClasses}
+          </span>
+        </div>
+
+      </div>
+
+
+      <h3 style="color:var(--primary);">
+        Student Coverage Audit
+      </h3>
+
+      <div class="student-audit">
+    `;
+
+
+    parsedStudentCache.forEach(student => {
+
+      const assigned =
+        result.assignments[student.id] || {};
+
+      const complete =
+        student.subjects.every(
+          subject =>
+            Object.prototype.hasOwnProperty.call(
+              assigned,
+              subject
+            )
+        );
+
+      html += `
+
+        <div class="audit-card ${
+          complete
+            ? "audit-complete"
+            : "audit-incomplete"
+        }">
+
+          <div class="audit-name">
+            ${escapeHtml(student.id)}
+            ${complete ? " ✓" : " ⚠"}
+          </div>
+
+          <div class="audit-slots">
+            Tihoi: Third ${student.tihoi}
+          </div>
+
+          <ul class="reason-list">
+      `;
+
+      student.subjects.forEach(subject => {
+
+        const slot =
+          assigned[subject];
+
+        if (slot) {
+
+          const [third, line] =
+            slot.split("|");
+
+          html += `
+            <li>
+              <strong>${escapeHtml(subject)}</strong>
+              — ${third}, ${line}
+            </li>
+          `;
+
+        } else {
+
+          html += `
+            <li style="color:#c53030;">
+              <strong>${escapeHtml(subject)}</strong>
+              — NOT ASSIGNED
+            </li>
+          `;
+
+        }
+
+      });
+
+      html += `
+          </ul>
+        </div>
+      `;
+
+    });
+
+
+    html += `
+      </div>
+
+
+      <div class="allocation-section">
+
+        <h3>
+          Timetable by Third
+        </h3>
+    `;
+
+
+    for (const [thirdName, lines]
+      of Object.entries(result.schedule)) {
+
+      html += `
+
+        <h4 style="margin-top:18px;">
+          ${thirdName}
+        </h4>
+
+        <div class="third-grid">
+      `;
+
+
+      ["Line 1", "Line 2"]
+        .forEach(lineName => {
+
+          const classes =
+            lines[lineName] || {};
+
+          html += `
+
+            <div class="line-box">
+
+              <h4>
+                ${lineName}
+              </h4>
+          `;
+
+
+          const activeClasses =
+            Object.keys(classes)
+              .filter(
+                subject =>
+                  classes[subject].length > 0
+              )
+              .sort();
+
+
+          if (activeClasses.length === 0) {
+
+            html += `
+              <div class="empty-message">
+                No classes assigned.
+              </div>
+            `;
+
+          } else {
+
+            activeClasses.forEach(subject => {
+
+              const roster =
+                classes[subject];
+
+              const count =
+                roster.length;
+
+              let metricClass =
+                "metric-good";
+
+              let statusText =
+                `${count} Enrolled`;
+
+
+              if (
+                count < bounds.min
+              ) {
+
+                metricClass =
+                  "metric-danger";
+
+                statusText =
+                  `${count} — Below Min ${bounds.min}`;
+
+              } else if (
+                count > bounds.max
+              ) {
+
+                metricClass =
+                  "metric-warn";
+
+                statusText =
+                  `${count} — Exceeds Max ${bounds.max}`;
+
+              }
+
+
+              html += `
+
+                <div style="
+                  margin-bottom:8px;
+                  padding-bottom:6px;
+                  border-bottom:1px dashed #e2e8f0;
+                ">
+
+                  <div>
+
+                    <span class="badge">
+                      ${escapeHtml(subject)}
+                    </span>
+
+                    <span class="metric-pill ${metricClass}">
+                      ${statusText}
+                    </span>
+
+                  </div>
+
+                  <div style="margin-top:4px;">
+
+              `;
+
+
+              roster.forEach(student => {
+
+                html += `
+                  <span class="student-tag">
+                    ${escapeHtml(student)}
+                  </span>
+                `;
+
+              });
+
+
+              html += `
+                  </div>
+                </div>
+              `;
+
+            });
+
+          }
+
+
+          html += `
+            </div>
+          `;
+
+        });
+
+
+      html += `
+        </div>
+      `;
+
+    }
+
+
+    /*
+     * Student matrix: six actual timetable slots.
+     */
+    html += `
+
+      <div class="student-timetable">
+
+        <h3 style="color:var(--primary);">
+          Six-Slot Student Matrix
+        </h3>
+
+        <p class="small-note">
+          Each student's six possible timetable positions are
+          shown here. Their Tihoi position is unavailable;
+          their selected subjects occupy the remaining required
+          positions.
+        </p>
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>T1 L1</th>
+              <th>T1 L2</th>
+              <th>T2 L1</th>
+              <th>T2 L2</th>
+              <th>T3 L1</th>
+              <th>T3 L2</th>
+            </tr>
+          </thead>
+
+          <tbody>
+    `;
+
+
+    parsedStudentCache.forEach(student => {
+
+      const assigned =
+        result.assignments[student.id] || {};
+
+      const slotMap = {};
+
+      Object.entries(assigned)
+        .forEach(([subject, slot]) => {
+          slotMap[slot] = subject;
+        });
+
+
+      html += `
+        <tr>
+
+          <td>
+            <strong>
+              ${escapeHtml(student.id)}
+            </strong>
+          </td>
+      `;
+
+
+      allSlots().forEach(slot => {
+
+        const subject =
+          slotMap[slot.key];
+
+        const unavailable =
+          slot.third ===
+          `Third ${student.tihoi}`;
+
+        if (unavailable) {
+
+          html += `
+            <td class="empty">
+              Tihoi
+            </td>
+          `;
+
+        } else if (subject) {
+
+          html += `
+            <td class="filled">
+              ${escapeHtml(subject)}
+            </td>
+          `;
+
+        } else {
+
+          /*
+           * A blank cell is allowed because a student has four
+           * subjects but six timetable positions.
+           */
+          html += `
+            <td>
+              —
+            </td>
+          `;
+
+        }
+
+      });
+
+
+      html += `
+        </tr>
+      `;
+
+    });
+
+
+    html += `
+          </tbody>
+
+        </table>
+
+      </div>
+
+    `;
+
 
     out.innerHTML = html;
-    document.getElementById('step2Card').style.display = 'block';
+
+    document.getElementById('step2Card')
+      .style.display = 'block';
+
+    window.scrollTo({
+      top:
+        document.getElementById('step2Card')
+          .offsetTop - 20,
+      behavior: 'smooth'
+    });
+
   }
+
+
+  /* ============================================================
+     FAILURE OUTPUT
+     ============================================================ */
+
+  function renderFailure(title, reasons) {
+
+    const out =
+      document.getElementById('allocationOutput');
+
+    let html = `
+
+      <div class="status-banner status-danger">
+
+        <div class="status-title">
+          ${escapeHtml(title)}
+        </div>
+
+        The scheduler could not produce a timetable in which
+        every required subject is assigned to every student.
+
+      </div>
+
+
+      <h3 style="color:var(--primary);">
+        What is preventing the solution?
+      </h3>
+
+      <ul>
+    `;
+
+
+    reasons.forEach(reason => {
+
+      html += `
+        <li>
+          ${escapeHtml(reason)}
+        </li>
+      `;
+
+    });
+
+
+    html += `
+      </ul>
+
+
+      <div class="status-banner status-warning">
+
+        <div class="status-title">
+          Suggested next step
+        </div>
+
+        Try adding an additional offering for one of the
+        subjects mentioned above. The important distinction is
+        that this does not automatically create a third line:
+        the solver will still place everything across only
+        Line 1 and Line 2.
+
+      </div>
+    `;
+
+
+    out.innerHTML = html;
+
+    document.getElementById('step2Card')
+      .style.display = 'block';
+
+  }
+
+
+  /* ============================================================
+     CSV EXPORT
+     ============================================================ */
 
   function exportToCSV() {
-    if (!currentSchedule) return;
-    let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject Section,Student Full Name\n";
 
-    for (const [thirdName, lines] of Object.entries(currentSchedule)) {
-      for (const [lineName, classes] of Object.entries(lines)) {
-        for (const [subjKey, roster] of Object.entries(classes)) {
-          if (roster.length > 0) {
-            roster.forEach(studentId => {
-              csvContent += `"${thirdName}","${lineName}","${subjKey}","${studentId}"\n`;
-            });
-          }
-        }
-      }
+    if (!currentSchedule) {
+
+      alert(
+        "There is no completed schedule to export."
+      );
+
+      return;
+
     }
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Separated_Rosters.csv");
+
+    let csvContent =
+      "data:text/csv;charset=utf-8," +
+      "Third,Line,Subject,Student Full Name\n";
+
+
+    for (
+      const [thirdName, lines]
+      of Object.entries(currentSchedule)
+    ) {
+
+      for (
+        const [lineName, classes]
+        of Object.entries(lines)
+      ) {
+
+        for (
+          const [subject, roster]
+          of Object.entries(classes)
+        ) {
+
+          if (roster.length > 0) {
+
+            roster.forEach(studentId => {
+
+              csvContent +=
+                `"${csvEscape(thirdName)}",` +
+                `"${csvEscape(lineName)}",` +
+                `"${csvEscape(subject)}",` +
+                `"${csvEscape(studentId)}"\n`;
+
+            });
+
+          }
+
+        }
+
+      }
+
+    }
+
+
+    const encodedUri =
+      encodeURI(csvContent);
+
+    const link =
+      document.createElement("a");
+
+    link.setAttribute(
+      "href",
+      encodedUri
+    );
+
+    link.setAttribute(
+      "download",
+      "Schola_Matrix_2Line_Rosters.csv"
+    );
+
     document.body.appendChild(link);
+
     link.click();
+
     document.body.removeChild(link);
+
   }
+
+
+  /* ============================================================
+     SAFETY / STRING HELPERS
+     ============================================================ */
+
+  function escapeHtml(value) {
+
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  function escapeJs(value) {
+
+    return String(value)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"');
+
+  }
+
+
+  function safeId(value) {
+
+    return String(value)
+      .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+  }
+
+
+  function csvEscape(value) {
+
+    return String(value)
+      .replace(/"/g, '""');
+
+  }
+
 </script>
 
 </body>
 </html>
+```
