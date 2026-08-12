@@ -33,7 +33,7 @@
       line-height: 1.6;
     }
 
-    .container { max-width: 1200px; margin: 0 auto; }
+    .container { max-width: 1240px; margin: 0 auto; }
 
     header {
       display: flex;
@@ -126,12 +126,15 @@
     table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; vertical-align: middle; }
     table.lock-table th { background: #edf2f7; color: #2d3748; }
 
+    .toggle-group { display: inline-flex; align-items: center; gap: 3px; margin-right: 8px; }
     .toggle-btn {
-      padding: 5px 10px; margin-right: 4px; border-radius: 6px; border: 1px solid #cbd5e0;
+      padding: 5px 9px; border-radius: 6px; border: 1px solid #cbd5e0;
       background: #edf2f7; color: #4a5568; font-size: 0.78rem; font-weight: 700; cursor: pointer;
     }
     .toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary-dark); }
     .toggle-btn.advised { border: 2px solid var(--accent); }
+    .toggle-btn.sec2 { font-size: 0.7rem; padding: 4px 7px; background: #e2e8f0; }
+    .toggle-btn.sec2.active { background: #805ad5; color: white; border-color: #553c9a; }
 
     .projection-pill { display: inline-block; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.78rem; }
     .proj-balanced { background: var(--success-bg); color: var(--success-text); }
@@ -206,7 +209,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to manually lock section placement. AI-advised terms carry an orange border (<span style="color:var(--accent); font-weight:bold;">T1</span>). Review real-time unserved spillover projections.
+      Click term buttons to lock class sections. Terms exceeding optimal class size reveal a secondary toggle (<span style="color:#805ad5; font-weight:bold;">+2nd</span>) to manually authorize a concurrent section on the same line.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -227,20 +230,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 </div>
 
 <script>
-  const MAX_CONCURRENT_SECTIONS = 2; // hard cap: never more than 2 groups of the same subject running at once
+  const MAX_CONCURRENT_SECTIONS = 2; // Maximum concurrent classes of a subject in a single term
 
   let currentSchedule = null;
   let currentUnserved = [];
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
-  let manualLocks = {}; // Tracks user click toggles per subject { "10ART1": ["Third 1", "Third 2"] }
+  let manualLocks = {}; // Tracks locked section counts per term { "10ART1": { "Third 1": 2, "Third 2": 1, "Third 3": 0 } }
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v3', this.value);
+    localStorage.setItem('schola_csv_pseudo_v5', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v3');
+    const saved = localStorage.getItem('schola_csv_pseudo_v5');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -301,12 +304,26 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
     });
 
-    // Initialise manual locks based on AI advice
+    // Preset manual section locks based on AI advice
     Object.keys(subjectDemandSummary).forEach(subj => {
       const data = subjectDemandSummary[subj];
-      const suggestedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
+      const totalAdvisedSections = Math.min(3 * MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(data.total / bounds.opt)));
       const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-      manualLocks[subj] = rankedThirds.slice(0, suggestedCount);
+
+      manualLocks[subj] = { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
+
+      let remaining = totalAdvisedSections;
+      for (let pass = 1; pass <= MAX_CONCURRENT_SECTIONS && remaining > 0; pass++) {
+        for (const t of rankedThirds) {
+          if (remaining > 0 && manualLocks[subj][t] < pass) {
+            // Only offer second section if demand in that term exceeds bounds.opt
+            if (pass === 1 || data[t] > bounds.opt) {
+              manualLocks[subj][t]++;
+              remaining--;
+            }
+          }
+        }
+      }
     });
 
     renderLockTable(bounds);
@@ -321,7 +338,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             <th>Subject Code</th>
             <th>Total Demand</th>
             <th>Term Availability (T1 / T2 / T3)</th>
-            <th>Manual Click Lock</th>
+            <th>Manual Section Lock</th>
             <th>Dynamic Capacity Projection</th>
           </tr>
         </thead>
@@ -332,19 +349,32 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     sortedSubjects.forEach(subj => {
       const data = subjectDemandSummary[subj];
       const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
-      const advisedCount = Math.min(3, Math.max(1, Math.ceil(data.total / bounds.opt)));
-      const advisedThirds = rankedThirds.slice(0, advisedCount);
+      const advisedTotalSections = Math.min(3 * MAX_CONCURRENT_SECTIONS, Math.max(1, Math.ceil(data.total / bounds.opt)));
 
       html += `
         <tr>
           <td><strong>${subj}</strong></td>
           <td>${data.total} choices</td>
           <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
-          <td>
-            <button id="btn_${subj}_T1" class="toggle-btn ${advisedThirds.includes('Third 1') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 1')">T1</button>
-            <button id="btn_${subj}_T2" class="toggle-btn ${advisedThirds.includes('Third 2') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 2')">T2</button>
-            <button id="btn_${subj}_T3" class="toggle-btn ${advisedThirds.includes('Third 3') ? 'advised' : ''}" onclick="toggleTermLock('${subj}', 'Third 3')">T3</button>
-          </td>
+          <td>`;
+
+      ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
+        const termCode = `T${idx + 1}`;
+        const termDemand = data[term];
+        const exceedsSingleClass = termDemand > bounds.opt;
+
+        html += `<div class="toggle-group">`;
+        html += `<button id="btn_${subj}_${termCode}_1" class="toggle-btn" onclick="toggleSectionCount('${subj}', '${term}', 1)">${termCode}</button>`;
+
+        // Render secondary section toggle ONLY if term demand exceeds bounds.opt
+        if (exceedsSingleClass) {
+          html += `<button id="btn_${subj}_${termCode}_2" class="toggle-btn sec2" onclick="toggleSectionCount('${subj}', '${term}', 2)" title="${termCode} demand (${termDemand}) exceeds target size (${bounds.opt}). Click to toggle 2nd concurrent section.">+2nd</button>`;
+        }
+
+        html += `</div>`;
+      });
+
+      html += `</td>
           <td id="projection_${subj}"></td>
         </tr>`;
     });
@@ -353,83 +383,64 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     container.innerHTML = html;
     document.getElementById('lockCard').style.display = 'block';
 
-    // Update active button UI states and projection figures
     sortedSubjects.forEach(subj => updateRowUI(subj, bounds));
   }
 
-  function toggleTermLock(subj, term) {
+  function toggleSectionCount(subj, term, sectionLevel) {
     const bounds = getBounds();
-    if (!manualLocks[subj]) manualLocks[subj] = [];
+    if (!manualLocks[subj]) manualLocks[subj] = { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
 
-    const index = manualLocks[subj].indexOf(term);
-    if (index > -1) {
-      manualLocks[subj].splice(index, 1); // Remove term
-    } else {
-      manualLocks[subj].push(term); // Add term
+    const currentCount = manualLocks[subj][term] || 0;
+
+    if (sectionLevel === 1) {
+      // Toggle primary section on/off
+      manualLocks[subj][term] = (currentCount >= 1) ? 0 : 1;
+    } else if (sectionLevel === 2) {
+      // Toggle secondary concurrent section on/off
+      manualLocks[subj][term] = (currentCount === 2) ? 1 : 2;
     }
 
     updateRowUI(subj, bounds);
   }
 
   function updateRowUI(subj, bounds) {
-    const activeTerms = manualLocks[subj] || [];
+    const locks = manualLocks[subj] || { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
+    const data = subjectDemandSummary[subj];
 
-    // Update button visual states
+    let totalLockedCapacity = 0;
+
     ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
       const termCode = `T${idx + 1}`;
-      const btn = document.getElementById(`btn_${subj}_${termCode}`);
-      if (btn) {
-        if (activeTerms.includes(term)) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
+      const count = locks[term] || 0;
+      totalLockedCapacity += count * bounds.opt;
+
+      const btn1 = document.getElementById(`btn_${subj}_${termCode}_1`);
+      const btn2 = document.getElementById(`btn_${subj}_${termCode}_2`);
+
+      if (btn1) {
+        if (count >= 1) btn1.classList.add('active');
+        else btn1.classList.remove('active');
+      }
+
+      if (btn2) {
+        if (count === 2) btn2.classList.add('active');
+        else btn2.classList.remove('active');
       }
     });
 
-    // Update Dynamic Leftover Projection
-    // Each locked Third can hold up to MAX_CONCURRENT_SECTIONS physical
-    // classes of this subject running side-by-side (e.g. two teachers,
-    // two rooms) rather than one class growing past Max Class Size.
-    const data = subjectDemandSummary[subj];
     const projCell = document.getElementById(`projection_${subj}`);
-    const offeredCapacity = activeTerms.length * bounds.opt;
-    const hardCeiling = activeTerms.length * bounds.max * MAX_CONCURRENT_SECTIONS;
-    const netSpillover = data.total - offeredCapacity;
+    const netSpillover = data.total - totalLockedCapacity;
 
-    if (activeTerms.length === 0) {
+    if (totalLockedCapacity === 0) {
       projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
     } else if (netSpillover > 0) {
-      if (data.total <= hardCeiling) {
-        projCell.innerHTML = `<span class="projection-pill proj-overcap">Needs 2nd Concurrent Section (${data.total}/${hardCeiling} Max)</span>`;
-      } else {
-        projCell.innerHTML = `<span class="projection-pill proj-spillover">${data.total - hardCeiling} Unserved Choices (exceeds 2 sections)</span>`;
-      }
+      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${netSpillover} choices over optimal capacity</span>`;
     } else {
-      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${offeredCapacity} Opt)</span>`;
+      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${totalLockedCapacity} Opt)</span>`;
     }
   }
 
-  // ---------------------------------------------------------------------
-  // STEP 2: EXECUTE SORTING CONSTRAINED TO MAX 2 LINES
-  //
-  // A student has up to 4 subjects but only 2 available Thirds (their
-  // off-campus rotation Third is excluded). Each subject sits on a fixed
-  // Line, so a student really only has 2 Thirds x 2 Lines = 4 usable slots
-  // out of the 6 in the full matrix. The allocator enforces that a student
-  // can never hold two subjects in the same Third+Line slot.
-  //
-  // Within one Third+Line, a subject isn't a single roster — it's an array
-  // of up to MAX_CONCURRENT_SECTIONS physical class groups (e.g. two
-  // teachers running 10ART1 at once). A subject fills its first section
-  // toward Optimal Target before a second section is opened; once both
-  // sections are at Max Class Size, that slot is genuinely full.
-  //
-  // The allocator runs several randomised passes plus a swap-repair pass
-  // to push coverage as close to complete as the lock choices allow, and
-  // reports exactly what's left unplaced and why.
-  // ---------------------------------------------------------------------
-
+  // STEP 2: ALLOCATION SOLVER ENFORCING STRICT SECTION LOCKS
   function shuffleArray(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -441,19 +452,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function slotKey(third, line) { return `${third}|${line}`; }
 
-  // Place a student into a subject's roster for a given Third+Line,
-  // filling the first section toward Optimal Target, then opening a
-  // second concurrent section (capped at MAX_CONCURRENT_SECTIONS) once
-  // the first is at Max Class Size. Returns false if both sections are
-  // already at Max — a genuine capacity failure.
   function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds) {
     if (!schedule[third][line][subj]) schedule[third][line][subj] = [[]];
     const sections = schedule[third][line][subj];
+    const maxAllowedSections = manualLocks[subj]?.[third] || 0;
+
+    if (maxAllowedSections === 0) return false;
 
     let target = sections.find(sec => sec.length < bounds.opt);
     if (!target) target = sections.find(sec => sec.length < bounds.max);
     if (!target) {
-      if (sections.length < MAX_CONCURRENT_SECTIONS) {
+      if (sections.length < maxAllowedSections) {
         target = [];
         sections.push(target);
       } else {
@@ -480,7 +489,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
-  // Balance Lines by total projected enrolment, not just subject count
   function assignLinesByLoad(activeSubjects) {
     const order = activeSubjects.slice().sort(
       (a, b) => (subjectDemandSummary[b]?.total || 0) - (subjectDemandSummary[a]?.total || 0)
@@ -518,34 +526,31 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      // Most-constrained-first: place the subject with fewest legal Thirds first
       const withScore = validChoices.map(subj => {
-        const permitted = manualLocks[subj] || [];
-        const legal = availThirds.filter(t => permitted.includes(t));
+        const locks = manualLocks[subj] || {};
+        const legal = availThirds.filter(t => (locks[t] || 0) > 0);
         return { subj, legal };
       }).sort((a, b) => a.legal.length - b.legal.length);
 
       withScore.forEach(({ subj, legal }) => {
         if (legal.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Not offered / clashes with off-campus term' });
+          unserved.push({ id: st.id, subj, reason: 'Not offered in student active terms' });
           return;
         }
         const line = fixedLine[subj] || "Line 1";
-
-        // A student can never occupy the same Third+Line slot twice
         const freeThirds = legal.filter(t => !studentSlots[st.id].has(slotKey(t, line)));
+
         if (freeThirds.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Line clash with another subject choice' });
+          unserved.push({ id: st.id, subj, reason: 'Line conflict with another elective choice' });
           return;
         }
 
-        const hardCeiling = bounds.max * MAX_CONCURRENT_SECTIONS;
-        const underOpt = freeThirds.filter(t => (counts[subj][t] || 0) < bounds.opt);
-        const underCeiling = freeThirds.filter(t => (counts[subj][t] || 0) < hardCeiling);
-        const pool = underOpt.length ? underOpt : (underCeiling.length ? underCeiling : null);
+        const underOpt = freeThirds.filter(t => (counts[subj][t] || 0) < (manualLocks[subj][t] * bounds.opt));
+        const underMax = freeThirds.filter(t => (counts[subj][t] || 0) < (manualLocks[subj][t] * bounds.max));
+        const pool = underOpt.length ? underOpt : (underMax.length ? underMax : null);
 
         if (!pool) {
-          unserved.push({ id: st.id, subj, reason: `At capacity in every legal Third (${MAX_CONCURRENT_SECTIONS} concurrent sections full)` });
+          unserved.push({ id: st.id, subj, reason: 'Locked class sections full in active terms' });
           return;
         }
 
@@ -554,7 +559,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
         const placed = placeInSubjectThird(schedule, counts, subj, chosenThird, line, st.id, bounds);
         if (!placed) {
-          unserved.push({ id: st.id, subj, reason: `At capacity in every legal Third (${MAX_CONCURRENT_SECTIONS} concurrent sections full)` });
+          unserved.push({ id: st.id, subj, reason: 'Locked class sections full in active terms' });
           return;
         }
 
@@ -566,19 +571,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function scoreAttempt(result, bounds) {
-    let variance = 0, n = 0;
-    Object.values(result.counts).forEach(byThird => {
-      Object.values(byThird).forEach(c => {
-        if (c > 0) { variance += Math.pow(c - bounds.opt, 2); n++; }
-      });
-    });
-    return { unserved: result.unserved.length, variance: n ? variance / n : 0 };
-  }
-
-  // Local-search repair: for each remaining unserved student, look for a
-  // student already sitting in a full slot who has spare room in an
-  // alternate legal Third, and bump them to free the seat.
   function repairSwaps(result, fixedLine, bounds, maxPasses = 4) {
     for (let pass = 0; pass < maxPasses; pass++) {
       let improved = false;
@@ -587,16 +579,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         const st = parsedStudentCache.find(s => s.id === u.id);
         if (!st) return true;
         const subj = u.subj;
-        const permitted = manualLocks[subj] || [];
+        const locks = manualLocks[subj] || {};
         const tNum = extractTihoiTerm(st.tihoi);
         const tihoiThird = `Third ${tNum}`;
         const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
         const line = fixedLine[subj] || "Line 1";
         const legal = availThirds.filter(
-          t => permitted.includes(t) && !result.studentSlots[st.id].has(slotKey(t, line))
+          t => (locks[t] || 0) > 0 && !result.studentSlots[st.id].has(slotKey(t, line))
         );
-
-        const hardCeiling = bounds.max * MAX_CONCURRENT_SECTIONS;
 
         for (const third of legal) {
           const sections = result.schedule[third][line][subj] || [];
@@ -609,32 +599,30 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             const occTihoiThird = `Third ${occTNum}`;
             const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== occTihoiThird);
             const altThirds = occAvail.filter(t =>
-              t !== third && permitted.includes(t) &&
+              t !== third && (locks[t] || 0) > 0 &&
               !result.studentSlots[occupantId].has(slotKey(t, line)) &&
-              (result.counts[subj][t] || 0) < hardCeiling
+              (result.counts[subj][t] || 0) < (locks[t] * bounds.max)
             );
 
             if (altThirds.length > 0) {
               altThirds.sort((a, b) => (result.counts[subj][a] || 0) - (result.counts[subj][b] || 0));
               const moveTo = altThirds[0];
 
-              // Move the existing occupant out, then into the alternate Third
               removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
               result.studentSlots[occupantId].delete(slotKey(third, line));
               placeInSubjectThird(result.schedule, result.counts, subj, moveTo, line, occupantId, bounds);
               result.studentSlots[occupantId].add(slotKey(moveTo, line));
 
-              // Seat the previously-unserved student in the freed slot
               placeInSubjectThird(result.schedule, result.counts, subj, third, line, st.id, bounds);
               result.studentSlots[st.id].add(slotKey(third, line));
               result.placements[st.id].push({ subj, third, line });
 
               improved = true;
-              return false; // resolved — drop from the unserved list
+              return false;
             }
           }
         }
-        return true; // still unserved
+        return true;
       });
 
       if (!improved) break;
@@ -645,7 +633,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
-    const activeSubjects = Object.keys(manualLocks).filter(s => manualLocks[s].length > 0).sort();
+    const activeSubjects = Object.keys(manualLocks).filter(s =>
+      Object.values(manualLocks[s]).some(c => c > 0)
+    ).sort();
+
     const fixedLine = assignLinesByLoad(activeSubjects);
 
     const ATTEMPTS = 25;
@@ -655,12 +646,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     for (let i = 0; i < ATTEMPTS; i++) {
       const order = i === 0 ? students.slice() : shuffleArray(students);
       const result = attemptAllocation(order, fixedLine, bounds);
-      const score = scoreAttempt(result, bounds);
-      if (!bestScore ||
-          score.unserved < bestScore.unserved ||
-          (score.unserved === bestScore.unserved && score.variance < bestScore.variance)) {
+      const unservedCount = result.unserved.length;
+
+      if (!bestScore || unservedCount < bestScore) {
         best = result;
-        bestScore = score;
+        bestScore = unservedCount;
       }
     }
 
@@ -746,7 +736,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       });
       html += `</tbody></table>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; margin-bottom:0;">
-          Try opening an extra Term lock for the affected subject, or raising Max Class Size, then re-run Step 2.
+          Try enabling a secondary section (+2nd) or opening an extra Term lock for affected subjects, then re-run Step 2.
         </p></div>`;
     }
 
@@ -773,7 +763,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
 
     (currentUnserved || []).forEach(u => {
-      csvContent += `"—","—","${u.subj}","${u.id}","Unplaced: ${u.reason}"\n`;
+      csvContent += `"—","—","${u.subj}","—","${u.id}","Unplaced: ${u.reason}"\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
