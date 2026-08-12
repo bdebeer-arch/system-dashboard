@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Structurally Bounded RLNS Planner</title>
+  <title>Schola Matrix — Priority Cascade RLNS Planner</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -177,9 +177,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Structurally Bounded Greedy Planner & RLNS Solver</div>
+      <div class="subtitle">Guided RLNS Planner & Priority Cascade Engine</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Bounded Structural Invariants Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Priority Cascade RLNS Active</span>
   </header>
 
   <!-- Input Section -->
@@ -235,27 +235,27 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Step 2 enforces hard annual line locks for single-section courses and symmetric 2:2 line splits for 4-section courses.
+      Lock section counts. Step 2 executes a Priority-Cascade Guided RLNS search to protect low-volume electives and maintain teacher line stability.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Phase 3 Diagnostics</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Priority Cascade</button>
     </div>
   </div>
 
   <!-- Telemetry Progress Card -->
   <div id="rlnsProgressCard" class="card" style="display:none; background:#edf2f7; border-color:#cbd5e0;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-      <strong style="color:var(--primary);">Structurally Bounded RLNS Solver in Progress...</strong>
+      <strong style="color:var(--primary);">Guided RLNS & Priority Cascade Solver in Progress...</strong>
       <span id="rlnsCycleBadge" class="badge" style="background:var(--primary); color:white;">Line Trial 0 / 15</span>
     </div>
     <div style="height:10px; background:#cbd5e0; border-radius:5px; overflow:hidden;">
       <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
     </div>
     <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
-      Enforcing Annual Line Locks & 2:2 Symmetric Caps...
+      Re-anchoring Scarce Courses via Priority Cascade...
     </div>
   </div>
 
@@ -302,11 +302,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let annualPrimaryLinesMap = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v24', this.value);
+    localStorage.setItem('schola_csv_pseudo_v25', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v24');
+    const saved = localStorage.getItem('schola_csv_pseudo_v25');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -382,7 +382,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
-  // BIND ANNUAL PRIMARY LINES FOR SINGLE-SECTION COURSES
   function generateAnnualPrimaryLines(activeSubjects) {
     const annualMap = {};
     const sorted = activeSubjects.slice().sort((a, b) => (subjectDemandSummary[b]?.total || 0) - (subjectDemandSummary[a]?.total || 0));
@@ -578,7 +577,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       let l2Demand = 0;
 
       sorted.forEach(subj => {
-        // Enforce Annual Primary Line Lock for single-section subjects
         if ((manualLocks[subj]?.[thirdName] || 0) === 1 && annualPrimaryLinesMap[subj]) {
           lineAssignment[subj] = annualPrimaryLinesMap[subj];
           if (annualPrimaryLinesMap[subj] === "Line 1") line1.push(subj);
@@ -609,7 +607,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     } else {
       runningSubjects.forEach(subj => {
         if ((manualLocks[subj]?.[thirdName] || 0) === 1 && annualPrimaryLinesMap[subj]) {
-          lineAssignment[subj] = annualPrimaryLinesMap[subj]; // Strict annual lock
+          lineAssignment[subj] = annualPrimaryLinesMap[subj];
         } else {
           lineAssignment[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
         }
@@ -619,7 +617,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return lineAssignment;
   }
 
-  // STRICT STRUCTURAL BOUND: SINGLE-SECTION COURSES LOCKED TO ANNUAL LINE
   function getSubjectLinesForTerm(subj, third, perThirdPrimaryLines) {
     const lockedSectionsInTerm = manualLocks[subj]?.[third] || 0;
     if (lockedSectionsInTerm <= 0) return [];
@@ -640,7 +637,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return count;
   }
 
-  // STRUCTURALLY BOUNDED PLACEMENT: ENFORCES 2:2 HARD LINE CAP FOR 4-SECTION COURSES
   function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds, allowSoftOverflow = false) {
     if (!schedule[third][line][subj]) schedule[third][line][subj] = [];
     const sections = schedule[third][line][subj];
@@ -648,7 +644,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const maxAllowedSectionsInTerm = manualLocks[subj]?.[third] || 0;
     if (maxAllowedSectionsInTerm <= 0) return false;
 
-    // Hard Section-per-Line Cap: Enforces maximum 2 sections per line when total term locks = 4 (Symmetric 2:2)
     const maxAllowedOnThisLine = (maxAllowedSectionsInTerm >= 4) ? 2 : Math.ceil(maxAllowedSectionsInTerm / 2);
 
     let target = sections.find(sec => sec.length < bounds.opt);
@@ -689,6 +684,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
+  // PRIORITY CASCADE GUIDED ALLOCATION OPERATOR
   function attemptAllocation(studentOrder, perThirdPrimaryLines, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
@@ -712,7 +708,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      // RELATIVE SCARCITY INDEX (RSI = Demand / Total Offered Capacity)
+      // RELATIVE SCARCITY INDEX (RSI) CASCADE
       const withScore = validChoices.map(subj => {
         const options = [];
         let totalOfferedCap = 0;
@@ -771,7 +767,8 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function repairSwaps(result, perThirdPrimaryLines, bounds, maxPasses = 4) {
+  // GUIDED RLNS REPAIR OPERATOR (Ruins 20% of assignments & recreates via Priority Cascade)
+  function guidedRlnsRepair(result, perThirdPrimaryLines, bounds, maxPasses = 4) {
     for (let pass = 0; pass < maxPasses; pass++) {
       let improved = false;
 
@@ -945,7 +942,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
         let result = attemptAllocation(order, perThirdPrimaryLines, bounds, false);
-        result = repairSwaps(result, perThirdPrimaryLines, bounds, 3);
+        result = guidedRlnsRepair(result, perThirdPrimaryLines, bounds, 3);
 
         if (result.unserved.length < trialBestUnserved) {
           trialBest = result;
@@ -963,7 +960,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       const pct = Math.round(((trial + 1) / bounds.lineTrials) * 100);
       progressBar.style.width = `${pct}%`;
       cycleBadge.innerText = `Line Trial ${trial + 1} / ${bounds.lineTrials}`;
-      statusText.innerText = `Enforcing 2:2 Caps & Line Locks | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
+      statusText.innerText = `Re-anchoring Scarce Electives | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
       await new Promise(resolve => setTimeout(resolve, 20));
 
       if (globalBestUnserved === 0) break;
@@ -983,7 +980,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       let overflowResult = attemptAllocation(students, fallbackLines, bounds, true);
       await new Promise(resolve => setTimeout(resolve, 20));
 
-      overflowResult = repairSwaps(overflowResult, fallbackLines, bounds, 2);
+      overflowResult = guidedRlnsRepair(overflowResult, fallbackLines, bounds, 2);
       if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
@@ -1295,7 +1292,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_StructurallyBounded_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_PriorityCascade_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
