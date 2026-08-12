@@ -241,9 +241,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">High-Density 6-Line Master Grid Board & Stochastic Load Balancer</div>
+      <div class="subtitle">High-Density 6-Line Master Grid Board & Strict Boundary Solver</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Pseudonymised Data Shell Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Hard Line-Lock Immunity Active</span>
   </header>
 
   <!-- Navigation Tabs -->
@@ -346,7 +346,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
       <div id="rlnsProgressBar" style="width:0%; height:100%; background:var(--accent); transition:width 0.1s;"></div>
     </div>
     <div id="rlnsStatusText" style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:right;">
-      Equalising Line Densities via Stochastic Tie-Breaking...
+      Enforcing Hard Line Locks & Section Caps...
     </div>
   </div>
 
@@ -500,7 +500,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     const students = cohortData[activeTab];
 
     progressBar.style.width = '50%';
-    statusText.innerText = 'Sorting Cohort & Balancing Line 1..6 Densities...';
+    statusText.innerText = 'Sorting Cohort with Hard Line Locks & Section Caps...';
     await new Promise(res => setTimeout(res, 100));
 
     const { schedule, unserved } = solveCohortMatrix(students, bounds);
@@ -516,7 +516,7 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
     renderDiagnostics();
   }
 
-  // SOLVER WITH DYNAMIC ZERO-SECTION IGNORING & STOCHASTIC LINE TIE-BREAKING
+  // SOLVER WITH HARD LINE-LOCK IMMUNITY & STRICT SECTION CAPPING
   function solveCohortMatrix(students, bounds) {
     const schedule = {};
     LINES.forEach(l => schedule[l] = {});
@@ -530,39 +530,60 @@ Logan	Lambda	13ENG_A	13CALC_A	13PHY_A	13DRA_A	13MUS_A	13TEC_A</textarea>
 
       const ranked = validChoices.map(s => {
         let available = LINES.filter(l => !studentSlots[st.id].has(l));
-        if (selectiveConstraints[s]?.lock) available = [selectiveConstraints[s].lock];
-        if (selectiveConstraints[s]?.forbid) available = available.filter(l => l !== selectiveConstraints[s].forbid);
+
+        // HARD LOCK IMMUNITY: Restrict available lines strictly to the locked line
+        if (selectiveConstraints[s]?.lock) {
+          const lockedLine = selectiveConstraints[s].lock;
+          available = studentSlots[st.id].has(lockedLine) ? [] : [lockedLine];
+        }
+
+        if (selectiveConstraints[s]?.forbid) {
+          available = available.filter(l => l !== selectiveConstraints[s].forbid);
+        }
 
         return { subj: s, available, demand: subjectDemandSummary[s] || 1 };
       }).sort((a, b) => a.available.length - b.available.length || a.demand - b.demand);
 
       ranked.forEach(({ subj, available }) => {
         if (available.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Line conflict across selected choices' });
+          unserved.push({ 
+            id: st.id, 
+            subj, 
+            reason: selectiveConstraints[subj]?.lock 
+              ? `Clash on locked line (${selectiveConstraints[subj].lock})` 
+              : 'Line conflict across selected choices' 
+          });
           return;
         }
 
-        // Stochastic tie-breaking prevents Line 6 under-capacity
+        // Stochastic tie-breaking across allowed lines
         available.sort((l1, l2) => {
           const load1 = getLineLoad(schedule, l1);
           const load2 = getLineLoad(schedule, l2);
           if (load1 !== load2) return load1 - load2;
-          return Math.random() - 0.5; // Distributes equal-load choices across Line 1..6
+          return Math.random() - 0.5;
         });
 
         const chosenLine = available[0];
 
-        if (!schedule[chosenLine][subj]) schedule[chosenLine][subj] = [[]];
+        // STRICT SECTION CAPPING
+        const allowedSections = manualLocks[subj] !== undefined ? manualLocks[subj] : 1;
+        schedule[chosenLine][subj] = schedule[chosenLine][subj] || [[]];
+
         let section = schedule[chosenLine][subj].find(sec => sec.length < bounds.opt) ||
                       schedule[chosenLine][subj].find(sec => sec.length < bounds.max);
 
-        if (!section) {
+        if (!section && schedule[chosenLine][subj].length < allowedSections) {
           section = [];
           schedule[chosenLine][subj].push(section);
         }
 
-        section.push(st.id);
-        studentSlots[st.id].add(chosenLine);
+        if (section) {
+          section.push(st.id);
+          studentSlots[st.id].add(chosenLine);
+        } else {
+          unserved.push({ id: st.id, subj, reason: 'Section capacity reached on locked line' });
+        }
       });
     });
 
