@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Dynamic Line-Trial RLNS Optimiser</title>
+  <title>Schola Matrix — Adaptive RLNS Planner & Phase 3 Inspector</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -151,6 +151,14 @@
     .stat-strip { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
     .stat-chip { background: #edf2f7; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; color: #4a5568; }
     .stat-chip b { color: var(--primary-dark); font-size: 0.95rem; }
+
+    /* Phase 3 Diagnostic Dashboard Styling */
+    .phase3-card { background: #faf5ff; border: 2px solid #805ad5; }
+    .phase3-card h2 { color: #553c9a; }
+    .search-box { width: 100%; max-width: 400px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; margin-bottom: 15px; }
+    .isolation-panel { background: white; border: 1px solid #d6bcfa; border-radius: 8px; padding: 16px; margin-top: 15px; }
+    .clash-meter-bg { background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; width: 100%; }
+    .clash-meter-fill { height: 100%; background: #e53e3e; }
   </style>
 </head>
 <body>
@@ -159,9 +167,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Dynamic Line-Trial RLNS Optimiser & Cohort Planner</div>
+      <div class="subtitle">Adaptive RLNS Capacity Planner & Phase 3 Inspector</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Outer-Loop Line Permutation Search Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Phase 3 Clash Isolation Active</span>
   </header>
 
   <!-- Input Section -->
@@ -217,13 +225,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock desired section counts. Step 2 will execute an Outer-Loop Line Trial Search to test different Line 1 / Line 2 subject assignments, finding the partition that minimizes option clashes.
+      Lock section counts. Step 2 calculates placement yield, feeding into Phase 3 for subject clash % metrics and individual student choice isolation.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Dynamic Line-Trial RLNS Search</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation & Launch Phase 3 Diagnostics</button>
     </div>
   </div>
 
@@ -249,6 +257,27 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     </div>
     <div id="allocationOutput"></div>
   </div>
+
+  <!-- PHASE 3 DIAGNOSTIC DASHBOARD -->
+  <div class="card phase3-card" id="phase3Card" style="display:none;">
+    <div class="step-header" style="background:#e9d8fd; color:#44337a;">
+      <span>PHASE 3: CLASS CLASH ANALYTICS & STUDENT ISOLATION INSPECTOR</span>
+    </div>
+
+    <h3>1. Subject-Level Clash % Metrics</h3>
+    <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+      Calculates exact choice clash percentages ($(\text{Unplaced Choices} / \text{Total Demand}) \times 100$) per subject.
+    </p>
+    <div id="subjectClashMetricsContainer"></div>
+
+    <h3 style="margin-top:25px;">2. Student Choice Isolation Inspector</h3>
+    <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+      Type a student's name to isolate their requested electives, active term allocations, and specific clash reasons.
+    </p>
+    <input type="text" id="studentSearchInput" class="search-box" placeholder="Search student name (e.g. Alex Smith)..." oninput="isolateStudentChoices()">
+
+    <div id="studentIsolationOutput"></div>
+  </div>
 </div>
 
 <script>
@@ -259,14 +288,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let parsedStudentCache = [];
   let subjectDemandSummary = {};
   let manualLocks = {};
-  let coOccurrenceMatrix = {}; // Stores pairwise student choice conflicts
+  let coOccurrenceMatrix = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v11', this.value);
+    localStorage.setItem('schola_csv_pseudo_v12', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v11');
+    const saved = localStorage.getItem('schola_csv_pseudo_v12');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -316,7 +345,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
   }
 
-  // STEP 1: PRE-SORT ANALYSIS & CO-OCCURRENCE MATRIX GENERATOR
+  // STEP 1: PRE-SORT ANALYSIS
   function generatePreSortLockTable() {
     parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
     const bounds = getBounds();
@@ -331,7 +360,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      // Build pairwise student co-occurrence conflict graph
       for (let i = 0; i < validChoices.length; i++) {
         for (let j = i + 1; j < validChoices.length; j++) {
           const s1 = validChoices[i];
@@ -494,12 +522,10 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function slotKey(third, line) { return `${third}|${line}`; }
 
-  // Generate candidate Line 1 / Line 2 partition using Greedy Conflict Minimisation + Randomised Perturbations
   function generateCandidateLineTrial(activeSubjects, trialIndex) {
     const primaryLine = {};
 
     if (trialIndex === 0) {
-      // Trial 0: Greedy Co-occurrence Graph Partitioning
       const unassigned = activeSubjects.slice().sort((a, b) => subjectDemandSummary[b].total - subjectDemandSummary[a].total);
       const line1 = [];
       const line2 = [];
@@ -520,7 +546,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         }
       });
     } else {
-      // Trials 1+: Randomised Bipartition Perturbations
       activeSubjects.forEach((subj, idx) => {
         primaryLine[subj] = (Math.random() < 0.5) ? "Line 1" : "Line 2";
       });
@@ -762,7 +787,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
-  // EXECUTE TWO-TIER LINE TRIALS & RLNS SEARCH
   async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -781,14 +805,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     let globalBest = null;
     let globalBestUnserved = Infinity;
 
-    // OUTER LOOP: Trial dynamic Line 1 / Line 2 subject partitions
     for (let trial = 0; trial < bounds.lineTrials; trial++) {
       const candidatePrimaryLine = generateCandidateLineTrial(activeSubjects, trial);
 
       let trialBest = null;
       let trialBestUnserved = Infinity;
 
-      // INNER LOOP: RLNS Student Allocation & Swap-Repair
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
         let result = attemptAllocation(order, candidatePrimaryLine, bounds, false);
@@ -807,29 +829,26 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         globalBestUnserved = trialBestUnserved;
       }
 
-      // Update Live Telemetry
       const pct = Math.round(((trial + 1) / bounds.lineTrials) * 100);
       progressBar.style.width = `${pct}%`;
       cycleBadge.innerText = `Line Trial ${trial + 1} / ${bounds.lineTrials}`;
       statusText.innerText = `Testing Line Bipartitions | Best Placed: ${totalChoices - globalBestUnserved} / ${totalChoices}`;
       await new Promise(resolve => setTimeout(resolve, 20));
 
-      if (globalBestUnserved === 0) break; // 100% Placement reached
+      if (globalBestUnserved === 0) break;
     }
 
-    // Final Soft-Overflow Pass if capacity deficit remains
     if (globalBestUnserved > 0) {
       statusText.innerText = "Executing final Soft-Overflow repair pass...";
-      const bestPrimaryLine = assignLinesByLoad(activeSubjects);
-      let overflowResult = attemptAllocation(students, bestPrimaryLine, bounds, true);
-      overflowResult = repairSwaps(overflowResult, bestPrimaryLine, bounds);
+      const fallbackLine = generateCandidateLineTrial(activeSubjects, 0);
+      let overflowResult = attemptAllocation(students, fallbackLine, bounds, true);
+      overflowResult = repairSwaps(overflowResult, fallbackLine, bounds);
       if (overflowResult.unserved.length < globalBestUnserved) {
         globalBest = overflowResult;
       }
     }
 
-    // Run deterministic Slot Uniqueness Audit
-    enforceSlotUniqueness(globalBest, assignLinesByLoad(activeSubjects), bounds);
+    enforceSlotUniqueness(globalBest, generateCandidateLineTrial(activeSubjects, 0), bounds);
 
     progressBar.style.width = "100%";
     cycleBadge.innerText = "Complete!";
@@ -839,6 +858,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     currentSchedule = globalBest.schedule;
     currentUnserved = globalBest.unserved;
     renderStep2(globalBest.schedule, bounds, globalBest.unserved, students.length);
+    renderPhase3Diagnostics(globalBest.schedule, globalBest.unserved);
   }
 
   function renderStep2(schedule, bounds, unserved, totalStudents) {
@@ -913,14 +933,132 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       unserved.forEach(u => {
         html += `<tr><td>${u.id}</td><td>${u.subj}</td><td>${u.reason}</td></tr>`;
       });
-      html += `</tbody></table>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; margin-bottom:0;">
-          Try increasing Line-Trial Permutations or enabling higher-tier section toggles (+2nd, +3rd) in Step 1.
-        </p></div>`;
+      html += `</tbody></table></div>`;
     }
 
     out.innerHTML = html;
     document.getElementById('step2Card').style.display = 'block';
+  }
+
+  // PHASE 3 DIAGNOSTICS & STUDENT ISOLATION INSPECTOR
+  function renderPhase3Diagnostics(schedule, unserved) {
+    const container = document.getElementById('subjectClashMetricsContainer');
+    let html = `
+      <table class="unserved-table">
+        <thead>
+          <tr>
+            <th>Subject Code</th>
+            <th>Total Demand</th>
+            <th>Unplaced Choices</th>
+            <th>Clash %</th>
+            <th>Visual Impact Bar</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    const sortedSubjects = Object.keys(subjectDemandSummary).sort();
+
+    sortedSubjects.forEach(subj => {
+      const demand = subjectDemandSummary[subj]?.total || 0;
+      const unplacedCount = unserved.filter(u => u.subj === subj).length;
+      const clashPct = demand ? ((unplacedCount / demand) * 100).toFixed(1) : "0.0";
+
+      let barColor = "#38a169";
+      if (clashPct > 20) barColor = "#e53e3e";
+      else if (clashPct > 5) barColor = "#dd6b20";
+
+      html += `
+        <tr>
+          <td><strong>${subj}</strong></td>
+          <td>${demand} choices</td>
+          <td>${unplacedCount} unplaced</td>
+          <td><strong>${clashPct}%</strong></td>
+          <td style="width:30%;">
+            <div class="clash-meter-bg">
+              <div class="clash-meter-fill" style="width:${clashPct}%; background:${barColor};"></div>
+            </div>
+          </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    document.getElementById('phase3Card').style.display = 'block';
+    isolateStudentChoices(); // Reset student isolation inspector
+  }
+
+  function isolateStudentChoices() {
+    const query = document.getElementById('studentSearchInput').value.trim().toLowerCase();
+    const output = document.getElementById('studentIsolationOutput');
+
+    if (!query) {
+      output.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); italic;">Type a student name above to view their choice roster and active allocations.</p>`;
+      return;
+    }
+
+    const matches = parsedStudentCache.filter(st => st.id.toLowerCase().includes(query));
+
+    if (matches.length === 0) {
+      output.innerHTML = `<p style="font-size:0.85rem; color:var(--danger-text);">No student found matching "${query}".</p>`;
+      return;
+    }
+
+    let html = '';
+
+    matches.forEach(st => {
+      const tNum = extractTihoiTerm(st.tihoi);
+      const offCampusThird = `Third ${tNum}`;
+      const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== offCampusThird);
+      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
+
+      // Find placements in current schedule
+      const placements = [];
+      for (const [thirdName, lines] of Object.entries(currentSchedule || {})) {
+        for (const [lineName, classes] of Object.entries(lines)) {
+          for (const [subj, sections] of Object.entries(classes)) {
+            sections.forEach((sec, idx) => {
+              if (sec.includes(st.id)) {
+                placements.push({ subj, third: thirdName, line: lineName, group: sections.length > 1 ? `Group ${String.fromCharCode(65 + idx)}` : "" });
+              }
+            });
+          }
+        }
+      }
+
+      const unplaced = (currentUnserved || []).filter(u => u.id === st.id);
+
+      html += `<div class="isolation-panel">`;
+      html += `<h4>👤 ${st.id} <span class="badge" style="background:#e9d8fd; color:#44337a; margin-left:8px;">Off-Campus Rotation: ${offCampusThird}</span></h4>`;
+      html += `<p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px;">Active On-Campus Terms: <strong>${availThirds.join(', ')}</strong></p>`;
+
+      html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:10px;">`;
+
+      // Column 1: Placed Subjects
+      html += `<div><strong>Placed Electives (${placements.length}):</strong><ul style="padding-left:20px; font-size:0.85rem; margin-top:4px;">`;
+      if (placements.length === 0) {
+        html += `<li style="color:var(--danger-text);">No choices placed</li>`;
+      } else {
+        placements.forEach(p => {
+          html += `<li><strong>${p.subj} ${p.group}</strong> → ${p.third} (${p.line})</li>`;
+        });
+      }
+      html += `</ul></div>`;
+
+      // Column 2: Unplaced Choices
+      html += `<div><strong>Unplaced Choices (${unplaced.length}):</strong><ul style="padding-left:20px; font-size:0.85rem; margin-top:4px;">`;
+      if (unplaced.length === 0) {
+        html += `<li style="color:var(--success-text); font-weight:600;">✓ All requested choices placed</li>`;
+      } else {
+        unplaced.forEach(u => {
+          html += `<li style="color:var(--danger-text);"><strong>${u.subj}</strong>: ${u.reason}</li>`;
+        });
+      }
+      html += `</ul></div>`;
+
+      html += `</div></div>`;
+    });
+
+    output.innerHTML = html;
   }
 
   function exportToCSV() {
@@ -948,7 +1086,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_LineTrial_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Phase3_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
