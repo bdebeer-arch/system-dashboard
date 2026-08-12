@@ -122,16 +122,18 @@
       padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 0.8rem;
     }
 
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
+
     .metric-pill { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; float: right; font-weight: 600; }
     .metric-good { background: var(--success-bg); color: var(--success-text); }
     .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
     .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
 
     table.lock-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
-    table.lock-table th, table.lock-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
+    table.lock-table th, table.lock-table td { padding: 10px 12px; border: 1px solid var(--border-color); text-align: left; }
     table.lock-table th { background: #edf2f7; color: #2d3748; }
-    table.lock-table input[type="number"] { width: 60px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); }
-    .recommendation-tag { background: #e2e8f0; color: #2c5282; font-weight: 600; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+    table.lock-table input[type="number"] { width: 60px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); font-weight: 600; }
+    .recommendation-tag { background: #e2e8f0; color: #2c5282; font-weight: 600; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -149,7 +151,7 @@
   <div class="card">
     <h2>1. Cohort Data & Class Bounds</h2>
     <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 10px;">
-      Format: <code>First Name, Last Name, Rotation Term (1-3), Subject 1, Subject 2, Subject 3, Subject 4</code>
+      Format: <code>First Name, Last Name, Off-Campus Rotation Term (1-3), Subject 1, Subject 2, Subject 3, Subject 4</code>
     </p>
     <textarea id="csvInput">Alex, Smith, 1, 10ART1, 10SCI1, 10MAT1, 10HIS1
 Jordan, Taylor, 2, 10ART1, 10TEC1, 10MUS1, 10HIS1
@@ -167,15 +169,15 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     <div class="config-grid">
       <div class="config-item">
         <label for="minInput">Min Class Size</label>
-        <input type="number" id="minInput" value="3" min="1">
+        <input type="number" id="minInput" value="9" min="1">
       </div>
       <div class="config-item">
         <label for="optInput">Optimal Target</label>
-        <input type="number" id="optInput" value="6" min="1">
+        <input type="number" id="optInput" value="16" min="1">
       </div>
       <div class="config-item">
         <label for="maxInput">Max Class Size</label>
-        <input type="number" id="maxInput" value="10" min="1">
+        <input type="number" id="maxInput" value="20" min="1">
       </div>
     </div>
 
@@ -190,7 +192,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: PRE-SORT CAPACITY LOCK & OPTIMAL THIRD ADVISOR</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Review student demand density per Third. Lock in the exact number of class sections to offer per subject. The advisor recommends which Third(s) yield maximum student availability.
+      Review student demand density per Third. Lock in the exact total number of sections to offer across the academic year. The advisor recommends optimal Third placement based on peak student availability.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -216,20 +218,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let subjectDemandSummary = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v1', this.value);
+    localStorage.setItem('schola_csv_pseudo_v2', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v1');
+    const saved = localStorage.getItem('schola_csv_pseudo_v2');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
 
   function getBounds() {
     return {
-      min: parseInt(document.getElementById('minInput').value) || 3,
-      opt: parseInt(document.getElementById('optInput').value) || 6,
-      max: parseInt(document.getElementById('maxInput').value) || 10
+      min: parseInt(document.getElementById('minInput').value) || 9,
+      opt: parseInt(document.getElementById('optInput').value) || 16,
+      max: parseInt(document.getElementById('maxInput').value) || 20
     };
   }
 
@@ -283,72 +285,37 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     renderLockTable(bounds);
   }
 
- function renderLockTable(bounds) {
-  const container = document.getElementById('lockTableContainer');
-  let html = `
-    <table class="lock-table">
-      <thead>
-        <tr>
-          <th>Subject Code</th>
-          <th>Total Demand</th>
-          <th>Term Availability (T1 / T2 / T3)</th>
-          <th>Suggested Sections</th>
-          <th>Lock Offered Sections</th>
-          <th>Optimal Third(s) Advice</th>
-        </tr>
-      </thead>
-      <tbody>`;
-
-  const sortedSubjects = Object.keys(subjectDemandSummary).sort();
-
-  sortedSubjects.forEach(subj => {
-    const data = subjectDemandSummary[subj];
-    
-    // Corrected Formula: Calculates total sections required across active Thirds
-    const activeTermsCount = 3; 
-    const totalRequiredCapacity = Math.max(1, Math.ceil(data.total / bounds.opt));
-    const suggestedCount = Math.min(3, Math.max(1, Math.round(totalRequiredCapacity / activeTermsCount)));
-
-    html += `
-      <tr>
-        <td><strong>${subj}</strong></td>
-        <td>${data.total} choices</td>
-        <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
-        <td>${suggestedCount} section(s) total</td>
-        <td>
-          <input type="number" id="lock_${subj}" value="${suggestedCount}" min="0" max="6">
-        </td>
-        <td id="advice_${subj}">
-          <span class="recommendation-tag">Analyse on Lock</span>
-        </td>
-      </tr>`;
-  });
-
-  html += `</tbody></table>`;
-  container.innerHTML = html;
-  document.getElementById('lockCard').style.display = 'block';
-
-  sortedSubjects.forEach(subj => {
-    const el = document.getElementById(`lock_${subj}`);
-    el.addEventListener('input', () => updateThirdAdvice(subj));
-    updateThirdAdvice(subj);
-  });
-}
+  function renderLockTable(bounds) {
+    const container = document.getElementById('lockTableContainer');
+    let html = `
+      <table class="lock-table">
+        <thead>
+          <tr>
+            <th>Subject Code</th>
+            <th>Total Demand</th>
+            <th>Term Availability (T1 / T2 / T3)</th>
+            <th>Suggested Annual Sections</th>
+            <th>Lock Total Sections</th>
+            <th>Optimal Placement Advice</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
     const sortedSubjects = Object.keys(subjectDemandSummary).sort();
 
     sortedSubjects.forEach(subj => {
       const data = subjectDemandSummary[subj];
-      const suggestedCount = Math.max(1, Math.round(data.total / bounds.opt));
+      // Corrected Formula: Calculates total annual sections needed based on target class size
+      const suggestedCount = Math.max(1, Math.ceil(data.total / bounds.opt));
 
       html += `
         <tr>
           <td><strong>${subj}</strong></td>
-          <td>${data.total}</td>
+          <td>${data.total} choices</td>
           <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
-          <td>${suggestedCount} section(s)</td>
+          <td>${suggestedCount} section(s) total</td>
           <td>
-            <input type="number" id="lock_${subj}" value="${suggestedCount}" min="0" max="6">
+            <input type="number" id="lock_${subj}" value="${suggestedCount}" min="0" max="9">
           </td>
           <td id="advice_${subj}">
             <span class="recommendation-tag">Analyse on Lock</span>
@@ -373,18 +340,20 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const adviceCell = document.getElementById(`advice_${subj}`);
 
     if (lockedCount === 0) {
-      adviceCell.innerHTML = `<span class="recommendation-tag" style="background:#fed7d7; color:#9b2c2c;">Do Not Run</span>`;
+      adviceCell.innerHTML = `<span class="recommendation-tag" style="background:#fed7d7; color:#9b2c2c;">Do Not Offer</span>`;
       return;
     }
 
     const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
 
     if (lockedCount >= 3) {
-      adviceCell.innerHTML = `<span class="recommendation-tag">All 3 Thirds</span>`;
+      adviceCell.innerHTML = `<span class="recommendation-tag">Run in All 3 Thirds</span>`;
     } else if (lockedCount === 2) {
-      adviceCell.innerHTML = `<span class="recommendation-tag">${rankedThirds[0]} & ${rankedThirds[1]}</span>`;
+      adviceCell.innerHTML = `<span class="recommendation-tag">Offer in ${rankedThirds[0]} & ${rankedThirds[1]}</span>`;
     } else if (lockedCount === 1) {
-      adviceCell.innerHTML = `<span class="recommendation-tag">${rankedThirds[0]} Only</span>`;
+      adviceCell.innerHTML = `<span class="recommendation-tag">Offer in ${rankedThirds[0]} Only</span>`;
+    } else {
+      adviceCell.innerHTML = `<span class="recommendation-tag">Multi-section (${lockedCount}) split across Thirds</span>`;
     }
   }
 
@@ -522,7 +491,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Pseudo_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Optimised_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
