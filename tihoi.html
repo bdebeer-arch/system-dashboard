@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schola Matrix — Timetable & Cohort Line Optimiser</title>
+  <title>Schola Matrix — Predictive Capacity Planner & Cohort Optimiser</title>
   <style>
     :root {
       --bg-main: #f4f6f9;
@@ -110,16 +110,6 @@
 
     .third-card h3 { width: 100%; margin: 0 0 12px 0; color: #2b6cb0; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
 
-    .pie-container { position: relative; width: 160px; height: 160px; margin: 10px 0; }
-    .pie-container svg { width: 100%; height: 100%; transform: rotate(-90deg); border-radius: 50%; }
-
-    .chart-legend { width: 100%; margin-top: 10px; font-size: 0.82rem; }
-    .legend-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .legend-color { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 6px; }
-
-    .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; background: #e2e8f0; }
-    .badge-ent { background: #e9d8fd; color: #44337a; }
-
     .line-box {
       background: white; border: 1px solid #e2e8f0; border-radius: 6px;
       padding: 12px; margin-bottom: 12px;
@@ -136,6 +126,12 @@
     .metric-good { background: var(--success-bg); color: var(--success-text); }
     .metric-warn { background: var(--warning-bg); color: var(--warning-text); }
     .metric-danger { background: var(--danger-bg); color: var(--danger-text); }
+
+    table.lock-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.88rem; }
+    table.lock-table th, table.lock-table td { padding: 8px 12px; border: 1px solid var(--border-color); text-align: left; }
+    table.lock-table th { background: #edf2f7; color: #2d3748; }
+    table.lock-table input[type="number"] { width: 60px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); }
+    .recommendation-tag { background: #e2e8f0; color: #2c5282; font-weight: 600; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -144,131 +140,114 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Two-Step Interactive Timetable & Cohort Planner</div>
+      <div class="subtitle">Predictive Capacity Planner & Cohort Optimiser</div>
     </div>
     <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Local Browser Storage</span>
   </header>
 
-  <!-- Input & Controls Section -->
+  <!-- Input Section -->
   <div class="card">
-    <h2>1. Cohort Data & Parameters</h2>
+    <h2>1. Cohort Data & Class Bounds</h2>
     <p style="font-size:0.85rem; color: var(--text-muted); margin-bottom: 10px;">
-      Accepts CSV, Tabbed data, or raw Excel string dumps. Automatic sanitisation strips <code>#VALUE!</code> and <code>#N/A</code> errors.
+      Format: <code>First Name, Last Name, Rotation Term (1-3), Subject 1, Subject 2, Subject 3, Subject 4</code>
     </p>
-    <textarea id="csvInput">LukeAbercrombie210ATD110ENT1910TE1CharlieAlderton210ATD110DIG110ENT1910DV1PippaAllen310ATD110ENT1910AR1910DV1TobinAndrew110DIG110ENT1910AR1910TE1LillyanaAndrews-Wright310ENT1910AR1910DR1910SM1XavierAtutahi110ENT1910AR1910MU1910TE1ArieBaigent310ENT110SPA1910AR1910DV1OliviaBair310ATD110DAN10ENT1910AR1HugoBaronian110ATD110DIG110ENT1910DV1JamieBarrett210DIG110ENT110SPA1910DV1BraxBayley110ATD110ENT1910DV1910TE1ReillyBlackmore210ATD110DIG110ENT1910TE1TonowaiBodger-Kearns310MAO1910AR1910DR1910TE1OliverBolscher-Plain110ATD110DIG110ENT1910TE1LeoBorgioli-Jones110ENT110SPA1910DV1910TE1AidanBradley110ATD110ENT110LEU2910TE1AliceBreingan310ATD1910AR1910DR1HeatherBrown310DAN10ENT1910AR1910SM1SophieBrowning310ATD110ENT1910AR1910DR1MiekeBusch310ATD110ENT1910DR1910MU1KyleBussey210ATD110DIG110ENT110SPA1JoeButler210ATD110ENT1910AR1910TE1JackChen110ENT1910AR1910DV1910MU1HenriettaCoxhead310ATD110ENT1910AR1910DR1VeraCrome310ATD110ENT110SPA1910DV1OliviaCurrie310ATD110ENT1910AR1910DV1EdwardDai110DIG110ENT110SPA1910MU1MarvinDaniel110ATD110ENT110LEU2910TE1ChelseaDavies310ENT110MAO1910AR1910DR1Christopherde Ath110ATD110DIG110ENT1910TE1HarryDenton210ATD110DIG110ENT1910TE1CharlieDickie110ATD110ENT1910DV1910TE1MacDingle210ATD110ENT110LEU2910TE1RyanDong110DIG110ENT110SPA1910MU1GracieDrummond310ENT1910AR1910DV1910MU1AustinDu210DIG110ENT110LEU2910TE1OscarDuder110DIG110ENT1910DV1910TE1BeauEarwaker110ATD110ENT1910DV1910TE1BostonEdgar210ATD110ENT1910MU1910TE1KahuEvans110ENT1910AR1910DV1910MU1DerekFang110DIG110ENT1910DR1910MU1JackFarrar210ATD110ENT110LEU2910TE1JamesFinnerty210ATD110ENT110LEU2910TE1JesseFraser210ATD110ENT110LEU2910TE1TedFrench210ATD110DIG110ENT1910TE1JessicaGaddes310ATD110ENT110SPA1910DV1ConnorGiberson110ATD110ENT1910AR1910TE1CarterGillett210ATD110ENT1910SM1910TE1EvaGladstone310ATD110ENT110LEU210SPA1RoseGoatcher310ATD110ENT1910AR1910DV1MannatGogian310DAN10ENT1910AR1910MU1TahliaGoldsmith310ENT110SPA1910AR1910DR1IsobelGorton310ENT1910AR1910DR1910DV1CadenceGreen310ENT1910AR1910DR1910MU1AlisaHamada310DIG110ENT1910AR1910DR1FergusHammonds110ATD110ENT1910DV1910TE1AnnaHarnett310ENT1910AR1910DR1910DV1SamanthaHarrison310ATD110DAN10ENT1910TE1ShahzebHasan210DIG110ENT110SPA1910TE1TaylorHaskew210ATD110ENT1910MU1910TE1MatildaHassell310DAN10ENT1910DR1910SM1CarlosHeaps110ENT110SPA1910AR1910TE1ConradHenderson210DIG110ENT110LEU2910TE1LouieHilhorst110ATD110ENT110LEU2910AR1BensonHill-Henderson110ATD110ENT1910AR1910TE1AnnabelleHodgson310DIG110ENT1910AR1910DR1FinleyHooper Smith110ATD110DIG110ENT1910TE1EvanHu110DIG110ENT1910AR1910TE1MegHunter310ATD110ENT110SPA1910AR1HarryJackson210ATD110ENT1910AR1910TE1NaliaJames310ENT1910AR1910DV1910SM1IkeJensen210ATD110ENT1910DV1910TE1AlilaJones310ENT110SPA1910DR1910DV1CeceliaKaralus310ENT1910AR1910DR1910MU1EmersonKay3#VALUE!AkainKuruppuge210ATD110ENT110SPA1910AR1SteffanLamason210ATD110ENT110LEU2910DV1LuciaLarkin310ENT110SPA1910AR1910DR1HarryLaurenson210ATD110ENT110SPA1910AR1TylerLe Fleming210ATD110ENT1910DV1910TE1JadenLee210DIG110ENT1910AR1910TE1DeanLi110DIG110ENT110SPA1910AR1HarrisLi#N/A10ATD110ENT110SPA1910MU1JessicaLi310ENT110SPA1910MU1910SM1LucasLi#N/A10ATD110ENT110SPA1910MU1RyenLi210DIG110ENT1910DV1910TE1NancyLi310DAN10ENT1910AR1910SM1ZoeLi310ATD110ENT1910AR1910TE1JonathanLiang2#VALUE!JessieLiao310ATD1910AR1910DV1AndyLin110DIG110ENT1910AR1910TE1ChristineLin310ENT1910AR1910DV1910MU1CheyseLowe110ATD110ENT1910AR1910TE1LandonLu210DIG110ENT110SPA1910MU1OliverLyons110ATD110ENT110SPA1910MU1SophiaMa310DIG110ENT1910AR1910TE1WillMacfarlane110ATD110DIG1910TE1JackMaguire Overdevest#N/A10ATD110ENT1910DV1910TE1AvaMaher310ATD110ENT1910AR1910DR1SamMahon2#VALUE!Niua-CybeleMahuta310ATD110MAO1910AR1910TE1AnabelleMartin310ATD110ENT110SPA1910AR1ZacMartin210ATD110DIG110ENT1910TE1SamMcCarthy110ATD110ENT1910AR1910TE1AnnabelleMcEntee310ATD110ENT110SPA1910AR1KeiraMcKain310ENT1910DR1910DV1910TE1ElsieMcKenzie310ENT110SPA1910AR1910DR1CooperMcKibbin110ATD110ENT1910DV1910TE1OliverMcKimmie210DIG110ENT110LEU2910SM1AlexMcLean110ATD110ENT1910DV1910TE1RylanMcPherson210DIG110ENT1910MU1910TE1MitchellMerritt210DIG110ENT1910DV1910TE1LuluMillar310ATD110ENT1910AR1910DR1CodyMillward210ATD110ENT1910AR1910TE1JeongyeonMoon1#VALUE!MaddoxMurray210ATD110ENT1910AR1910TE1VismayaMurthy310ATD110ENT1910AR1910DR1CoreyMusker1#VALUE!DanielNeethling2#VALUE!JoshuaNicholson110ATD110DIG110ENT1910TE1AllenNiu210DIG110ENT1910AR1910TE1HemiNoe110ATD110DIG110ENT1910MU1NeoNooyen110ATD110ENT1910TE1PaigeO'Connor310DIG1910AR1910SM1910TE1HenryOpie210ATD110DIG110ENT1910TE1KatelynPacker310DIG110ENT1910DV1910SM1WinstonPalmer210ATD110ENT1910DV1910TE1CharliePanting210DIG110ENT110SPA1910DV1RaehaParekh310ENT110SPA1910MU1910SM1JiminPark110DIG110ENT1910AR1910DV1KobyPayne110ATD110DIG110ENT1910TE1KaitlynPeng310ENT1910AR1910MU1910TE1AndrePenman210DIG110ENT1910MU1910TE1StellaPenn310ATD110ENT1910AR1910DR1ColePhillips110ATD110ENT1910DV1910TE1ConradPocock2#VALUE!CadenRabarts110ATD110DIG110ENT110SPA1AvaRameka310ATD110DAN10ENT1910AR1LiamRangiawha110ENT1910MU1910SM1910TE1LucasRichmond110DIG110ENT1910DR1910TE1GraceRobinson310ATD110DAN10ENT1910AR1MackenzieRobinson310ATD110ENT1910DR1910MU1MaiaRobinson310DIG110ENT110SPA1910DR1CouperRobson1#VALUE!HarryRonaldson110ENT110LEU2910AR1910TE1GeorgiaRowe310ENT110SPA1910AR1910DV1MaddiRowe310ATD110ENT1910AR1910DV1OscarRowe210ATD110ENT110LEU2910TE1CharlieRussell#N/A10DIG110ENT110SPA1910TE1KereamaRutherford110ATD110ENT1910DR1910TE1BraneSaparkakul110ATD110DIG110ENT1ArloSatherley#N/A#VALUE!HenryScherer110ATD110DIG110ENT1910TE1OliSchick110ATD110ENT1910AR1910TE1JamesSchuster110ATD110DIG1910TE1BrodyScott110ATD110DIG110ENT1910TE1NateScott210ATD110ENT110LEU2910TE1EstherSentch310ATD1910AR1910DR1910MU1JarnaShand3910AR1910MU1910SM1910TE1MischaShen310ATD110ENT1910AR1910DV1KieferShen210DIG110ENT1910DR1910TE1SamuelSheppard210ATD110DIG110ENT1910AR1LachieSherriff210DIG110ENT1910AR1910TE1CharlesShort-Tupaea210ATD110DIG110ENT110LEU2CarlyShum310ATD110ENT1910AR1910TE1SummerShum310ATD110ENT1910AR1910TE1CameronSingleton110ATD110ENT1910SM1910TE1VictoriaSouthworth310ENT110SPA1910AR1910DR1HugoSpencer210ATD110DIG110ENT1910TE1LachieStent1#VALUE!Te AmotawaSteward210ATD110ENT110MAO1910AR1KevinSu210ATD110DIG110ENT1910MU1ZahnTahere1#VALUE!GavinTang110ENT1910DR1910MU1910TE1JacobTaylor110ATD110ENT110LEU2910TE1TommyTeat210DIG110ENT1910AR1910DV1ZachThompson110DIG110ENT1910AR1910DV1LukeTootill210DIG110ENT1910DV1910MU1ViennaUrlich310ENT110MAO1910AR1910DR1Abbyvan den Engel310ATD1910AR1910DR1910MU1Kylevan der Merwe110DIG110ENT1910MU1910TE1BraxVan Der Poel1#VALUE!TyelaVan Kuijk310ATD110ENT110SPA1910AR1OliviaVerrall310ATD110DIG1910AR1910TE1OllieWakeling210ENT1910DR1910DV1910TE1JaxonWalker110DIG110ENT1910MU1910TE1JoeyWang110ENT110SPA1910AR1910DR1StellaWard-Allen310DIG1910AR1910SM1910TE1LolaWatson310ENT110SPA1910DR1LockieWatts210ATD110ENT110LEU2910TE1BenjaminWei210ATD110DIG110ENT1910AR1MeilahWells310ATD110ENT110SPA1910AR1SamWere1#VALUE!GeorgeWhite2#VALUE!BellaWhite310ENT110SPA1910AR1910DR1LoganWilletts110ATD110ENT110MAO1910MU1LachlanWilliams110ATD110ENT1910DV1910TE1RoccoWilliams2#VALUE!BeauWilson2#VALUE!JasperWong210DIG110ENT110SPA1910AR1EmmettWood110ATD110ENT1910AR1910DV1DaceyWoodyard2#VALUE!DanielXu1#VALUE!CooperYang110ENT1910MU1910SM1910TE1ZianYork110ATD110DIG110ENT1910TE1AustinYoung110ATD110ENT1910AR1910TE1StevenYuan210ENT110SPA1910MU1910TE1KevinZhang110DIG110ENT1910MU1910TE1EvaZhang3#VALUE!OscarZhu210ATD110ENT1910MU1910TE1</textarea>
+    <textarea id="csvInput">Alex, Smith, 1, 10ART1, 10SCI1, 10MAT1, 10HIS1
+Jordan, Taylor, 2, 10ART1, 10TEC1, 10MUS1, 10HIS1
+Morgan, Lee, 3, 10SCI1, 10MAT1, 10TEC1, 10MUS1
+Sam, Patel, 1, 10ART1, 10TEC1, 10HIS1, 10DRA1
+Chris, Wong, 2, 10MAT1, 10SCI1, 10ART1, 10DRA1
+Taylor, Brown, 3, 10TEC1, 10HIS1, 10MUS1, 10ART1
+Casey, Davis, 1, 10SCI1, 10MAT1, 10DRA1, 10MUS1
+Riley, Wilson, 2, 10ART1, 10HIS1, 10TEC1, 10SCI1
+Jamie, Miller, 3, 10MAT1, 10TEC1, 10DRA1, 10ART1
+Avery, Clark, 1, 10SCI1, 10HIS1, 10MUS1, 10DRA1
+Quinn, Adams, 2, 10ART1, 10MAT1, 10TEC1, 10HIS1
+Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     <div class="config-grid">
       <div class="config-item">
         <label for="minInput">Min Class Size</label>
-        <input type="number" id="minInput" value="6" min="1">
+        <input type="number" id="minInput" value="3" min="1">
       </div>
       <div class="config-item">
         <label for="optInput">Optimal Target</label>
-        <input type="number" id="optInput" value="16" min="1">
+        <input type="number" id="optInput" value="6" min="1">
       </div>
       <div class="config-item">
         <label for="maxInput">Max Class Size</label>
-        <input type="number" id="maxInput" value="21" min="1">
+        <input type="number" id="maxInput" value="10" min="1">
       </div>
     </div>
 
     <div class="btn-group">
-      <button class="btn-step1" onclick="generateDemandMatrix()">Step 1: Visualise On-Campus Demand (Pie Charts)</button>
-      <button class="btn-step2" onclick="executeLineSorting()">Step 2: Execute Dynamic Line Allocation</button>
+      <button class="btn-step1" onclick="generatePreSortLockTable()">Step 1: Parse Data & Analyse Optimal Thirds</button>
     </div>
   </div>
 
-  <!-- Step 1 Display -->
-  <div class="card" id="step1Card" style="display:none;">
+  <!-- Pre-Sort Lock Section -->
+  <div class="card" id="lockCard" style="display:none;">
     <div class="step-header">
-      <span>STEP 1: PRE-SORT ON-CAMPUS DEMAND BY THIRD (BALANCED 2 CHOICE/TERM DENSITY)</span>
+      <span>STEP 1: PRE-SORT CAPACITY LOCK & OPTIMAL THIRD ADVISOR</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Pie charts reflect exact elective choices per Third for active on-campus students (target: 280 choices per Third).
+      Review student demand density per Third. Lock in the exact number of class sections to offer per subject. The advisor recommends which Third(s) yield maximum student availability.
     </p>
 
-    <div id="demandOutput" class="third-grid"></div>
+    <div id="lockTableContainer"></div>
+
+    <div class="btn-group" style="margin-top:20px;">
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute Allocation with Locked Capacities</button>
+    </div>
   </div>
 
-  <!-- Step 2 Display -->
+  <!-- Step 2 Schedule Output -->
   <div class="card" id="step2Card" style="display:none;">
     <div class="step-header">
-      <span>STEP 2: OPTIMISED CLASS LISTS & LINE SCHEDULE BY THIRD (LOCAL SEARCH VIABILITY PRUNING)</span>
+      <span>STEP 2: FINAL OPTIMISED SCHEDULE</span>
       <button class="btn-export" onclick="exportToCSV()">Export Schedule (CSV)</button>
     </div>
-    <p style="font-size:0.88rem; color: var(--text-muted);">
-      Final sorted cohort distributions. Unviable local sections (< Min Size) are automatically consolidated into alternate viable Thirds.
-    </p>
     <div id="allocationOutput"></div>
   </div>
 </div>
 
 <script>
   let currentSchedule = null;
-  const colorPalette = ['#3182ce', '#dd6b20', '#38a169', '#805ad5', '#d69e2e', '#e53e3e', '#319795', '#d6bcfa'];
+  let parsedStudentCache = [];
+  let subjectDemandSummary = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_v23', this.value);
+    localStorage.setItem('schola_csv_pseudo_v1', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_v23');
+    const saved = localStorage.getItem('schola_csv_pseudo_v1');
     if (saved) document.getElementById('csvInput').value = saved;
-    generateDemandMatrix();
+    generatePreSortLockTable();
   });
 
   function getBounds() {
     return {
-      min: parseInt(document.getElementById('minInput').value) || 6,
-      opt: parseInt(document.getElementById('optInput').value) || 16,
-      max: parseInt(document.getElementById('maxInput').value) || 21
+      min: parseInt(document.getElementById('minInput').value) || 3,
+      opt: parseInt(document.getElementById('optInput').value) || 6,
+      max: parseInt(document.getElementById('maxInput').value) || 10
     };
   }
 
-  // Universal Stream Parser: Handles Standard CSVs & Unformatted Concatenated Excel Dumps
   function parseCSV(text) {
     if (!text) return [];
-
-    // 1. Sanitize Spreadsheet Error Codes
     let cleanText = text.replace(/#(?:VALUE!|N\/A|REF!|NAME\?)/gi, ' ');
-
     const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
     const parsedStudents = [];
 
-    // Path A: Standard CSV / Tab-Delimited text
-    if (lines.length > 5 && lines.some(l => l.includes(',') || l.includes('\t'))) {
-      lines.forEach(line => {
-        const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
-        if (parts.length >= 3) {
-          const studentName = `${parts[0]} ${parts[1]}`.replace(/[0-9]/g, '').trim();
-          const tihoiTerm = parts[2].replace(/\D/g, '') || "1";
-          const subjects = parts.slice(3).map(s => s.toUpperCase()).filter(s => s.length > 0);
-          if (studentName) {
-            parsedStudents.push({ id: studentName, tihoi: tihoiTerm, subjects: subjects });
-          }
-        }
-      });
-    } else {
-      // Path B: Stream Regex Extraction for Concatenated Excel Dumps
-      const studentBlockRegex = /([A-Z][a-zA-Za-z\s'-]+?)\s*([1-3])\s*((?:(?:910|10|[A-Z]{2,4})[A-Z0-9]{0,3})+)/g;
-      let match;
-      while ((match = studentBlockRegex.exec(cleanText)) !== null) {
-        const studentName = match[1].trim();
-        const tihoiTerm = match[2];
-        const rawSubjects = match[3];
-
-        // Extract individual subject codes (e.g. 10ATD1, 10DAN, 10ENT1, 910TE1)
-        const subjectTokens = rawSubjects.match(/(?:910|10|[A-Z]{2,4})[A-Z0-9]{0,3}/g) || [];
-
-        if (studentName && subjectTokens.length > 0) {
-          parsedStudents.push({
-            id: studentName,
-            tihoi: tihoiTerm,
-            subjects: subjectTokens
-          });
-        }
+    lines.forEach(line => {
+      const parts = line.split(/[\t,]+/).map(s => s.trim()).filter(s => s.length > 0);
+      if (parts.length >= 3) {
+        const studentName = `${parts[0]} ${parts[1]}`.replace(/[0-9]/g, '').trim();
+        const tihoiTerm = parts[2].replace(/\D/g, '') || "1";
+        const subjects = parts.slice(3).map(s => s.toUpperCase()).filter(s => s.length > 0);
+        if (studentName) parsedStudents.push({ id: studentName, tihoi: tihoiTerm, subjects: subjects });
       }
-    }
+    });
 
     return parsedStudents;
   }
@@ -279,108 +258,129 @@
     return (cleaned === "1" || cleaned === "2" || cleaned === "3") ? cleaned : "1";
   }
 
-  function isEnterpriseSubject(subj) {
-    return /10ent|ent1/i.test(subj);
-  }
+  // STEP 1: PRE-SORT ANALYSIS & LOCK TABLE GENERATOR
+  function generatePreSortLockTable() {
+    parsedStudentCache = parseCSV(document.getElementById('csvInput').value);
+    const bounds = getBounds();
+    subjectDemandSummary = {};
 
-  // STEP 1: PRE-SORT DEMAND MATRIX (Enforces 2 choices/term per active student)
-  function generateDemandMatrix() {
-    const students = parseCSV(document.getElementById('csvInput').value);
-    const demandPerThird = { "Third 1": {}, "Third 2": {}, "Third 3": {} };
-
-    students.forEach(st => {
+    parsedStudentCache.forEach(st => {
       const tNum = extractTihoiTerm(st.tihoi);
       const tihoiThird = `Third ${tNum}`;
       const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
 
-      const load = {};
-      availThirds.forEach(t => load[t] = 0);
+      const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
-      const validSubjects = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
-
-      validSubjects.forEach(subj => {
-        // Balance choices 2:2 across active terms
-        const targetThird = availThirds.sort((a, b) => load[a] - load[b])[0];
-        load[targetThird]++;
-        demandPerThird[targetThird][subj] = (demandPerThird[targetThird][subj] || 0) + 1;
+      validChoices.forEach(subj => {
+        if (!subjectDemandSummary[subj]) {
+          subjectDemandSummary[subj] = { total: 0, "Third 1": 0, "Third 2": 0, "Third 3": 0 };
+        }
+        subjectDemandSummary[subj].total++;
+        availThirds.forEach(t => subjectDemandSummary[subj][t]++);
       });
     });
 
-    renderPieCharts(demandPerThird);
+    renderLockTable(bounds);
   }
 
-  function renderPieCharts(demandPerThird) {
-    const out = document.getElementById('demandOutput');
-    let html = '';
+  function renderLockTable(bounds) {
+    const container = document.getElementById('lockTableContainer');
+    let html = `
+      <table class="lock-table">
+        <thead>
+          <tr>
+            <th>Subject Code</th>
+            <th>Total Choices</th>
+            <th>Available Demand (T1 / T2 / T3)</th>
+            <th>Suggested Sections</th>
+            <th>Lock Offered Sections</th>
+            <th>Optimal Third(s) Advice</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-    for (let t = 1; t <= 3; t++) {
-      const tKey = `Third ${t}`;
-      const thirdData = demandPerThird[tKey];
-      const totalRequests = Object.values(thirdData).reduce((a, b) => a + b, 0);
+    const sortedSubjects = Object.keys(subjectDemandSummary).sort();
 
-      html += `<div class="third-card"><h3>${tKey} <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">(${totalRequests} Choices)</span></h3>`;
+    sortedSubjects.forEach(subj => {
+      const data = subjectDemandSummary[subj];
+      const suggestedCount = Math.max(1, Math.round(data.total / bounds.opt));
 
-      if (totalRequests === 0) {
-        html += `<p style="font-size:0.8rem; color:var(--text-muted);">No on-campus elective choices parsed.</p>`;
-      } else {
-        let cumulativePercent = 0;
-        let svgSlices = '';
-        let legendHTML = '<div class="chart-legend">';
+      html += `
+        <tr>
+          <td><strong>${subj}</strong></td>
+          <td>${data.total}</td>
+          <td>T1: ${data["Third 1"]} | T2: ${data["Third 2"]} | T3: ${data["Third 3"]}</td>
+          <td>${suggestedCount} section(s)</td>
+          <td>
+            <input type="number" id="lock_${subj}" value="${suggestedCount}" min="0" max="6">
+          </td>
+          <td id="advice_${subj}">
+            <span class="recommendation-tag">Analyse on Lock</span>
+          </td>
+        </tr>`;
+    });
 
-        const sortedSubjects = Object.keys(thirdData).sort();
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    document.getElementById('lockCard').style.display = 'block';
 
-        sortedSubjects.forEach((subj, i) => {
-          const count = thirdData[subj];
-          const percent = count / totalRequests;
-          const color = colorPalette[i % colorPalette.length];
+    sortedSubjects.forEach(subj => {
+      const el = document.getElementById(`lock_${subj}`);
+      el.addEventListener('input', () => updateThirdAdvice(subj));
+      updateThirdAdvice(subj);
+    });
+  }
 
-          const strokeDash = `${percent * 100} 100`;
-          const strokeOffset = -cumulativePercent * 100;
+  function updateThirdAdvice(subj) {
+    const lockedCount = parseInt(document.getElementById(`lock_${subj}`).value) || 0;
+    const data = subjectDemandSummary[subj];
+    const adviceCell = document.getElementById(`advice_${subj}`);
 
-          svgSlices += `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" 
-            stroke="${color}" stroke-width="8" 
-            stroke-dasharray="${strokeDash}" stroke-dashoffset="${strokeOffset}">
-            <title>${subj}: ${count} choices (${Math.round(percent * 100)}%)</title>
-          </circle>`;
-
-          cumulativePercent += percent;
-
-          legendHTML += `
-            <div class="legend-item">
-              <span><span class="legend-color" style="background:${color};"></span><strong>${subj}</strong></span>
-              <span>${count} choices</span>
-            </div>`;
-        });
-
-        legendHTML += '</div>';
-
-        html += `
-          <div class="pie-container">
-            <svg viewBox="0 0 42 42">
-              ${svgSlices}
-            </svg>
-          </div>
-          ${legendHTML}`;
-      }
-
-      html += `</div>`;
+    if (lockedCount === 0) {
+      adviceCell.innerHTML = `<span class="recommendation-tag" style="background:#fed7d7; color:#9b2c2c;">Do Not Run</span>`;
+      return;
     }
 
-    out.innerHTML = html;
-    document.getElementById('step1Card').style.display = 'block';
+    const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+
+    if (lockedCount >= 3) {
+      adviceCell.innerHTML = `<span class="recommendation-tag">All 3 Thirds</span>`;
+    } else if (lockedCount === 2) {
+      adviceCell.innerHTML = `<span class="recommendation-tag">${rankedThirds[0]} & ${rankedThirds[1]}</span>`;
+    } else if (lockedCount === 1) {
+      adviceCell.innerHTML = `<span class="recommendation-tag">${rankedThirds[0]} Only</span>`;
+    }
   }
 
-  // STEP 2: TWO-PASS DYNAMIC LOCAL SEARCH WITH PER-THIRD VIABILITY PRUNING
-  function executeLineSorting() {
+  // STEP 2: EXECUTE SORTING WITH LOCKED SECTION CAPACITIES
+  function executeLockedLineSorting() {
     const bounds = getBounds();
-    const students = parseCSV(document.getElementById('csvInput').value);
-    
-    // Fixed Line Allocation (Alternating unique subjects)
-    const allSubjects = new Set();
-    students.forEach(st => st.subjects.forEach(s => { if(s.toLowerCase() !== 'tihoi') allSubjects.add(s); }));
-    const sortedSubjects = Array.from(allSubjects).sort();
+    const students = parsedStudentCache;
+
+    const lockedSectionCounts = {};
+    const assignedThirdsPerSubject = {};
+
+    Object.keys(subjectDemandSummary).forEach(subj => {
+      const count = parseInt(document.getElementById(`lock_${subj}`).value) || 0;
+      lockedSectionCounts[subj] = count;
+
+      const data = subjectDemandSummary[subj];
+      const rankedThirds = ["Third 1", "Third 2", "Third 3"].sort((a, b) => data[b] - data[a]);
+
+      if (count >= 3) {
+        assignedThirdsPerSubject[subj] = ["Third 1", "Third 2", "Third 3"];
+      } else if (count === 2) {
+        assignedThirdsPerSubject[subj] = [rankedThirds[0], rankedThirds[1]];
+      } else if (count === 1) {
+        assignedThirdsPerSubject[subj] = [rankedThirds[0]];
+      } else {
+        assignedThirdsPerSubject[subj] = [];
+      }
+    });
+
+    const activeSubjects = Object.keys(lockedSectionCounts).filter(s => lockedSectionCounts[s] > 0).sort();
     const fixedLine = {};
-    sortedSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
+    activeSubjects.forEach((s, idx) => fixedLine[s] = (idx % 2 === 0) ? "Line 1" : "Line 2");
 
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
@@ -388,7 +388,6 @@
       "Third 3": { "Line 1": {}, "Line 2": {} }
     };
 
-    // PASS 1: Balanced Initial Distribution
     students.forEach(st => {
       const tNum = extractTihoiTerm(st.tihoi);
       const tihoiThird = `Third ${tNum}`;
@@ -400,47 +399,21 @@
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
       validChoices.forEach(subj => {
-        const targetThird = availThirds.sort((a, b) => termLoad[a] - termLoad[b])[0];
-        termLoad[targetThird]++;
+        const permittedThirds = assignedThirdsPerSubject[subj] || [];
+        if (permittedThirds.length === 0) return;
+
+        let candidateThirds = availThirds.filter(t => permittedThirds.includes(t));
+        if (candidateThirds.length === 0) candidateThirds = [...permittedThirds];
+
+        candidateThirds.sort((a, b) => termLoad[a] - termLoad[b]);
+        const chosenThird = candidateThirds[0];
+        termLoad[chosenThird]++;
 
         const line = fixedLine[subj] || "Line 1";
-        if (!schedule[targetThird][line][subj]) schedule[targetThird][line][subj] = [];
-        schedule[targetThird][line][subj].push(st.id);
+        if (!schedule[chosenThird][line][subj]) schedule[chosenThird][line][subj] = [];
+        schedule[chosenThird][line][subj].push(st.id);
       });
     });
-
-    // PASS 2: Local Search Viability Pruning per Third
-    for (const [thirdName, lines] of Object.entries(schedule)) {
-      for (const [lineName, classes] of Object.entries(lines)) {
-        for (const [subj, roster] of Object.entries(classes)) {
-          // Check local viability threshold
-          if (roster.length > 0 && roster.length < bounds.min) {
-            const strandedStudents = [...roster];
-            classes[subj] = []; // Collapse unviable local section
-
-            // Reallocate stranded students to an alternative viable Third
-            strandedStudents.forEach(stId => {
-              const stObj = students.find(s => s.id === stId);
-              if (!stObj) return;
-
-              const tNum = extractTihoiTerm(stObj.tihoi);
-              const altThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${tNum}` && t !== thirdName);
-              
-              let reallocated = false;
-              for (const altT of altThirds) {
-                if (schedule[altT][lineName][subj]) {
-                  schedule[altT][lineName][subj].push(stId);
-                  reallocated = true;
-                  break;
-                }
-              }
-              // Fallback: Retain in section if no alternate viable section exists
-              if (!reallocated) classes[subj].push(stId);
-            });
-          }
-        }
-      }
-    }
 
     currentSchedule = schedule;
     renderStep2(schedule, bounds);
@@ -465,9 +438,6 @@
         } else {
           for (const subj of activeClasses) {
             const roster = classes[subj];
-            let badgeStyle = "badge";
-            if (isEnterpriseSubject(subj)) badgeStyle += " badge-ent";
-
             let count = roster.length;
             let metricClass = "metric-good";
             let statusText = `${count} Enrolled`;
@@ -481,7 +451,7 @@
             }
 
             html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
-            html += `<div><span class="${badgeStyle}">${subj}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
+            html += `<div><span class="badge">${subj}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
             html += `<div style="margin-top:4px;">`;
             roster.forEach(st => html += `<span class="student-tag">${st}</span>`);
             html += `</div></div>`;
@@ -499,7 +469,6 @@
 
   function exportToCSV() {
     if (!currentSchedule) return;
-
     let csvContent = "data:text/csv;charset=utf-8,Third,Line,Subject,Student Full Name\n";
 
     for (const [thirdName, lines] of Object.entries(currentSchedule)) {
@@ -517,7 +486,7 @@
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_Optimised_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_Pseudo_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
