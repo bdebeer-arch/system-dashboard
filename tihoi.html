@@ -166,9 +166,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Planner & Strict Term-Line Pinning Engine</div>
+      <div class="subtitle">Adaptive RLNS Planner & Strict Section Enforcement Engine</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict Term-Specific Line Pinning Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Strict Section Count Enforced</span>
   </header>
 
   <!-- Input Section -->
@@ -224,7 +224,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Lock section counts. Single-section offerings in a Third are strictly pinned to a single line; multi-section offerings spread across Line 1 and Line 2.
+      Lock section counts. Single-section offerings in a Third are strictly consolidated into a single class roster without micro-splitting.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -290,11 +290,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let coOccurrenceMatrix = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v14', this.value);
+    localStorage.setItem('schola_csv_pseudo_v15', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v14');
+    const saved = localStorage.getItem('schola_csv_pseudo_v15');
     if (saved) document.getElementById('csvInput').value = saved;
 
     ['minInput', 'optInput', 'maxInput'].forEach(id => {
@@ -551,7 +551,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return primaryLine;
   }
 
-  // CORRECTED BUG-FIX: Evaluates term-specific locks to strictly pin single-section subjects to primaryLine
   function getSubjectLinesForTerm(subj, third, primaryLine) {
     const lockedSectionsInTerm = manualLocks[subj]?.[third] || 0;
     if (lockedSectionsInTerm <= 0) return [];
@@ -560,25 +559,43 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     if (lockedSectionsInTerm === 1) {
       return [primaryLine[subj] || "Line 1"];
     }
-    
+
     // Spread across both lines ONLY if 2 or more sections are locked in THIS specific Third
     return ["Line 1", "Line 2"];
   }
 
+  // REFACTORED PLACEMENT ENGINE: Enforces hard upper bound on group creation to prevent micro-class splitting
   function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds, allowSoftOverflow = false) {
-    if (!schedule[third][line][subj]) schedule[third][line][subj] = [[]];
+    if (!schedule[third][line][subj]) schedule[third][line][subj] = [];
     const sections = schedule[third][line][subj];
 
-    const totalTermLocks = manualLocks[subj]?.[third] || 0;
-    const lineLimit = (totalTermLocks >= 2) ? Math.ceil(totalTermLocks / 2) : 1;
+    const maxAllowedSectionsInTerm = manualLocks[subj]?.[third] || 0;
+    if (maxAllowedSectionsInTerm <= 0) return false;
 
+    // Calculate how many total sections currently exist for this subject across BOTH lines in this Third
+    const line1Sections = schedule[third]["Line 1"][subj] || [];
+    const line2Sections = schedule[third]["Line 2"][subj] || [];
+    const totalActiveSectionsInTerm = (line === "Line 1" ? sections.length : line1Sections.length) + 
+                                       (line === "Line 2" ? sections.length : line2Sections.length);
+
+    // 1. Try placing into an existing section under Optimal Target
     let target = sections.find(sec => sec.length < bounds.opt);
-    if (!target) target = sections.find(sec => sec.length < bounds.max);
-    if (!target && sections.length < lineLimit) {
-      target = [];
-      sections.push(target);
+
+    // 2. Try placing into an existing section under Max Class Size
+    if (!target) {
+      target = sections.find(sec => sec.length < bounds.max);
     }
-    if (!target && allowSoftOverflow) {
+
+    // 3. Create a NEW parallel section ONLY IF total sections in this Third < manualLocks[subj][third]
+    if (!target) {
+      if (totalActiveSectionsInTerm < maxAllowedSectionsInTerm) {
+        target = [];
+        sections.push(target);
+      }
+    }
+
+    // 4. Soft-Overflow: Force-fit into the primary existing section rather than spawning a new class
+    if (!target && allowSoftOverflow && sections.length > 0) {
       target = sections[0];
     }
 
@@ -1093,7 +1110,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Schola_Matrix_StrictPinning_Rosters.csv");
+    link.setAttribute("download", "Schola_Matrix_StrictSection_Rosters.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
