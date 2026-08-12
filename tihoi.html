@@ -159,9 +159,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Capacity Planner & Slot Uniqueness Auditor</div>
+      <div class="subtitle">Adaptive RLNS Capacity Planner & Dynamic Parameter Feedback</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Zero Intra-Term Line Clashes Guaranteed</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Real-Time Bound Reactive</span>
   </header>
 
   <!-- Input Section -->
@@ -213,7 +213,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to lock section placement. The solver enforces strict slot uniqueness so no student holds two classes on the same line in a single Third.
+      Adjusting Min, Optimal, or Max class sizes above will dynamically update projections below in real time.
     </p>
 
     <div id="lockTableContainer"></div>
@@ -257,12 +257,23 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let manualLocks = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v9', this.value);
+    localStorage.setItem('schola_csv_pseudo_v10', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v9');
+    const saved = localStorage.getItem('schola_csv_pseudo_v10');
     if (saved) document.getElementById('csvInput').value = saved;
+
+    // Attach dynamic input listeners to class parameters for live Step 1 re-rendering
+    ['minInput', 'optInput', 'maxInput'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if (Object.keys(subjectDemandSummary).length > 0) {
+          const bounds = getBounds();
+          renderLockTable(bounds); // Re-render table and dynamic advice in real time
+        }
+      });
+    });
+
     generatePreSortLockTable();
   });
 
@@ -420,12 +431,14 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     const locks = manualLocks[subj] || { "Third 1": 0, "Third 2": 0, "Third 3": 0 };
     const data = subjectDemandSummary[subj];
 
-    let totalLockedCapacity = 0;
+    let totalOptCapacity = 0;
+    let totalMaxCapacity = 0;
 
     ["Third 1", "Third 2", "Third 3"].forEach((term, idx) => {
       const termCode = `T${idx + 1}`;
       const count = locks[term] || 0;
-      totalLockedCapacity += count * bounds.opt;
+      totalOptCapacity += count * bounds.opt;
+      totalMaxCapacity += count * bounds.max;
 
       for (let level = 1; level <= MAX_CONCURRENT_SECTIONS; level++) {
         const btn = document.getElementById(`btn_${subj}_${termCode}_${level}`);
@@ -437,14 +450,17 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
 
     const projCell = document.getElementById(`projection_${subj}`);
-    const netSpillover = data.total - totalLockedCapacity;
 
-    if (totalLockedCapacity === 0) {
+    if (totalMaxCapacity === 0) {
       projCell.innerHTML = `<span class="projection-pill proj-spillover">Not Offered (${data.total} Unserved)</span>`;
-    } else if (netSpillover > 0) {
-      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${netSpillover} over opt (Soft-Overflow Active)</span>`;
+    } else if (data.total > totalMaxCapacity) {
+      const overflowCount = data.total - totalMaxCapacity;
+      projCell.innerHTML = `<span class="projection-pill proj-spillover">+${overflowCount} Over Max (${data.total}/${totalMaxCapacity} Max Cap)</span>`;
+    } else if (data.total > totalOptCapacity) {
+      const overOpt = data.total - totalOptCapacity;
+      projCell.innerHTML = `<span class="projection-pill proj-overcap">+${overOpt} Over Opt (${data.total}/${totalMaxCapacity} Max Cap)</span>`;
     } else {
-      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${totalLockedCapacity} Opt)</span>`;
+      projCell.innerHTML = `<span class="projection-pill proj-balanced">Fully Covered (${data.total}/${totalOptCapacity} Opt Cap)</span>`;
     }
   }
 
@@ -547,7 +563,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         availThirds.forEach(t => {
           const lines = getSubjectLinesForTerm(subj, t, primaryLine);
           lines.forEach(l => {
-            // STRICT HARD CONSTRAINT: Never assign a student to a slot they already occupy!
             if (!studentSlots[st.id].has(slotKey(t, l))) {
               options.push({ third: t, line: l });
             }
@@ -599,7 +614,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
           const validLines = getSubjectLinesForTerm(subj, third, primaryLine);
 
           for (const line of validLines) {
-            // STRICT HARD CONSTRAINT: Skip if unserved student ALREADY holds a class in this slot
             if (result.studentSlots[st.id].has(slotKey(third, line))) continue;
 
             const sections = result.schedule[third][line][subj] || [];
@@ -615,7 +629,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
                 const altLines = getSubjectLinesForTerm(subj, altT, primaryLine);
                 for (const altL of altLines) {
                   if (altT === third && altL === line) continue;
-                  // Ensure existing occupant does not conflict on their new slot
                   if (!result.studentSlots[occupantId].has(slotKey(altT, altL))) {
                     removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
                     result.studentSlots[occupantId].delete(slotKey(third, line));
@@ -642,14 +655,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return result;
   }
 
-  // POST-SORT AUDIT: Enforces absolute slot uniqueness per student
   function enforceSlotUniqueness(result, primaryLine, bounds) {
     parsedStudentCache.forEach(st => {
       ["Third 1", "Third 2", "Third 3"].forEach(third => {
         ["Line 1", "Line 2"].forEach(line => {
           const key = slotKey(third, line);
 
-          // Find all subjects where this student is currently placed in this slot
           const enrolledInSlot = [];
           Object.keys(result.schedule[third][line]).forEach(subj => {
             const sections = result.schedule[third][line][subj];
@@ -660,7 +671,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             });
           });
 
-          // Resolve any double-bookings on the exact same (Third, Line)
           while (enrolledInSlot.length > 1) {
             const clash = enrolledInSlot.pop();
             const idx = clash.sec.indexOf(st.id);
@@ -671,7 +681,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
             const oppKey = slotKey(third, oppLine);
             let resolved = false;
 
-            // Attempt 1: Move to opposite line in the same Third
             const validLines = getSubjectLinesForTerm(clash.subj, third, primaryLine);
             if (validLines.includes(oppLine) && !result.studentSlots[st.id].has(oppKey)) {
               const placed = placeInSubjectThird(result.schedule, result.counts, clash.subj, third, oppLine, st.id, bounds, true);
@@ -681,7 +690,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               }
             }
 
-            // Attempt 2: Move to another active Third
             if (!resolved) {
               const tNum = extractTihoiTerm(st.tihoi);
               const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${tNum}` && t !== third);
@@ -702,7 +710,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
               }
             }
 
-            // Flag as legitimately unplaced if impossible to resolve without line double-booking
             if (!resolved) {
               result.unserved.push({
                 id: st.id,
@@ -716,7 +723,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     });
   }
 
-  // ASYNCHRONOUS RLNS SOLVER WITH LIVE TELEMETRY
   async function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -778,7 +784,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       }
     }
 
-    // Run deterministic Slot Uniqueness Audit
     enforceSlotUniqueness(best, primaryLine, bounds);
 
     progressBar.style.width = "100%";
