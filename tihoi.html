@@ -159,9 +159,9 @@
   <header>
     <div>
       <h1><span class="sparkle">✦</span> Schola Matrix</h1>
-      <div class="subtitle">Adaptive RLNS Capacity Planner & Soft-Overflow Manager</div>
+      <div class="subtitle">Adaptive RLNS Capacity Planner & Multi-Line Spreading Engine</div>
     </div>
-    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Adaptive RLNS Loop Active</span>
+    <span class="badge" style="background: #eafbe8; color: #1e7e34;">● Multi-Line Section Spreading Active</span>
   </header>
 
   <!-- Input Section -->
@@ -213,13 +213,13 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       <span>STEP 1: INTERACTIVE CLICK-LOCK & DYNAMIC DEMAND PROJECTION</span>
     </div>
     <p style="font-size:0.88rem; color: var(--text-muted);">
-      Click term buttons to lock section placement. The adaptive RLNS engine will cycle to target 100% placement, softly overflowing locked classes beyond Max Class Size if necessary.
+      Click term buttons to lock section placement. Multi-section offerings in the same Third automatically spread across Line 1 and Line 2 to maximize student choice flexibility.
     </p>
 
     <div id="lockTableContainer"></div>
 
     <div class="btn-group" style="margin-top:20px;">
-      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute RLNS Allocation (Targeting 100%)</button>
+      <button class="btn-step2" onclick="executeLockedLineSorting()">Step 2: Execute RLNS Allocation across Lines 1 & 2</button>
     </div>
   </div>
 
@@ -243,11 +243,11 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
   let manualLocks = {};
 
   document.getElementById('csvInput').addEventListener('input', function() {
-    localStorage.setItem('schola_csv_pseudo_v7', this.value);
+    localStorage.setItem('schola_csv_pseudo_v8', this.value);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
-    const saved = localStorage.getItem('schola_csv_pseudo_v7');
+    const saved = localStorage.getItem('schola_csv_pseudo_v8');
     if (saved) document.getElementById('csvInput').value = saved;
     generatePreSortLockTable();
   });
@@ -434,7 +434,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     }
   }
 
-  // STEP 2: REPEATED LOCAL NEIGHBOURHOOD SEARCH (RLNS) SOLVER WITH SOFT OVERFLOW
+  // STEP 2: RLNS SOLVER WITH MULTI-LINE SECTION SPREADING
   function shuffleArray(arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -446,25 +446,47 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
   function slotKey(third, line) { return `${third}|${line}`; }
 
+  function assignLinesByLoad(activeSubjects) {
+    const order = activeSubjects.slice().sort(
+      (a, b) => (subjectDemandSummary[b]?.total || 0) - (subjectDemandSummary[a]?.total || 0)
+    );
+    const lineTotals = { "Line 1": 0, "Line 2": 0 };
+    const primaryLine = {};
+    order.forEach(subj => {
+      const target = lineTotals["Line 1"] <= lineTotals["Line 2"] ? "Line 1" : "Line 2";
+      primaryLine[subj] = target;
+      lineTotals[target] += (subjectDemandSummary[subj]?.total || 0);
+    });
+    return primaryLine;
+  }
+
+  // Determine line availability for a subject in a specific Third:
+  // Single section -> Primary Line only.
+  // Multiple concurrent sections -> Spread across both Line 1 and Line 2.
+  function getSubjectLinesForTerm(subj, third, primaryLine) {
+    const lockedSections = manualLocks[subj]?.[third] || 0;
+    if (lockedSections <= 0) return [];
+    if (lockedSections === 1) return [primaryLine[subj] || "Line 1"];
+    // 2+ concurrent sections in the same Third -> Available on BOTH lines!
+    return ["Line 1", "Line 2"];
+  }
+
   function placeInSubjectThird(schedule, counts, subj, third, line, studentId, bounds, allowSoftOverflow = false) {
     if (!schedule[third][line][subj]) schedule[third][line][subj] = [[]];
     const sections = schedule[third][line][subj];
-    const maxAllowedSections = manualLocks[subj]?.[third] || 0;
 
-    if (maxAllowedSections === 0) return false;
+    // Determine max allowed sections on THIS specific line for this Third
+    const totalTermLocks = manualLocks[subj]?.[third] || 0;
+    const lineLimit = (totalTermLocks >= 2) ? Math.ceil(totalTermLocks / 2) : 1;
 
-    // 1. Try to place under Optimal Target
     let target = sections.find(sec => sec.length < bounds.opt);
-    // 2. Try to place under Max Class Size
     if (!target) target = sections.find(sec => sec.length < bounds.max);
-    // 3. Try opening an additional locked section if available
-    if (!target && sections.length < maxAllowedSections) {
+    if (!target && sections.length < lineLimit) {
       target = [];
       sections.push(target);
     }
-    // 4. Soft-Overflow: If permitted, place in existing section even if > bounds.max
     if (!target && allowSoftOverflow) {
-      target = sections[0]; // Place in primary locked section
+      target = sections[0];
     }
 
     if (!target) return false;
@@ -488,21 +510,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return false;
   }
 
-  function assignLinesByLoad(activeSubjects) {
-    const order = activeSubjects.slice().sort(
-      (a, b) => (subjectDemandSummary[b]?.total || 0) - (subjectDemandSummary[a]?.total || 0)
-    );
-    const lineTotals = { "Line 1": 0, "Line 2": 0 };
-    const fixedLine = {};
-    order.forEach(subj => {
-      const target = lineTotals["Line 1"] <= lineTotals["Line 2"] ? "Line 1" : "Line 2";
-      fixedLine[subj] = target;
-      lineTotals[target] += (subjectDemandSummary[subj]?.total || 0);
-    });
-    return fixedLine;
-  }
-
-  function attemptAllocation(studentOrder, fixedLine, bounds, allowSoftOverflow = false) {
+  function attemptAllocation(studentOrder, primaryLine, bounds, allowSoftOverflow = false) {
     const schedule = {
       "Third 1": { "Line 1": {}, "Line 2": {} },
       "Third 2": { "Line 1": {}, "Line 2": {} },
@@ -525,47 +533,49 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       const validChoices = st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4);
 
+      // Score options by available legal (Third, Line) options
       const withScore = validChoices.map(subj => {
-        const locks = manualLocks[subj] || {};
-        const legal = availThirds.filter(t => (locks[t] || 0) > 0);
-        return { subj, legal };
-      }).sort((a, b) => a.legal.length - b.legal.length);
+        const options = [];
+        availThirds.forEach(t => {
+          const lines = getSubjectLinesForTerm(subj, t, primaryLine);
+          lines.forEach(l => {
+            if (!studentSlots[st.id].has(slotKey(t, l))) {
+              options.push({ third: t, line: l });
+            }
+          });
+        });
+        return { subj, options };
+      }).sort((a, b) => a.options.length - b.options.length);
 
-      withScore.forEach(({ subj, legal }) => {
-        if (legal.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Not offered in student active terms' });
+      withScore.forEach(({ subj, options }) => {
+        if (options.length === 0) {
+          unserved.push({ id: st.id, subj, reason: 'Line/term clash with other elective choices' });
           return;
         }
-        const line = fixedLine[subj] || "Line 1";
-        const freeThirds = legal.filter(t => !studentSlots[st.id].has(slotKey(t, line)));
 
-        if (freeThirds.length === 0) {
-          unserved.push({ id: st.id, subj, reason: 'Line conflict with another choice' });
-          return;
-        }
+        // Prioritise options under optimal class size
+        const underOpt = options.filter(o => (counts[subj][o.third] || 0) < ((manualLocks[subj][o.third] || 1) * bounds.opt));
+        const underMax = options.filter(o => (counts[subj][o.third] || 0) < ((manualLocks[subj][o.third] || 1) * bounds.max));
+        const pool = underOpt.length ? underOpt : (underMax.length ? underMax : options);
 
-        const underOpt = freeThirds.filter(t => (counts[subj][t] || 0) < (manualLocks[subj][t] * bounds.opt));
-        const underMax = freeThirds.filter(t => (counts[subj][t] || 0) < (manualLocks[subj][t] * bounds.max));
-        const pool = underOpt.length ? underOpt : (underMax.length ? underMax : freeThirds);
+        pool.sort((a, b) => (counts[subj][a.third] || 0) - (counts[subj][b.third] || 0));
+        const chosen = pool[0];
 
-        pool.sort((a, b) => (counts[subj][a] || 0) - (counts[subj][b] || 0));
-        const chosenThird = pool[0];
-
-        const placed = placeInSubjectThird(schedule, counts, subj, chosenThird, line, st.id, bounds, allowSoftOverflow);
+        const placed = placeInSubjectThird(schedule, counts, subj, chosen.third, chosen.line, st.id, bounds, allowSoftOverflow);
         if (!placed) {
-          unserved.push({ id: st.id, subj, reason: 'Locked sections at capacity' });
+          unserved.push({ id: st.id, subj, reason: 'Locked sections at maximum capacity' });
           return;
         }
 
-        studentSlots[st.id].add(slotKey(chosenThird, line));
-        placements[st.id].push({ subj, third: chosenThird, line });
+        studentSlots[st.id].add(slotKey(chosen.third, chosen.line));
+        placements[st.id].push({ subj, third: chosen.third, line: chosen.line });
       });
     });
 
     return { schedule, counts, unserved, placements, studentSlots };
   }
 
-  function repairSwaps(result, fixedLine, bounds, maxPasses = 6) {
+  function repairSwaps(result, primaryLine, bounds, maxPasses = 6) {
     for (let pass = 0; pass < maxPasses; pass++) {
       let improved = false;
 
@@ -573,45 +583,46 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         const st = parsedStudentCache.find(s => s.id === u.id);
         if (!st) return true;
         const subj = u.subj;
-        const locks = manualLocks[subj] || {};
         const tNum = extractTihoiTerm(st.tihoi);
         const tihoiThird = `Third ${tNum}`;
         const availThirds = ["Third 1", "Third 2", "Third 3"].filter(t => t !== tihoiThird);
-        const line = fixedLine[subj] || "Line 1";
-        const legal = availThirds.filter(
-          t => (locks[t] || 0) > 0 && !result.studentSlots[st.id].has(slotKey(t, line))
-        );
 
-        for (const third of legal) {
-          const sections = result.schedule[third][line][subj] || [];
-          const roster = sections.flat();
+        for (const third of availThirds) {
+          const validLines = getSubjectLinesForTerm(subj, third, primaryLine);
 
-          for (const occupantId of roster) {
-            const occ = parsedStudentCache.find(s => s.id === occupantId);
-            if (!occ) continue;
-            const occTNum = extractTihoiTerm(occ.tihoi);
-            const occTihoiThird = `Third ${occTNum}`;
-            const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== occTihoiThird);
-            const altThirds = occAvail.filter(t =>
-              t !== third && (locks[t] || 0) > 0 &&
-              !result.studentSlots[occupantId].has(slotKey(t, line))
-            );
+          for (const line of validLines) {
+            if (result.studentSlots[st.id].has(slotKey(third, line))) continue;
 
-            if (altThirds.length > 0) {
-              altThirds.sort((a, b) => (result.counts[subj][a] || 0) - (result.counts[subj][b] || 0));
-              const moveTo = altThirds[0];
+            const sections = result.schedule[third][line][subj] || [];
+            const roster = sections.flat();
 
-              removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
-              result.studentSlots[occupantId].delete(slotKey(third, line));
-              placeInSubjectThird(result.schedule, result.counts, subj, moveTo, line, occupantId, bounds, true);
-              result.studentSlots[occupantId].add(slotKey(moveTo, line));
+            for (const occupantId of roster) {
+              const occ = parsedStudentCache.find(s => s.id === occupantId);
+              if (!occ) continue;
+              const occTNum = extractTihoiTerm(occ.tihoi);
+              const occAvail = ["Third 1", "Third 2", "Third 3"].filter(t => t !== `Third ${occTNum}`);
 
-              placeInSubjectThird(result.schedule, result.counts, subj, third, line, st.id, bounds, true);
-              result.studentSlots[st.id].add(slotKey(third, line));
-              result.placements[st.id].push({ subj, third, line });
+              // Check alternate legal slots for existing occupant
+              for (const altT of occAvail) {
+                const altLines = getSubjectLinesForTerm(subj, altT, primaryLine);
+                for (const altL of altLines) {
+                  if (altT === third && altL === line) continue;
+                  if (!result.studentSlots[occupantId].has(slotKey(altT, altL))) {
+                    // Execute swap
+                    removeFromSubjectThird(result.schedule, result.counts, subj, third, line, occupantId);
+                    result.studentSlots[occupantId].delete(slotKey(third, line));
 
-              improved = true;
-              return false;
+                    placeInSubjectThird(result.schedule, result.counts, subj, altT, altL, occupantId, bounds, true);
+                    result.studentSlots[occupantId].add(slotKey(altT, altL));
+
+                    placeInSubjectThird(result.schedule, result.counts, subj, third, line, st.id, bounds, true);
+                    result.studentSlots[st.id].add(slotKey(third, line));
+
+                    improved = true;
+                    return false;
+                  }
+                }
+              }
             }
           }
         }
@@ -623,7 +634,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
     return result;
   }
 
-  // EXECUTE RLNS CYCLES WITH ADAPTIVE THRESHOLD DECAY
   function executeLockedLineSorting() {
     const bounds = getBounds();
     const students = parsedStudentCache;
@@ -631,13 +641,12 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
       Object.values(manualLocks[s]).some(c => c > 0)
     ).sort();
 
-    const fixedLine = assignLinesByLoad(activeSubjects);
+    const primaryLine = assignLinesByLoad(activeSubjects);
     const totalChoices = students.reduce((sum, st) => sum + st.subjects.filter(s => s.toLowerCase() !== 'tihoi').slice(0, 4).length, 0);
 
     let best = null;
     let bestUnservedCount = Infinity;
 
-    // Adaptive RLNS Threshold Decay Loops (100% target yield down to 98%, then Soft-Overflow)
     const targetYields = [1.0, 0.99, 0.98];
 
     for (const targetYield of targetYields) {
@@ -645,25 +654,23 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
       for (let cycle = 0; cycle < bounds.rlnsCycles; cycle++) {
         const order = cycle === 0 ? students.slice() : shuffleArray(students);
-        let result = attemptAllocation(order, fixedLine, bounds, false);
-        result = repairSwaps(result, fixedLine, bounds);
+        let result = attemptAllocation(order, primaryLine, bounds, false);
+        result = repairSwaps(result, primaryLine, bounds);
 
         if (result.unserved.length < bestUnservedCount) {
           best = result;
           bestUnservedCount = result.unserved.length;
         }
 
-        // Break early if target yield achieved
         if (bestUnservedCount <= allowedUnservedThreshold) break;
       }
 
       if (bestUnservedCount <= allowedUnservedThreshold) break;
     }
 
-    // Final Soft-Overflow Pass: If choices remain unplaced due to strict max caps, force overflow into locked sections
     if (bestUnservedCount > 0) {
-      let overflowResult = attemptAllocation(students, fixedLine, bounds, true);
-      overflowResult = repairSwaps(overflowResult, fixedLine, bounds);
+      let overflowResult = attemptAllocation(students, primaryLine, bounds, true);
+      overflowResult = repairSwaps(overflowResult, primaryLine, bounds);
       if (overflowResult.unserved.length < bestUnservedCount) {
         best = overflowResult;
       }
@@ -706,7 +713,6 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
         } else {
           for (const subj of activeClasses) {
             const sections = classes[subj].filter(sec => sec.length > 0);
-            const multiSection = sections.length > 1;
 
             sections.forEach((roster, secIdx) => {
               const count = roster.length;
@@ -721,7 +727,7 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
                 statusText = `${count} (Below Min ${bounds.min})`;
               }
 
-              const label = multiSection ? `${subj} — Group ${String.fromCharCode(65 + secIdx)}` : subj;
+              const label = (sections.length > 1) ? `${subj} — Group ${String.fromCharCode(65 + secIdx)}` : subj;
 
               html += `<div style="margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed #e2e8f0;">`;
               html += `<div><span class="badge">${label}</span> <span class="metric-pill ${metricClass}">${statusText}</span></div>`;
@@ -740,16 +746,16 @@ Dakota, White, 3, 10SCI1, 10DRA1, 10MUS1, 10TEC1</textarea>
 
     if (unserved.length === 0) {
       html += `<div class="unserved-card clear"><h3>✓ 100% Choice Placement Achieved</h3>
-        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit within current section locks (using soft-overflow where flagged).</p></div>`;
+        <p style="font-size:0.85rem; margin:0;">All ${totalChoices} choices across ${totalStudents} students fit cleanly across Line 1 and Line 2.</p></div>`;
     } else {
       html += `<div class="unserved-card"><h3>⚠ ${unserved.length} choice(s) could not be placed</h3>
         <table class="unserved-table"><thead><tr><th>Student</th><th>Subject</th><th>Reason</th></tr></thead><tbody>`;
       unserved.forEach(u => {
         html += `<tr><td>${u.id}</td><td>${u.subj}</td><td>${u.reason}</td></tr>`;
       });
-      html += `</tbody>纠</table>
+      html += `</tbody></table>
         <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px; margin-bottom:0;">
-          Try enabling higher-tier section toggles (+2nd, +3rd) for affected subjects, or increase RLNS cycles per step.
+          Try enabling higher-tier section toggles (+2nd, +3rd) or increasing RLNS cycles per step.
         </p></div>`;
     }
 
