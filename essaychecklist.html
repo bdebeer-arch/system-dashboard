@@ -2,557 +2,405 @@
 <html lang="en" class="h-full">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentence Workbench - Academic Prose Refinement</title>
-<!-- Tailwind CSS for modern responsive utility styling -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentence Workbench & Essay Checklist</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
-    darkMode: 'media',
+    darkMode: 'class',
     theme: {
       extend: {
         colors: {
           brand: {
             50: '#f0f7ff',
             100: '#e0effe',
-            200: '#bae0fd',
-            500: '#2563eb',
-            600: '#1d4ed8',
-            700: '#1e40af',
-            800: '#1e3a8a',
-            900: '#1c2d5a',
-          },
-          academic: {
-            bg: '#fbf9f5',
-            card: '#ffffff',
-            border: '#e7e2d8',
-            text: '#1c1a17',
-            muted: '#736e65',
-            accent: '#3b5998',
-            passBg: '#edf7ed',
-            passText: '#1e4620',
-            passBorder: '#a3d9a5',
-            failBg: '#fdeded',
-            failText: '#5f2120',
-            failBorder: '#f5c2c7',
-            selBg: '#e8f2fc'
+            500: '#3b82f6',
+            600: '#2563eb',
+            700: '#1d4ed8',
+            900: '#1e3a8a',
           }
-        },
-        fontFamily: {
-          serif: ['Charis SIL', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
-          sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-          mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
         }
       }
     }
   }
 </script>
 <style>
-  /* Custom scrollbar styling for clean desktop interface */
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .serif-prose { font-family: 'Lora', Georgia, serif; }
+  .title-serif { font-family: 'Cinzel', serif; }
+  
+  .s-mark { transition: all 0.15s ease; cursor: pointer; border-radius: 4px; padding: 2px 0; }
+  .s-mark:hover { background-color: rgba(59, 130, 246, 0.15); }
+  .s-mark.long-sentence { border-bottom: 2px dashed #a855f7; }
+  .s-mark.is-flagged { background-color: rgba(234, 179, 8, 0.2); box-shadow: 0 0 0 1px rgba(202, 138, 4, 0.4); }
+  .s-mark.is-resolved { background-color: rgba(34, 197, 94, 0.15); box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.3); }
+  .s-mark.is-selected { outline: 2px solid #3b82f6; outline-offset: 2px; }
+  
+  /* Custom scrollbars */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 9999px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(150, 150, 150, 0.5); }
-
-  /* Sentence highlighter classes in review canvas */
-  .s-node {
-    transition: all 0.15s ease-in-out;
-    border-radius: 4px;
-    padding: 2px 4px;
-    margin: 0 1px;
-    cursor: pointer;
-  }
-  .s-node:hover {
-    background-color: rgba(59, 130, 246, 0.15);
-  }
-  .s-node.long-sent {
-    border-bottom: 2px dashed #eab308;
-  }
-  .s-node.flagged {
-    background-color: #fef9c3;
-    box-shadow: 0 0 0 1px #fde047;
-  }
-  .dark .s-node.flagged {
-    background-color: #422006;
-    box-shadow: 0 0 0 1px #854d0e;
-    color: #fef08a;
-  }
-  .s-node.done {
-    background-color: #dcfce7;
-    box-shadow: 0 0 0 1px #86efac;
-  }
-  .dark .s-node.done {
-    background-color: #14532d;
-    box-shadow: 0 0 0 1px #166534;
-    color: #bbf7d0;
-  }
-  .s-node.selected {
-    outline: 2px solid #2563eb;
-    outline-offset: 1px;
-  }
+  ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(107, 114, 128, 0.7); }
 </style>
 </head>
-<body class="h-full bg-academic-bg dark:bg-zinc-950 text-academic-text dark:text-zinc-100 font-sans flex flex-col antialiased selection:bg-brand-100 dark:selection:bg-brand-900">
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
 
 <!-- Header Navbar -->
-<header class="sticky top-0 z-30 flex-none bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-academic-border dark:border-zinc-800 px-4 py-3 shadow-sm">
-  <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-    
-    <!-- Title & Mode Toggles -->
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center font-serif font-bold text-lg shadow-sm">
-          S
-        </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight leading-none text-zinc-900 dark:text-white">Sentence Workbench</h1>
-          <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Academic Essay Quality Refinement</p>
-        </div>
-      </div>
-
-      <!-- Segmented Mode Buttons -->
-      <div class="inline-flex rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1 border border-zinc-200 dark:border-zinc-700">
-        <button id="btnModeWrite" class="px-3 py-1 text-xs font-semibold rounded-md transition-all shadow-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white">
-          Write &amp; Edit
-        </button>
-        <button id="btnModeReview" class="px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-md transition-all">
-          Review &amp; Flag
-        </button>
-      </div>
-
-      <button id="btnFocusMode" title="Toggle Focus Mode (Hide editor panel)" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
-        <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-        <span>Focus Mode</span>
-      </button>
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-sm">
+  <div class="flex items-center gap-3">
+    <span class="text-2xl">✍️</span>
+    <div>
+      <h1 class="title-serif font-bold text-base md:text-lg tracking-wide text-slate-900 dark:text-slate-100">Sentence Workbench</h1>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Granular Essay Editing & Criteria Checklist</p>
     </div>
+  </div>
 
-    <!-- Quick Stats Indicator -->
-    <div id="statsBar" class="hidden xl:flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-1.5 rounded-full border border-zinc-200/60 dark:border-zinc-700/60">
-      <span>0 words</span> • <span>0 sentences</span> • <span class="text-amber-600 dark:text-amber-400 font-medium">0 flagged</span>
-    </div>
+  <!-- Mode Controls -->
+  <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+    <button id="bWrite" class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm">
+      ✏️ Write
+    </button>
+    <button id="bReview" class="px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all">
+      🔍 Review & Flag
+    </button>
+  </div>
 
-    <!-- Toolbar Action Buttons -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <button id="btnFlagAll" title="Flag/Select every sentence in the text" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 transition">
-        Flag All
-      </button>
-      <button id="btnUnflagAll" title="Clear all sentence flags" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 transition">
-        Unflag All
-      </button>
+  <!-- Quick Actions -->
+  <div class="flex items-center flex-wrap gap-2 text-xs">
+    <button id="bFocus" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition">
+      🎯 Focus Mode
+    </button>
+    <button id="bFlagAll" class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-semibold hover:bg-indigo-100 transition">
+      ⚡ Flag All
+    </button>
+    <button id="bUnflagAll" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition">
+      Clear Flags
+    </button>
 
-      <div class="h-4 w-px bg-zinc-200 dark:bg-zinc-800 mx-0.5"></div>
+    <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1 hidden sm:block"></div>
 
-      <button id="btnSample" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-950 dark:hover:bg-brand-900 dark:text-brand-300 transition">
-        Sample Text
-      </button>
-      <button id="btnExportMd" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition">
-        Export Report
-      </button>
-      <button id="btnSaveSession" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition">
-        Save
-      </button>
-      <button id="btnLoadSession" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition">
-        Load
-      </button>
-      <button id="btnClear" class="px-2.5 py-1.5 text-xs font-medium rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 transition">
-        Clear
-      </button>
-      <input type="file" id="fileInput" accept=".json" class="hidden">
-    </div>
-
+    <button id="bSample" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition">
+      Sample
+    </button>
+    <button id="bExportMd" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold transition shadow-sm">
+      Export Report
+    </button>
+    <button id="bSave" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition">
+      Save
+    </button>
+    <button id="bLoad" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition">
+      Load
+    </button>
+    <button id="bClear" class="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-medium hover:bg-red-100 transition">
+      Clear All
+    </button>
+    <input type="file" id="fileIn" accept=".json" hidden>
   </div>
 </header>
 
-<!-- Main Layout Area -->
-<main id="mainContainer" class="flex-1 flex flex-col md:flex-row overflow-hidden max-w-[1800px] w-full mx-auto">
+<!-- Main Workspace Layout -->
+<main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
   
-  <!-- Left Side: Editor / Sentence Reader Canvas -->
-  <section id="leftPanel" class="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-academic-border dark:border-zinc-800 bg-white dark:bg-zinc-900 min-w-0 transition-all duration-300">
-    <div id="hintBar" class="px-4 py-2 text-xs bg-amber-50/60 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 border-b border-amber-100 dark:border-amber-900/40 flex items-center justify-between">
-      <span id="hintText">Type or paste your essay below. All sentences are automatically flagged for review.</span>
-      <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono hidden sm:inline">35+ words = long sentence</span>
+  <!-- Left Side: Document Editor / Interactive Reviewer -->
+  <section id="left" class="flex-1 flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300">
+    <!-- Hint Bar -->
+    <div id="hint" class="px-5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+      <span>Loading...</span>
     </div>
 
-    <div class="relative flex-1 flex flex-col min-h-[300px]">
-      <!-- Plain Text Editor Mode -->
-      <textarea id="textEditor" spellcheck="true" placeholder="Paste or type your essay here... Every sentence will be flagged automatically for systematic analysis." class="w-full h-full p-6 font-serif text-lg leading-relaxed bg-transparent text-zinc-900 dark:text-zinc-100 resize-none outline-none focus:ring-0 border-0"></textarea>
+    <div class="relative flex-1 flex flex-col overflow-hidden">
+      <!-- Plain Text Editor -->
+      <textarea id="editor" spellcheck="true" placeholder="Paste or type your essay here..." class="serif-prose w-full h-full p-6 md:p-8 bg-transparent text-slate-800 dark:text-slate-100 text-base md:text-lg leading-relaxed resize-none focus:outline-none overflow-y-auto"></textarea>
+      
+      <!-- Interactive Sentence Review overlay -->
+      <div id="review" class="serif-prose hidden w-full h-full p-6 md:p-8 text-slate-800 dark:text-slate-100 text-base md:text-lg leading-relaxed overflow-y-auto whitespace-pre-wrap"></div>
+    </div>
 
-      <!-- Review Mode Canvas -->
-      <div id="reviewCanvas" class="hidden w-full h-full p-6 font-serif text-lg leading-relaxed overflow-y-auto whitespace-pre-wrap word-break-break-word"></div>
+    <!-- Live Word / Sentence Stats Footbar -->
+    <div class="px-5 py-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between" id="stats">
+      <span>0 words</span>
     </div>
   </section>
 
-  <!-- Right Side: Sentence Queue & Diagnostic Workbench -->
-  <section id="rightPanel" class="w-full md:w-[680px] lg:w-[780px] xl:w-[860px] flex flex-row min-w-0 bg-academic-bg dark:bg-zinc-950 shrink-0">
+  <!-- Right Side: Sentence Queue & Evaluation Workbench -->
+  <section id="right" class="w-full md:w-[650px] lg:w-[720px] flex min-w-0 bg-slate-50 dark:bg-slate-950 transition-all duration-300">
     
-    <!-- Sidebar Queue -->
-    <aside id="queueSidebar" class="w-56 sm:w-64 border-r border-academic-border dark:border-zinc-800 flex flex-col bg-zinc-50/70 dark:bg-zinc-900/50 shrink-0">
-      <div class="p-3 border-b border-academic-border dark:border-zinc-800 flex items-center justify-between">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Flagged Sentences</h2>
-        <span id="queueBadge" class="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-300">0</span>
+    <!-- Queue Sidebar -->
+    <aside id="queue" class="w-48 sm:w-56 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900/60">
+      <div class="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Flagged</h2>
+        <span id="qCount" class="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-medium">0</span>
       </div>
 
-      <!-- Queue list items -->
-      <div id="queueList" class="flex-1 overflow-y-auto p-2 space-y-1.5"></div>
+      <div id="qlist" class="flex-1 overflow-y-auto p-2 space-y-1.5"></div>
 
-      <div class="p-2.5 border-t border-academic-border dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 text-xs">
-        <label class="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 cursor-pointer select-none">
-          <input type="checkbox" id="chkShowResolved" checked class="rounded border-zinc-300 text-brand-600 focus:ring-brand-500">
-          <span>Show resolved sentences</span>
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 text-xs text-slate-500">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" id="showDone" checked class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+          <span>Show resolved</span>
         </label>
       </div>
     </aside>
 
-    <!-- Main Diagnostic Bench -->
-    <div id="workbench" class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-white dark:bg-zinc-900">
-      <div class="p-3 border-b border-academic-border dark:border-zinc-800 flex items-center justify-between">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Sentence Diagnostic Workbench</h2>
-        <div id="navGroup" class="flex items-center gap-1">
-          <button id="btnPrev" class="px-2 py-0.5 text-xs font-medium rounded border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">← Prev</button>
-          <button id="btnNext" class="px-2 py-0.5 text-xs font-medium rounded border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">Next →</button>
-        </div>
+    <!-- Workbench Box -->
+    <div id="bench" class="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900">
+      <div class="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sentence Workbench</h2>
+        <span id="dwc" class="text-xs text-slate-400"></span>
       </div>
 
-      <div id="workbenchContent" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-        <!-- Dynamic content or empty state rendered via JavaScript -->
+      <div id="benchscroll" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-5">
+        <div class="text-center py-16 px-4 text-slate-400 dark:text-slate-500">
+          <span class="text-3xl block mb-2">🔍</span>
+          <p class="text-sm">Select a flagged sentence from the queue or click any sentence in "Review" mode to evaluate it.</p>
+        </div>
       </div>
     </div>
 
   </section>
 </main>
 
-<!-- Notification Toast -->
-<div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-4 py-2.5 rounded-lg shadow-xl text-xs font-medium flex items-center gap-2">
-  <span id="toastMsg">Notification message</span>
-</div>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs md:text-sm font-medium px-4 py-2.5 rounded-xl shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50 transform translate-y-2"></div>
 
 <script>
-/* ---------------- 8-Part Academic Checklist Criteria Data ---------------- */
+/* ---------------- Checklist criteria database ---------------- */
 const CRITERIA = [
-  {
-    n: "1", 
-    title: "Authorial ownership", 
-    q: "Does this sentence represent something I understand, intend and can defend?", 
-    items: [
-      ["AO1","I understand the claim being made in this sentence."],
-      ["AO2","I could explain this sentence in my own words."],
-      ["AO3","The sentence expresses my intended meaning."],
-      ["AO4","I can distinguish my own interpretation from the ideas of others."],
-      ["AO5","I could defend this claim if challenged."],
-      ["AO6","I have not retained this sentence merely because it sounds academic."],
-      ["AO7","The wording does not conceal uncertainty or gaps in my understanding."]
-    ]
-  },
-  {
-    n: "2", 
-    title: "Argument & intellectual contribution", 
-    q: "Does this sentence contribute something meaningful to the argument?", 
-    items: [
-      ["AR1","The sentence makes a discernible point or performs a clear function."],
-      ["AR2","It advances, develops or qualifies the argument."],
-      ["AR3","It contributes something beyond simply repeating an earlier point."],
-      ["AR4","It makes a meaningful connection between ideas or evidence."],
-      ["AR5","It distinguishes between description, interpretation and evaluation."],
-      ["AR6","It expresses a sufficiently specific claim rather than a generic observation."],
-      ["AR7","The strength of the claim is justified by the available evidence."],
-      ["AR8","It introduces a meaningful implication, qualification or consequence where appropriate."]
-    ]
-  },
-  {
-    n: "3", 
-    title: "Scholarship & evidential accountability", 
-    q: "Does this sentence engage responsibly with evidence and existing scholarship?", 
-    items: [
-      ["SE1","Any factual or scholarly claim is appropriately supported."],
-      ["SE2","The source is relevant to the particular claim being made."],
-      ["SE3","The attribution makes clear whose idea or interpretation is being presented."],
-      ["SE4","The sentence represents the source's position accurately."],
-      ["SE5","Important qualifications or limitations have been preserved."],
-      ["SE6","I have distinguished the source's explicit claims from my own inferences."],
-      ["SE7","The sentence uses evidence to develop an argument rather than simply reporting information."],
-      ["SE8","The citation is attached to the claim it actually supports."],
-      ["SE9","The sentence does not imply greater scholarly agreement than the evidence warrants."]
-    ]
-  },
-  {
-    n: "4", 
-    title: "Clarity & specificity", 
-    q: "Does this sentence communicate its meaning precisely?", 
-    items: [
-      ["CS1","The central meaning is immediately understandable."],
-      ["CS2","The subject of the sentence is identifiable."],
-      ["CS3","The action or relationship being described is clear."],
-      ["CS4","Abstract concepts are sufficiently explained or contextualised."],
-      ["CS5","Important terms are used precisely and consistently."],
-      ["CS6","The sentence avoids unnecessary generalisations."],
-      ["CS7","The wording is specific enough to distinguish the claim from a generic academic observation."],
-      ["CS8","Unnecessary ambiguity has been removed."],
-      ["CS9","The sentence contains no more conceptual complexity than the idea requires."]
-    ]
-  },
-  {
-    n: "5", 
-    title: "Natural academic prose", 
-    q: "Does this sentence sound like considered scholarly writing rather than formulaic academic language?", 
-    items: [
-      ["NP1","The sentence uses vocabulary because it is precise, not simply because it sounds academic."],
-      ["NP2","The sentence avoids unnecessary jargon or inflated language."],
-      ["NP3","Abstract nouns are used purposefully rather than excessively."],
-      ["NP4","Verbs communicate actions and relationships clearly."],
-      ["NP5","The sentence avoids unnecessary introductory or transitional padding."],
-      ["NP6","The sentence does not repeat information already communicated."],
-      ["NP7","The grammatical structure is natural and readable."],
-      ["NP8","The sentence is not unnecessarily elaborate."],
-      ["NP9","The sentence maintains an appropriate academic register without becoming impersonal or artificial."]
-    ]
-  },
-  {
-    n: "6", 
-    title: "Epistemic precision & critical judgement", 
-    q: "Does this sentence demonstrate appropriate intellectual confidence and critical awareness?", 
-    items: [
-      ["EP1","The sentence expresses an appropriate degree of certainty."],
-      ["EP2","Qualification is used where the evidence requires it."],
-      ["EP3","The sentence avoids unnecessary hedging."],
-      ["EP4","The sentence avoids overstating what the evidence establishes."],
-      ["EP5","Judgements and interpretations are clearly distinguished from established facts."],
-      ["EP6","Relevant tensions, disagreements or limitations are acknowledged where necessary."],
-      ["EP7","The sentence does not artificially resolve a genuinely complex issue."],
-      ["EP8","The sentence demonstrates independent evaluation where appropriate."]
-    ]
-  },
-  {
-    n: "7", 
-    title: "Disciplinary & contextual specificity", 
-    q: "Does this sentence belong to the particular scholarly conversation in which I am participating?", 
-    items: [
-      ["DC1","The terminology is appropriate to the discipline."],
-      ["DC2","Disciplinary concepts are used accurately."],
-      ["DC3","The sentence reflects relevant theoretical or methodological distinctions."],
-      ["DC4","The claim is appropriately situated within its scholarly or historical context."],
-      ["DC5","The sentence avoids substituting generic language for more precise disciplinary concepts."],
-      ["DC6","The implications are relevant to the particular research question or field."],
-      ["DC7","The sentence reflects an understanding of the wider scholarly conversation."]
-    ]
-  },
-  {
-    n: "8", 
-    title: "Authorial voice & expression", 
-    q: "Does this sentence sound like something I would genuinely write and stand behind?", 
-    items: [
-      ["AV1","The sentence sounds natural when read aloud."],
-      ["AV2","The phrasing reflects my own established writing voice."],
-      ["AV3","The sentence does not sound unnecessarily polished or symmetrical."],
-      ["AV4","The wording reflects how I would naturally explain the idea to an informed reader."],
-      ["AV5","The sentence communicates my thinking rather than merely imitating academic conventions."],
-      ["AV6","The sentence retains my intended emphasis and intellectual personality."],
-      ["AV7","I would be comfortable explaining this sentence to my supervisor without reading it."]
-    ]
-  }
+ {n:"1", title:"Authorial ownership", q:"Does this sentence represent something I understand, intend and can defend?", items:[
+  ["AO1","I understand the claim being made in this sentence."],
+  ["AO2","I could explain this sentence in my own words."],
+  ["AO3","The sentence expresses my intended meaning."],
+  ["AO4","I can distinguish my own interpretation from the ideas of others."],
+  ["AO5","I could defend this claim if challenged."],
+  ["AO6","I have not retained this sentence merely because it sounds academic."],
+  ["AO7","The wording does not conceal uncertainty or gaps in my understanding."]]},
+ {n:"2", title:"Argument and intellectual contribution", q:"Does this sentence contribute something meaningful to the argument?", items:[
+  ["AR1","The sentence makes a discernible point or performs a clear function."],
+  ["AR2","It advances, develops or qualifies the argument."],
+  ["AR3","It contributes something beyond simply repeating an earlier point."],
+  ["AR4","It makes a meaningful connection between ideas or evidence."],
+  ["AR5","It distinguishes between description, interpretation and evaluation."],
+  ["AR6","It expresses a sufficiently specific claim rather than a generic observation."],
+  ["AR7","The strength of the claim is justified by the available evidence."],
+  ["AR8","It introduces a meaningful implication, qualification or consequence where appropriate."]]},
+ {n:"3", title:"Scholarship and evidential accountability", q:"Does this sentence engage responsibly with evidence and existing scholarship?", items:[
+  ["SE1","Any factual or scholarly claim is appropriately supported."],
+  ["SE2","The source is relevant to the particular claim being made."],
+  ["SE3","The attribution makes clear whose idea or interpretation is being presented."],
+  ["SE4","The sentence represents the source's position accurately."],
+  ["SE5","Important qualifications or limitations have been preserved."],
+  ["SE6","I have distinguished the source's explicit claims from my own inferences."],
+  ["SE7","The sentence uses evidence to develop an argument rather than simply reporting information."],
+  ["SE8","The citation is attached to the claim it actually supports."],
+  ["SE9","The sentence does not imply greater scholarly agreement than the evidence warrants."]]},
+ {n:"4", title:"Clarity and specificity", q:"Does this sentence communicate its meaning precisely?", items:[
+  ["CS1","The central meaning is immediately understandable."],
+  ["CS2","The subject of the sentence is identifiable."],
+  ["CS3","The action or relationship being described is clear."],
+  ["CS4","Abstract concepts are sufficiently explained or contextualised."],
+  ["CS5","Important terms are used precisely and consistently."],
+  ["CS6","The sentence avoids unnecessary generalisations."],
+  ["CS7","The wording is specific enough to distinguish the claim from a generic academic observation."],
+  ["CS8","Unnecessary ambiguity has been removed."],
+  ["CS9","The sentence contains no more conceptual complexity than the idea requires."]]},
+ {n:"5", title:"Natural academic prose", q:"Does this sentence sound like considered scholarly writing rather than formulaic academic language?", items:[
+  ["NP1","The sentence uses vocabulary because it is precise, not simply because it sounds academic."],
+  ["NP2","The sentence avoids unnecessary jargon or inflated language."],
+  ["NP3","Abstract nouns are used purposefully rather than excessively."],
+  ["NP4","Verbs communicate actions and relationships clearly."],
+  ["NP5","The sentence avoids unnecessary introductory or transitional padding."],
+  ["NP6","The sentence does not repeat information already communicated."],
+  ["NP7","The grammatical structure is natural and readable."],
+  ["NP8","The sentence is not unnecessarily elaborate."],
+  ["NP9","The sentence maintains an appropriate academic register without becoming impersonal or artificial."]]},
+ {n:"6", title:"Epistemic precision and critical judgement", q:"Does this sentence demonstrate appropriate intellectual confidence and critical awareness?", items:[
+  ["EP1","The sentence expresses an appropriate degree of certainty."],
+  ["EP2","Qualification is used where the evidence requires it."],
+  ["EP3","The sentence avoids unnecessary hedging."],
+  ["EP4","The sentence avoids overstating what the evidence establishes."],
+  ["EP5","Judgements and interpretations are clearly distinguished from established facts."],
+  ["EP6","Relevant tensions, disagreements or limitations are acknowledged where necessary."],
+  ["EP7","The sentence does not artificially resolve a genuinely complex issue."],
+  ["EP8","The sentence demonstrates independent evaluation where appropriate."]]},
+ {n:"7", title:"Disciplinary and contextual specificity", q:"Does this sentence belong to the particular scholarly conversation in which I am participating?", items:[
+  ["DC1","The terminology is appropriate to the discipline."],
+  ["DC2","Disciplinary concepts are used accurately."],
+  ["DC3","The sentence reflects relevant theoretical or methodological distinctions."],
+  ["DC4","The claim is appropriately situated within its scholarly or historical context."],
+  ["DC5","The sentence avoids substituting generic language for more precise disciplinary concepts."],
+  ["DC6","The implications are relevant to the particular research question or field."],
+  ["DC7","The sentence reflects an understanding of the wider scholarly conversation."]]},
+ {n:"8", title:"Authorial voice and expression", q:"Does this sentence sound like something I would genuinely write and stand behind?", items:[
+  ["AV1","The sentence sounds natural when read aloud."],
+  ["AV2","The phrasing reflects my own established writing voice."],
+  ["AV3","The sentence does not sound unnecessarily polished or symmetrical."],
+  ["AV4","The wording reflects how I would naturally explain the idea to an informed reader."],
+  ["AV5","The sentence communicates my thinking rather than merely imitating academic conventions."],
+  ["AV6","The sentence retains my intended emphasis and intellectual personality."],
+  ["AV7","I would be comfortable explaining this sentence to my supervisor without reading it."]]}
 ];
 
-/* ---------------- Application State ---------------- */
-const STORE_KEY = "sentence-workbench-v2";
-const LONG_WORD_COUNT = 35;
-const AUTO_PASS_THRESHOLD = 4; // Requirement: auto-check/mark criterion if 4 subcriteria are checked
+/* ---------------- State ---------------- */
+const STORE = "sentence-workbench-v2";
+const LONG_WORDS = 35;
+let S = { text:"", flags:{}, sel:null, mode:"write", showDone:true, openCats:new Set(["1"]) };
 
-let AppState = {
-  text: "",
-  flags: {},       // Keyed by exact sentence text -> { status: "open"|"done", marks: { [itemId]: "ok"|"fix" }, note: "" }
-  selected: null,  // Current sentence key being edited
-  mode: "write",   // "write" | "review"
-  showResolved: true,
-  openCategories: new Set(["1"])
-};
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const words = s => (s.trim().match(/\S+/g) || []).length;
 
-/* Helper Functions */
-const $ = selector => document.querySelector(selector);
-const esc = str => (str || '').replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const countWords = str => (str.trim().match(/\S+/g) || []).length;
-
-function saveToStorage() {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({
-      text: AppState.text,
-      flags: AppState.flags
-    }));
-  } catch(e){}
+function save(){
+  try{ localStorage.setItem(STORE, JSON.stringify({text:S.text, flags:S.flags})); }catch(e){}
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(STORE) || "null");
+    if(d){ S.text = d.text || ""; S.flags = d.flags || {}; }
+  }catch(e){}
+}
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; 
+  t.classList.remove("opacity-0", "translate-y-2", "pointer-events-none");
+  t.classList.add("opacity-100", "translate-y-0");
+  clearTimeout(toast._t); 
+  toast._t = setTimeout(() => {
+    t.classList.add("opacity-0", "translate-y-2", "pointer-events-none");
+    t.classList.remove("opacity-100", "translate-y-0");
+  }, 2200);
 }
 
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if(raw) {
-      const data = JSON.parse(raw);
-      AppState.text = data.text || "";
-      AppState.flags = data.flags || {};
-    }
-  } catch(e){}
-}
+/* ---------------- Sentence splitting ---------------- */
+const ABBR = new Set(["e.g","i.e","et al","etc","vs","cf","fig","figs","dr","mr","mrs","ms","prof","no","nos","pp","p","vol","ch","ed","eds","st","approx","ca","inc","ltd","al","viz","ibid","op cit","trans","repr","rev"]);
 
-function showToast(message) {
-  const toast = $("#toast");
-  $("#toastMsg").textContent = message;
-  toast.classList.remove("translate-y-10", "opacity-0", "pointer-events-none");
-  clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => {
-    toast.classList.add("translate-y-10", "opacity-0", "pointer-events-none");
-  }, 2400);
-}
-
-/* Sentence Boundary Detection with Abbreviation Recognition */
-const COMMON_ABBRS = new Set(["e.g","i.e","et al","etc","vs","cf","fig","figs","dr","mr","mrs","ms","prof","no","nos","pp","p","vol","ch","ed","eds","st","approx","ca","inc","ltd","al","viz","ibid","op cit","trans","repr","rev"]);
-
-function splitParagraph(paragraphText, baseOffset, outArray) {
-  const sentenceRegex = /[.!?]+["'\u201d\u2019)\]]*(?=\s|$)/g;
-  let start = 0, match;
-  
-  const pushSentence = (sIdx, eIdx) => {
-    let s = sIdx, e = eIdx;
-    while(s < e && /\s/.test(paragraphText[s])) s++;
-    while(e > s && /\s/.test(paragraphText[e-1])) e--;
-    if(e > s) {
-      outArray.push({
-        start: baseOffset + s,
-        end: baseOffset + e,
-        text: paragraphText.slice(s, e)
-      });
-    }
+function splitPara(p, offset, out){
+  const re = /[.!?]+["'\u201d\u2019)\]]*(?=\s|$)/g;
+  let start = 0, m;
+  const push = (a,b) => {
+    let s=a, e=b;
+    while(s<e && /\s/.test(p[s])) s++;
+    while(e>s && /\s/.test(p[e-1])) e--;
+    if(e>s) out.push({start:offset+s, end:offset+e, text:p.slice(s,e)});
   };
-
-  while((match = sentenceRegex.exec(paragraphText))) {
-    const end = match.index + match[0].length;
-    if(end < paragraphText.length) {
-      const nextChar = paragraphText.slice(end).trimStart()[0];
-      if(nextChar && /[a-z]/.test(nextChar)) continue; // Lowercase following punct -> not end
-      if(match[0][0] === ".") {
-        const words = paragraphText.slice(start, match.index).trim().split(/\s+/);
-        const w1 = (words.pop() || "").toLowerCase().replace(/^[("'\u201c\[]+/,"");
-        const w2 = (words.pop() || "").toLowerCase();
-        if(COMMON_ABBRS.has(w1) || COMMON_ABBRS.has(w2 + " " + w1) || /^[a-z]$/.test(w1)) continue;
+  while((m = re.exec(p))){
+    const end = m.index + m[0].length;
+    if(end < p.length){
+      const next = p.slice(end).trimStart()[0];
+      if(next && /[a-z]/.test(next)) continue; 
+      if(m[0][0] === "."){
+        const words_ = p.slice(start, m.index).trim().split(/\s+/);
+        const w1 = (words_.pop() || "").toLowerCase().replace(/^[("'\u201c\[]+/,"");
+        const w2 = (words_.pop() || "").toLowerCase();
+        if(ABBR.has(w1) || ABBR.has(w2+" "+w1) || /^[a-z]$/.test(w1)) continue;
       }
     }
-    pushSentence(start, end);
+    push(start, end);
     start = end;
   }
-  if(start < paragraphText.length) pushSentence(start, paragraphText.length);
+  if(start < p.length) push(start, p.length);
 }
 
-function parseSentences(fullText) {
-  const result = [];
-  let pos = 0;
-  fullText.split("\n").forEach(p => {
-    splitParagraph(p, pos, result);
-    pos += p.length + 1;
-  });
-  return result;
+function splitSentences(text){
+  const out = []; let pos = 0;
+  text.split("\n").forEach(p => { splitPara(p, pos, out); pos += p.length + 1; });
+  return out;
 }
 
-function createNewFlag() {
-  return { status: "open", marks: {}, note: "" };
-}
+function newFlag(){ return {status:"open", marks:{}, note:""}; }
 
-/* Requirement 2: Ensure all sentences are selected/flagged by default */
-function autoFlagAllSentences(forceReset = false) {
-  const sentences = parseSentences(AppState.text);
-  let newlyFlagged = 0;
-  sentences.forEach(s => {
-    if(!AppState.flags[s.text] || forceReset) {
-      AppState.flags[s.text] = AppState.flags[s.text] || createNewFlag();
-      newlyFlagged++;
+/* Auto-flag sentences that do not exist yet */
+function autoFlagSentences(){
+  const sents = splitSentences(S.text);
+  let newlyAdded = 0;
+  sents.forEach(s => {
+    if(!S.flags[s.text]){
+      S.flags[s.text] = newFlag();
+      newlyAdded++;
     }
   });
-
-  // If active selection is invalid, pick the first sentence
-  const flaggedKeys = getOrderedFlaggedKeys();
-  if(flaggedKeys.length > 0 && (!AppState.selected || !AppState.flags[AppState.selected])) {
-    AppState.selected = flaggedKeys[0];
+  if(newlyAdded > 0 && !S.sel && sents.length > 0){
+    S.sel = sents[0].text;
   }
-  return newlyFlagged;
 }
 
-function getOrderedFlaggedKeys() {
+/* ---------------- Render Functions ---------------- */
+function queueKeys(){
   const seen = new Set(), keys = [];
-  parseSentences(AppState.text).forEach(s => {
-    if(AppState.flags[s.text] && !seen.has(s.text)) {
-      seen.add(s.text);
-      keys.push(s.text);
+  splitSentences(S.text).forEach(s => {
+    if(S.flags[s.text] && !seen.has(s.text)){ 
+      seen.add(s.text); 
+      keys.push(s.text); 
     }
   });
   return keys;
 }
 
-/* UI Rendering Core */
-function renderStats() {
-  const sentences = parseSentences(AppState.text);
-  const totalWords = countWords(AppState.text);
-  const keys = getOrderedFlaggedKeys();
-  const openCount = keys.filter(k => AppState.flags[k].status !== "done").length;
-  const resolvedCount = keys.length - openCount;
+function fixCount(f){ return Object.values(f.marks).filter(v => v==="fix").length; }
+function okCount(f){ return Object.values(f.marks).filter(v => v==="ok").length; }
 
-  $("#statsBar").innerHTML = `
-    <span><b>${totalWords}</b> words</span> • 
-    <span><b>${sentences.length}</b> sentences</span> • 
-    <span class="text-amber-600 dark:text-amber-400 font-medium"><b>${openCount}</b> open</span> • 
-    <span class="text-emerald-600 dark:text-emerald-400 font-medium"><b>${resolvedCount}</b> resolved</span>
+function renderStats(){
+  const sents = splitSentences(S.text);
+  const keys = queueKeys();
+  const open = keys.filter(k => S.flags[k].status !== "done").length;
+  $("#stats").innerHTML = `
+    <span><b>${words(S.text)}</b> words &nbsp;·&nbsp; <b>${sents.length}</b> sentences</span>
+    <span><b>${open}</b> open &nbsp;·&nbsp; <b>${keys.length - open}</b> resolved</span>
   `;
 }
 
-function renderReviewCanvas() {
-  const sentences = parseSentences(AppState.text);
-  let html = "", currentIdx = 0;
-
-  sentences.forEach((s, i) => {
-    html += esc(AppState.text.slice(currentIdx, s.start));
-    const flag = AppState.flags[s.text];
-    const isLong = countWords(s.text) >= LONG_WORD_COUNT;
-    
-    let classes = ["s-node"];
-    if(isLong) classes.push("long-sent");
-    if(flag) {
-      classes.push(flag.status === "done" ? "done" : "flagged");
-    }
-    if(AppState.selected === s.text) classes.push("selected");
-
-    html += `<span class="${classes.join(" ")}" data-idx="${i}" title="${isLong ? 'Long sentence ('+countWords(s.text)+' words)' : ''}">${esc(s.text)}</span>`;
-    currentIdx = s.end;
+function renderReview(){
+  const sents = splitSentences(S.text);
+  let html = "", cur = 0;
+  sents.forEach((s,i) => {
+    html += esc(S.text.slice(cur, s.start));
+    const f = S.flags[s.text];
+    const cls = ["s-mark"];
+    if(words(s.text) >= LONG_WORDS) cls.push("long-sentence");
+    if(f) cls.push(f.status === "done" ? "is-resolved" : "is-flagged");
+    if(S.sel === s.text) cls.push("is-selected");
+    html += `<span class="${cls.join(" ")}" data-i="${i}">${esc(s.text)}</span>`;
+    cur = s.end;
   });
-
-  html += esc(AppState.text.slice(currentIdx));
-  $("#reviewCanvas").innerHTML = html || `<div class="text-zinc-400 text-sm italic">No text provided. Enter your essay in "Write &amp; Edit" mode.</div>`;
+  html += esc(S.text.slice(cur));
+  $("#review").innerHTML = html || '<span class="text-slate-400">Nothing to review yet. Write or paste text in Write mode.</span>';
 }
 
-function renderQueue() {
-  const keys = getOrderedFlaggedKeys().filter(k => AppState.showResolved || AppState.flags[k].status !== "done");
-  const container = $("#queueList");
-  $("#queueBadge").textContent = keys.length;
+function renderHint(){
+  $("#hint").innerHTML = S.mode === "write"
+    ? `<span>✏️ <b>Write mode:</b> Type/paste text. All sentences auto-flag so you can review them immediately.</span>`
+    : `<span>🔍 <b>Review mode:</b> Dotted underline = long (${LONG_WORDS}+ words). Gold = open, Green = resolved. Click any sentence to focus on it.</span>`;
+}
 
-  if(!keys.length) {
-    container.innerHTML = `<div class="p-4 text-center text-xs text-zinc-400">No sentences flagged. Click "Flag All" or switch to Review mode to select sentences.</div>`;
+function renderQueue(){
+  const keys = queueKeys().filter(k => S.showDone || S.flags[k].status !== "done");
+  $("#qCount").textContent = keys.length;
+  
+  if(!keys.length){
+    $("#qlist").innerHTML = `<div class="p-4 text-center text-xs text-slate-400">No flagged sentences match filter.</div>`;
     return;
   }
 
-  container.innerHTML = keys.map(k => {
-    const f = AppState.flags[k];
-    const isSelected = AppState.selected === k;
+  $("#qlist").innerHTML = keys.map(k => {
+    const f = S.flags[k];
+    const isSelected = S.sel === k;
     const isDone = f.status === "done";
-    const fixesCount = Object.values(f.marks).filter(v => v === "fix").length;
-    const okCount = Object.values(f.marks).filter(v => v === "ok").length;
+    const okC = okCount(f);
+    const fixC = fixCount(f);
 
     return `
-      <button class="queue-item w-full text-left p-2.5 rounded-lg border text-xs transition-all ${
+      <button class="q-item w-full text-left p-2.5 rounded-lg border text-xs transition-all ${
         isSelected 
-          ? 'bg-brand-50 border-brand-300 dark:bg-brand-950/60 dark:border-brand-700 ring-1 ring-brand-400' 
-          : 'bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700/70 hover:border-zinc-300 dark:hover:border-zinc-600'
-      } ${isDone ? 'opacity-60' : ''}" data-key="${esc(k)}">
-        <div class="font-serif text-zinc-800 dark:text-zinc-200 line-clamp-2 leading-snug mb-1.5">${esc(k)}</div>
-        <div class="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400 font-sans">
-          <span class="inline-flex items-center gap-1 font-medium ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
-            ${isDone ? '✓ Resolved' : '● Open'}
+          ? "border-brand-500 bg-brand-50/80 dark:bg-brand-950/50 shadow-sm" 
+          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900"
+      } ${isDone ? "opacity-60" : ""}" data-k="${esc(k)}">
+        <p class="line-clamp-2 font-serif text-slate-700 dark:text-slate-200 leading-snug">${esc(k)}</p>
+        <div class="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+          <span class="font-medium ${isDone ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}">
+            ${isDone ? "✓ Resolved" : "• Open"}
           </span>
-          <div class="flex items-center gap-1">
-            ${fixesCount > 0 ? `<span class="px-1 bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded">${fixesCount} ✗</span>` : ''}
-            <span class="px-1 bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 rounded">${okCount} ✓</span>
+          <div class="flex gap-1.5">
+            ${okC > 0 ? `<span class="text-emerald-600 dark:text-emerald-400 font-semibold">${okC}✓</span>` : ''}
+            ${fixC > 0 ? `<span class="text-rose-600 dark:text-rose-400 font-semibold">${fixC}✗</span>` : ''}
           </div>
         </div>
       </button>
@@ -560,520 +408,364 @@ function renderQueue() {
   }).join("");
 }
 
-function renderWorkbench() {
-  const box = $("#workbenchContent");
-  const activeKey = AppState.selected;
-  const flag = activeKey && AppState.flags[activeKey];
+function renderBench(){
+  const box = $("#benchscroll");
+  const f = S.sel && S.flags[S.sel];
 
-  if(!activeKey || !flag) {
+  if(!f){
     box.innerHTML = `
-      <div class="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-400 space-y-3">
-        <svg class="w-12 h-12 stroke-current opacity-40" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        <p class="text-sm font-medium text-zinc-600 dark:text-zinc-300">No sentence selected</p>
-        <p class="text-xs max-w-xs">Select a flagged sentence from the queue or click any sentence in "Review &amp; Flag" mode to inspect it.</p>
-      </div>
-    `;
+      <div class="text-center py-16 px-4 text-slate-400 dark:text-slate-500">
+        <span class="text-3xl block mb-2">🔍</span>
+        <p class="text-sm">Select a sentence from the queue or click any sentence in "Review" mode to evaluate it.</p>
+      </div>`;
     return;
   }
 
   box.innerHTML = `
-    <!-- Working draft sentence -->
-    <div class="space-y-2">
-      <div class="flex items-center justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+    <!-- Sentence Draft Area -->
+    <div class="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+      <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
         <span>Working Copy</span>
-        <span class="text-zinc-400 font-mono font-normal">${countWords(activeKey)} words</span>
+        <span id="dwcVal">${words(S.sel)} words</span>
       </div>
-      <textarea id="draftInput" spellcheck="true" class="w-full p-3 font-serif text-base border border-zinc-300 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:bg-white dark:focus:bg-zinc-900 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition">${esc(activeKey)}</textarea>
+      <textarea id="draft" spellcheck="true" class="serif-prose w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-100 text-base leading-relaxed focus:ring-2 focus:ring-brand-500 focus:outline-none resize-y min-h-[90px]"></textarea>
       
-      <!-- Action Toolbar -->
       <div class="flex flex-wrap items-center gap-2 pt-1">
-        <button id="btnApplyEdit" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition">
-          Apply Edit to Essay
+        <button id="bApply" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold transition shadow-sm">
+          Apply Edit to Text
         </button>
-        <button id="btnToggleResolve" class="px-3 py-1.5 text-xs font-medium rounded-md border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition">
-          ${flag.status === "done" ? "Re-open Sentence" : "Mark Resolved ✓"}
+        <button id="bResolve" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+          f.status === "done" 
+            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300" 
+            : "bg-emerald-600 hover:bg-emerald-700 text-white"
+        }">
+          ${f.status === "done" ? "Re-open Sentence" : "✓ Mark Resolved"}
         </button>
-        <button id="btnUnflagSingle" class="px-3 py-1.5 text-xs font-medium rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition">
+        <button id="bUnflag" class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium transition text-slate-600 dark:text-slate-400">
           Unflag
         </button>
+        <div class="flex-1"></div>
+        <div class="flex items-center gap-1">
+          <button id="bPrev" class="px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium">← Prev</button>
+          <button id="bNext" class="px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium">Next →</button>
+        </div>
       </div>
     </div>
 
-    <!-- 8 Criteria Accordions -->
-    <div class="space-y-3 pt-2">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Diagnostic Criteria Suite</h3>
-        <span class="text-[11px] text-zinc-400">≥ 4 checks auto-marks criterion</span>
+    <!-- Checklist Accordions -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between px-1">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Criteria Checklists</h3>
+        <span class="text-[11px] text-slate-400">Auto-marks criterion as passed when 4+ subcriteria are checked (✓)</span>
       </div>
-      <div id="criteriaSuite" class="space-y-2.5"></div>
+      <div id="checklist" class="space-y-2.5"></div>
     </div>
 
-    <!-- Sentence Notes -->
-    <div class="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-      <label for="sentenceNote" class="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">Notes &amp; Supervisor Query</label>
-      <textarea id="sentenceNote" placeholder="Record ideas, doubts, or queries for your advisor regarding this sentence..." class="w-full p-2.5 text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-brand-500 outline-none h-20 resize-y">${esc(flag.note || '')}</textarea>
+    <!-- Notes Section -->
+    <div class="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+      <label for="note" class="block text-xs font-semibold text-slate-500">Sentence Notes & Supervisor Queries</label>
+      <textarea id="note" placeholder="What needs doing? What would you ask your supervisor?" class="w-full p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs md:text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:outline-none min-h-[70px] resize-y"></textarea>
     </div>
   `;
 
-  renderCriteriaList();
+  $("#draft").value = S.sel;
+  $("#note").value = f.note || "";
+  renderChecklist();
 }
 
-function renderCriteriaList() {
-  const flag = AppState.selected && AppState.flags[AppState.selected];
-  if(!flag) return;
+function renderChecklist(){
+  const f = S.sel && S.flags[S.sel]; 
+  if(!f) return;
 
-  const container = $("#criteriaSuite");
-  if(!container) return;
-
-  container.innerHTML = CRITERIA.map(cat => {
-    const totalItems = cat.items.length;
-    const okCount = cat.items.filter(([id]) => flag.marks[id] === "ok").length;
-    const fixCount = cat.items.filter(([id]) => flag.marks[id] === "fix").length;
-    const isOpen = AppState.openCategories.has(cat.n);
-    
-    // Requirement 3: Auto-check rule: ≥ 4 subcriteria marked 'ok' automatically passes criterion
-    const isAutoPassed = okCount >= AUTO_PASS_THRESHOLD;
+  $("#checklist").innerHTML = CRITERIA.map(c => {
+    const okList = c.items.filter(i => f.marks[i[0]] === "ok");
+    const fixList = c.items.filter(i => f.marks[i[0]] === "fix");
+    const okCountNum = okList.length;
+    const fixCountNum = fixList.length;
+    const isAutoPassed = okCountNum >= 4;
 
     return `
-      <details class="group rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-800/60 overflow-hidden shadow-sm transition" data-cat="${cat.n}" ${isOpen ? 'open' : ''}>
-        
-        <!-- Accordion Summary Bar -->
-        <summary class="flex items-center justify-between p-3 cursor-pointer select-none bg-zinc-50/80 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-750 transition border-b border-transparent group-open:border-zinc-200 dark:group-open:border-zinc-700">
+      <details data-cat="${c.n}" class="group border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden transition-all" ${S.openCats.has(c.n) ? "open" : ""}>
+        <summary class="flex items-center justify-between p-3.5 cursor-pointer select-none bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/50 dark:hover:bg-slate-800/60 transition">
           <div class="flex items-center gap-2.5 min-w-0 pr-2">
-            <span class="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-[11px] font-bold flex items-center justify-center shrink-0">
-              ${cat.n}
-            </span>
-            <span class="font-medium text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate">${cat.title}</span>
-            
-            ${isAutoPassed ? `
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-                ✓ Criterion Met
-              </span>
-            ` : ''}
+            <span class="text-xs font-bold text-slate-400">${c.n}.</span>
+            <span class="text-xs md:text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">${c.title}</span>
+            ${isAutoPassed ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">✓ Criterion Met</span>` : ''}
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
-            <!-- Progress Pill -->
-            <div class="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
-              <span class="text-emerald-600 dark:text-emerald-400 font-semibold">${okCount}</span>/<span class="text-red-500">${fixCount}</span> of ${totalItems}
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="text-[11px] text-slate-500 flex items-center gap-2">
+              <span class="${okCountNum > 0 ? "text-emerald-600 font-bold" : ""}">${okCountNum} ✓</span>
+              <span class="${fixCountNum > 0 ? "text-rose-600 font-bold" : ""}">${fixCountNum} ✗</span>
+              <span class="text-slate-400">/ ${c.items.length}</span>
             </div>
-
-            <!-- Requirement 3: Criterion Level Batch Controls -->
-            <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-              <button title="Mark all subcriteria in this category as met" class="btn-batch-cat px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 dark:bg-emerald-950 dark:hover:bg-emerald-900 dark:text-emerald-300 dark:border-emerald-800" data-cat="${cat.n}" data-action="ok">
+            
+            <!-- Category Batch Actions -->
+            <div class="flex items-center gap-1" onclick="e => e.stopPropagation()">
+              <button data-cat-action="markAll" data-cat-id="${c.n}" class="px-2 py-1 text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded hover:bg-emerald-100 transition">
                 Mark All ✓
               </button>
-              <button title="Clear all marks for this criterion" class="btn-batch-cat px-1.5 py-0.5 text-[10px] font-medium rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300" data-cat="${cat.n}" data-action="clear">
+              <button data-cat-action="clear" data-cat-id="${c.n}" class="px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 rounded hover:bg-slate-200 transition">
                 Clear
               </button>
             </div>
           </div>
         </summary>
 
-        <!-- Progress Bar Indicator -->
-        <div class="w-full bg-zinc-100 dark:bg-zinc-700 h-1">
-          <div class="bg-emerald-500 h-1 transition-all duration-300" style="width: ${Math.min(100, Math.round((okCount/totalItems)*100))}%"></div>
-        </div>
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800/60 space-y-3">
+          <p class="text-xs italic text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+            ${c.q}
+          </p>
 
-        <!-- Question Prompt -->
-        <div class="p-3 bg-zinc-50/40 dark:bg-zinc-900/40 border-b border-zinc-100 dark:border-zinc-800/60 text-xs italic text-zinc-600 dark:text-zinc-400">
-          "${cat.q}"
-        </div>
-
-        <!-- Subcriteria Items List -->
-        <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
-          ${cat.items.map(([id, label]) => {
-            const val = flag.marks[id];
-            return `
-              <div class="p-2.5 sm:px-3 flex items-start justify-between gap-3 text-xs hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition">
-                <div class="flex items-start gap-2 pt-0.5 min-w-0">
-                  <span class="font-mono text-[10px] font-semibold text-zinc-400 shrink-0 w-7">${id}</span>
-                  <span class="text-zinc-700 dark:text-zinc-300 leading-snug">${esc(label)}</span>
+          <div class="space-y-2">
+            ${c.items.map(([id, t]) => {
+              const val = f.marks[id];
+              return `
+                <div class="flex items-start justify-between gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                  <div class="flex items-start gap-2.5 min-w-0">
+                    <span class="text-[10px] font-mono font-bold text-slate-400 pt-0.5">${id}</span>
+                    <span class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">${esc(t)}</span>
+                  </div>
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button class="m-btn border text-xs px-2.5 py-1 rounded-md font-bold transition ${                       val === "ok"                          ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"                          : "border-slate-200 dark:border-slate-700 hover:border-emerald-400 text-slate-500 hover:text-emerald-600"                     }" data-id="${id}" data-v="ok" title="Meets this">✓</button>
+                    <button class="m-btn border text-xs px-2.5 py-1 rounded-md font-bold transition ${                       val === "fix"                          ? "bg-rose-600 border-rose-600 text-white shadow-sm"                          : "border-slate-200 dark:border-slate-700 hover:border-rose-400 text-slate-500 hover:text-rose-600"                     }" data-id="${id}" data-v="fix" title="Needs work">✗</button>
+                  </div>
                 </div>
-
-                <div class="flex items-center gap-1 shrink-0">
-                  <button class="btn-mark-item w-7 h-6 rounded text-xs font-bold transition ${
-                    val === 'ok' 
-                      ? 'bg-emerald-600 text-white shadow-sm' 
-                      : 'bg-zinc-100 hover:bg-emerald-100 text-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300'
-                  }" data-id="${id}" data-val="ok" title="Pass / Meets criterion">✓</button>
-
-                  <button class="btn-mark-item w-7 h-6 rounded text-xs font-bold transition ${
-                    val === 'fix' 
-                      ? 'bg-red-600 text-white shadow-sm' 
-                      : 'bg-zinc-100 hover:bg-red-100 text-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300'
-                  }" data-id="${id}" data-val="fix" title="Needs work / Attention required">✗</button>
-                </div>
-              </div>
-            `;
-          }).join('')}
+              `;
+            }).join("")}
+          </div>
         </div>
-
       </details>
     `;
-  }).join('');
+  }).join("");
 }
 
-function refreshAll() {
-  renderStats();
-  renderQueue();
-  if(AppState.mode === "review") renderReviewCanvas();
-  renderWorkbench();
+function refresh(){ renderStats(); renderQueue(); if(S.mode === "review") renderReview(); }
+function renderAll(){ autoFlagSentences(); renderHint(); refresh(); renderBench(); }
+
+/* ---------------- Actions ---------------- */
+function select(key, scroll){
+  S.sel = key; renderBench(); refresh();
+  if(scroll && S.mode === "review"){
+    const el = document.querySelector("#review .s-mark.is-selected"); 
+    if(el) el.scrollIntoView({block:"center", behavior:"smooth"});
+  }
 }
 
-/* User Actions & Logic handlers */
-function setMode(mode) {
-  AppState.mode = mode;
-  const isWrite = mode === "write";
-
-  $("#btnModeWrite").className = isWrite
-    ? "px-3 py-1 text-xs font-semibold rounded-md transition-all shadow-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white"
-    : "px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-md transition-all";
-
-  $("#btnModeReview").className = !isWrite
-    ? "px-3 py-1 text-xs font-semibold rounded-md transition-all shadow-sm bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white"
-    : "px-3 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-md transition-all";
-
-  if(isWrite) {
-    $("#textEditor").classList.remove("hidden");
-    $("#reviewCanvas").classList.add("hidden");
-    $("#hintText").textContent = "Type or paste your essay below. Every sentence is automatically flagged for systematic analysis.";
-    $("#textEditor").value = AppState.text;
+function setMode(m){
+  S.mode = m;
+  document.body.classList.toggle("mode-review", m==="review");
+  
+  if(m === "write"){
+    $("#editor").classList.remove("hidden");
+    $("#review").classList.add("hidden");
+    $("#bWrite").className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm";
+    $("#bReview").className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all";
+    $("#editor").value = S.text;
   } else {
-    $("#textEditor").classList.add("hidden");
-    $("#reviewCanvas").classList.remove("hidden");
-    $("#hintText").textContent = "Click any sentence to select and flag it. Dotted underline indicates long sentences (35+ words).";
-    renderReviewCanvas();
+    $("#editor").classList.add("hidden");
+    $("#review").classList.remove("hidden");
+    $("#bReview").className = "px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm";
+    $("#bWrite").className = "px-3 py-1.5 text-xs font-semibold rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all";
   }
+  renderHint(); refresh();
 }
 
-function applyEditToText() {
-  const draft = $("#draftInput").value.trim();
-  const sentences = parseSentences(AppState.text);
-  const idx = sentences.findIndex(s => s.text === AppState.selected);
-
-  if(idx < 0) {
-    showToast("Selected sentence not found in main text.");
-    return;
-  }
-
-  if(draft === AppState.selected) {
-    showToast("No changes detected.");
-    return;
-  }
-
-  const origSentence = sentences[idx];
-  const oldFlagData = AppState.flags[AppState.selected];
-
-  // Substitute sentence in primary text
-  AppState.text = AppState.text.slice(0, origSentence.start) + draft + AppState.text.slice(origSentence.end);
-  delete AppState.flags[AppState.selected];
-
-  if(draft) {
-    const newParsed = parseSentences(draft);
-    newParsed.forEach(s => {
-      AppState.flags[s.text] = (newParsed.length === 1 && oldFlagData) ? { ...oldFlagData, marks: { ...oldFlagData.marks } } : createNewFlag();
-    });
-    AppState.selected = newParsed[0] ? newParsed[0].text : null;
-  } else {
-    AppState.selected = null;
-  }
-
-  saveToStorage();
-  $("#textEditor").value = AppState.text;
-  refreshAll();
-  showToast("Edit applied successfully to essay text.");
+function applyEdit(){
+  const sents = splitSentences(S.text);
+  const idx = sents.findIndex(s => s.text === S.sel);
+  if(idx < 0){ toast("That sentence is no longer in the text."); return; }
+  const nt = $("#draft").value.trim();
+  if(nt === S.sel){ toast("No changes to apply."); return; }
+  const s = sents[idx], old = S.flags[S.sel];
+  S.text = S.text.slice(0, s.start) + nt + S.text.slice(s.end);
+  delete S.flags[S.sel];
+  if(nt){
+    const ns = splitSentences(nt);
+    ns.forEach(x => { S.flags[x.text] = (ns.length===1 && old) ? {...old, marks:{...old.marks}} : newFlag(); });
+    S.sel = ns[0] ? ns[0].text : null;
+  } else S.sel = null;
+  $("#editor").value = S.text;
+  save(); autoFlagSentences(); renderBench(); refresh(); toast("Edit applied to document.");
 }
 
-function stepQueue(direction) {
-  const keys = getOrderedFlaggedKeys().filter(k => AppState.showResolved || AppState.flags[k].status !== "done");
+function step(dir){
+  const keys = queueKeys().filter(k => S.showDone || S.flags[k].status !== "done");
   if(!keys.length) return;
-  let idx = keys.indexOf(AppState.selected);
-  idx = idx < 0 ? 0 : (idx + direction + keys.length) % keys.length;
-  AppState.selected = keys[idx];
-  refreshAll();
+  let i = keys.indexOf(S.sel);
+  i = i < 0 ? 0 : (i + dir + keys.length) % keys.length;
+  select(keys[i], true);
 }
 
-function exportMarkdownReport() {
-  const lines = ["# Sentence Workbench - Essay Quality Report", "", `_Generated on ${new Date().toLocaleDateString()}_`, ""];
-  const allSubcriteria = {};
-  CRITERIA.forEach(c => c.items.forEach(([id, t]) => allSubcriteria[id] = t));
+function nextOpen(){
+  const keys = queueKeys().filter(k => S.flags[k].status !== "done");
+  if(!keys.length){ S.sel = null; renderBench(); refresh(); toast("All flagged sentences resolved!"); return; }
+  select(keys[0], true);
+}
 
-  const keys = getOrderedFlaggedKeys();
-  if(!keys.length) {
-    lines.push("_No sentences currently flagged._");
-  } else {
-    keys.forEach((k, idx) => {
-      const f = AppState.flags[k];
-      lines.push(`## ${idx + 1}. [${f.status === "done" ? "RESOLVED" : "OPEN"}]`);
-      lines.push(`> ${k}`, "");
-
-      const fixes = Object.entries(f.marks).filter(([, v]) => v === "fix").map(([id]) => id);
-      const passed = Object.entries(f.marks).filter(([, v]) => v === "ok").map(([id]) => id);
-
-      if(fixes.length) {
-        lines.push("**Needs Attention:**");
-        fixes.forEach(id => lines.push(`- **${id}**: ${allSubcriteria[id]}`));
-        lines.push("");
-      }
-
-      if(passed.length) {
-        lines.push(`**Passed (${passed.length} criteria met)**`);
-        lines.push("");
-      }
-
-      if(f.note) {
-        lines.push(`**Notes:** ${f.note}`, "");
-      }
-      lines.push("---", "");
-    });
-  }
-
-  const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
-  const url = URL.createObjectURL(blob);
+function download(name, content, type){
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "Sentence-Workbench-Report.md";
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast("Report exported as Markdown file.");
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 500);
 }
 
-/* Attach Event Listeners */
-document.addEventListener("DOMContentLoaded", () => {
-  loadFromStorage();
-
-  // Mode switching
-  $("#btnModeWrite").addEventListener("click", () => setMode("write"));
-  $("#btnModeReview").addEventListener("click", () => setMode("review"));
-
-  // Text editor input handler
-  $("#textEditor").addEventListener("input", (e) => {
-    AppState.text = e.target.value;
-    autoFlagAllSentences(false);
-    saveToStorage();
-    renderStats();
-    renderQueue();
+function buildReport(){
+  const lines = ["# Sentence Review & Criteria Report", ""];
+  const all = {}; CRITERIA.forEach(c => c.items.forEach(([id,t]) => all[id] = t));
+  const keys = queueKeys();
+  if(!keys.length) return lines.concat("_No flagged sentences present._").join("\n");
+  
+  keys.forEach((k,i) => {
+    const f = S.flags[k];
+    lines.push(`## ${i+1}. ${f.status==="done" ? "[Resolved]" : "[Open]"}`, "", `> ${k}`, "");
+    const passes = Object.entries(f.marks).filter(([,v]) => v==="ok").map(([id]) => id);
+    const fixes = Object.entries(f.marks).filter(([,v]) => v==="fix").map(([id]) => id);
+    
+    if(passes.length){ lines.push("**Criteria Passed:** " + passes.join(", ")); }
+    if(fixes.length){ lines.push("**Needs Work:**"); fixes.forEach(id => lines.push(`- ${id}: ${all[id]}`)); }
+    if(f.note) lines.push("", "**Notes:** " + f.note);
+    lines.push("");
   });
+  return lines.join("\n");
+}
 
-  // Toggle Focus Mode
-  $("#btnFocusMode").addEventListener("click", () => {
-    $("#leftPanel").classList.toggle("hidden");
-    $("#btnFocusMode").classList.toggle("bg-brand-50");
-  });
+/* ---------------- Event Listeners ---------------- */
+$("#editor").addEventListener("input", e => { 
+  S.text = e.target.value; 
+  autoFlagSentences();
+  save(); 
+  renderStats(); 
+  renderQueue(); 
+});
 
-  // Flag all / Unflag all controls
-  $("#btnFlagAll").addEventListener("click", () => {
-    const count = autoFlagAllSentences(true);
-    saveToStorage();
-    refreshAll();
-    showToast(`Flagged all sentences in essay.`);
-  });
+$("#bWrite").onclick = () => setMode("write");
+$("#bReview").onclick = () => setMode("review");
 
-  $("#btnUnflagAll").addEventListener("click", () => {
-    AppState.flags = {};
-    AppState.selected = null;
-    saveToStorage();
-    refreshAll();
-    showToast("Cleared all sentence flags.");
-  });
+$("#bFocus").onclick = () => { 
+  $("#left").classList.toggle("hidden"); 
+  $("#bFocus").classList.toggle("bg-brand-50");
+  $("#bFocus").classList.toggle("text-brand-600");
+};
 
-  // Queue filter
-  $("#chkShowResolved").addEventListener("change", (e) => {
-    AppState.showResolved = e.target.checked;
-    renderQueue();
-  });
+$("#bFlagAll").onclick = () => {
+  const sents = splitSentences(S.text);
+  sents.forEach(s => { if(!S.flags[s.text]) S.flags[s.text] = newFlag(); });
+  save(); refresh(); toast("All sentences flagged.");
+};
 
-  // Review mode canvas sentence click
-  $("#reviewCanvas").addEventListener("click", (e) => {
-    const node = e.target.closest(".s-node");
-    if(!node) return;
-    const idx = parseInt(node.dataset.idx, 10);
-    const parsed = parseSentences(AppState.text);
-    const sentence = parsed[idx];
-    if(!sentence) return;
+$("#bUnflagAll").onclick = () => {
+  if(!confirm("Clear all sentence flags and checklists?")) return;
+  S.flags = {}; S.sel = null; save(); renderBench(); refresh(); toast("All flags cleared.");
+};
 
-    if(!AppState.flags[sentence.text]) {
-      AppState.flags[sentence.text] = createNewFlag();
-    }
-    AppState.selected = sentence.text;
-    saveToStorage();
-    refreshAll();
-  });
+$("#showDone").onchange = e => { S.showDone = e.target.checked; renderQueue(); };
 
-  // Queue item click
-  $("#queueList").addEventListener("click", (e) => {
-    const item = e.target.closest(".queue-item");
-    if(item) {
-      AppState.selected = item.dataset.key;
-      refreshAll();
-    }
-  });
+$("#review").addEventListener("click", e => {
+  const el = e.target.closest(".s-mark"); if(!el) return;
+  const s = splitSentences(S.text)[+el.dataset.i]; if(!s) return;
+  if(!S.flags[s.text]) S.flags[s.text] = newFlag();
+  save(); select(s.text, false);
+});
 
-  // Workbench delegator
-  $("#workbenchContent").addEventListener("click", (e) => {
-    const flag = AppState.selected && AppState.flags[AppState.selected];
-    if(!flag) return;
+$("#qlist").addEventListener("click", e => {
+  const b = e.target.closest(".q-item"); if(b) select(b.dataset.k, true);
+});
 
-    // Apply edit
-    if(e.target.id === "btnApplyEdit") {
-      applyEditToText();
-      return;
-    }
+/* Workbench Click Handler (Subcriteria Marks + Category Batch Buttons) */
+$("#benchscroll").addEventListener("click", e => {
+  const f = S.sel && S.flags[S.sel]; if(!f) return;
 
-    // Toggle resolve status
-    if(e.target.id === "btnToggleResolve") {
-      flag.status = flag.status === "done" ? "open" : "done";
-      saveToStorage();
-      refreshAll();
-      showToast(flag.status === "done" ? "Sentence marked as resolved." : "Sentence re-opened.");
-      return;
-    }
-
-    // Unflag single sentence
-    if(e.target.id === "btnUnflagSingle") {
-      delete AppState.flags[AppState.selected];
-      AppState.selected = getOrderedFlaggedKeys()[0] || null;
-      saveToStorage();
-      refreshAll();
-      showToast("Unflagged sentence.");
-      return;
-    }
-
-    // Subcriteria button click (✓ or ✗)
-    const btnMark = e.target.closest(".btn-mark-item");
-    if(btnMark) {
-      const id = btnMark.dataset.id;
-      const val = btnMark.dataset.val;
-      if(flag.marks[id] === val) {
-        delete flag.marks[id];
-      } else {
-        flag.marks[id] = val;
-      }
-      saveToStorage();
+  // 1. Batch category actions ("Mark All ✓" / "Clear")
+  const catBtn = e.target.closest("[data-cat-action]");
+  if(catBtn){
+    e.stopPropagation();
+    e.preventDefault();
+    const action = catBtn.dataset.catAction;
+    const catId = catBtn.dataset.catId;
+    const criterion = CRITERIA.find(c => c.n === catId);
+    
+    if(criterion){
+      criterion.items.forEach(([id]) => {
+        if(action === "markAll"){
+          f.marks[id] = "ok";
+        } else if(action === "clear"){
+          delete f.marks[id];
+        }
+      });
+      save();
+      renderChecklist();
       renderQueue();
-      renderWorkbench();
-      return;
+      toast(action === "markAll" ? `Marked all items in #${catId} ✓` : `Cleared items in #${catId}`);
     }
-
-    // Criterion Batch action button ("Mark All ✓" or "Clear")
-    const btnBatch = e.target.closest(".btn-batch-cat");
-    if(btnBatch) {
-      const catNum = btnBatch.dataset.cat;
-      const action = btnBatch.dataset.action;
-      const category = CRITERIA.find(c => c.n === catNum);
-      if(category) {
-        category.items.forEach(([id]) => {
-          if(action === "ok") {
-            flag.marks[id] = "ok";
-          } else if(action === "clear") {
-            delete flag.marks[id];
-          }
-        });
-        saveToStorage();
-        renderQueue();
-        renderWorkbench();
-      }
-      return;
-    }
-  });
-
-  // Notes & Draft input change listeners
-  $("#workbenchContent").addEventListener("input", (e) => {
-    const flag = AppState.selected && AppState.flags[AppState.selected];
-    if(!flag) return;
-
-    if(e.target.id === "sentenceNote") {
-      flag.note = e.target.value;
-      saveToStorage();
-    }
-  });
-
-  // Accordion state tracker
-  $("#workbenchContent").addEventListener("toggle", (e) => {
-    const details = e.target.closest("details");
-    if(!details || !details.dataset.cat) return;
-    if(details.open) {
-      AppState.openCategories.add(details.dataset.cat);
-    } else {
-      AppState.openCategories.delete(details.dataset.cat);
-    }
-  }, true);
-
-  // Queue navigation
-  $("#btnPrev").addEventListener("click", () => stepQueue(-1));
-  $("#btnNext").addEventListener("click", () => stepQueue(1));
-
-  // Toolbar Actions
-  $("#btnSample").addEventListener("click", () => {
-    AppState.text = "It is important to note that the concept of memory has been widely discussed in the literature. Halbwachs (1992) argued that memory is socially framed, although later scholars have questioned how far this claim can be pushed. In this sense, it could be said that remembering is, to a certain extent, a fundamentally collective practice. This chapter argues that commemorative rituals do not simply preserve the past but actively reshape it for present needs.\n\nThe archive, therefore, plays a pivotal role in the broader landscape of knowledge production.";
-    AppState.flags = {};
-    autoFlagAllSentences(true);
-    saveToStorage();
-    $("#textEditor").value = AppState.text;
-    refreshAll();
-    showToast("Sample essay loaded with all sentences flagged.");
-  });
-
-  $("#btnExportMd").addEventListener("click", exportMarkdownReport);
-
-  $("#btnSaveSession").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify({ text: AppState.text, flags: AppState.flags }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "sentence-workbench-session.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("Session saved to file.");
-  });
-
-  $("#btnLoadSession").addEventListener("click", () => $("#fileInput").click());
-
-  $("#fileInput").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = JSON.parse(evt.target.result);
-        AppState.text = data.text || "";
-        AppState.flags = data.flags || {};
-        autoFlagAllSentences(false);
-        saveToStorage();
-        $("#textEditor").value = AppState.text;
-        refreshAll();
-        showToast("Session loaded successfully.");
-      } catch(err) {
-        showToast("Error loading JSON session file.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  });
-
-  $("#btnClear").addEventListener("click", () => {
-    if(confirm("Are you sure you want to clear all essay text and sentence flags?")) {
-      AppState.text = "";
-      AppState.flags = {};
-      AppState.selected = null;
-      saveToStorage();
-      $("#textEditor").value = "";
-      refreshAll();
-      showToast("Cleared all text and session data.");
-    }
-  });
-
-  // Initial Load setup
-  if(!AppState.text) {
-    // Load default sample if first launch
-    AppState.text = "It is important to note that the concept of memory has been widely discussed in the literature. Halbwachs (1992) argued that memory is socially framed, although later scholars have questioned how far this claim can be pushed. In this sense, it could be said that remembering is, to a certain extent, a fundamentally collective practice. This chapter argues that commemorative rituals do not simply preserve the past but actively reshape it for present needs.\n\nThe archive, therefore, plays a pivotal role in the broader landscape of knowledge production.";
+    return;
   }
 
-  $("#textEditor").value = AppState.text;
-  autoFlagAllSentences(false);
-  refreshAll();
+  // 2. Individual subcriterion toggles (✓ / ✗)
+  const m = e.target.closest(".m-btn");
+  if(m){
+    const id = m.dataset.id, v = m.dataset.v;
+    if(f.marks[id] === v) delete f.marks[id]; else f.marks[id] = v;
+    save(); renderChecklist(); renderQueue(); return;
+  }
+
+  // 3. Sentence Workbench Control Actions
+  const id = e.target.id;
+  if(id === "bApply") applyEdit();
+  else if(id === "bResolve"){ 
+    f.status = f.status==="done" ? "open" : "done"; 
+    save(); 
+    if(f.status==="done") nextOpen(); else { renderBench(); refresh(); } 
+  }
+  else if(id === "bUnflag"){ delete S.flags[S.sel]; S.sel = null; save(); renderBench(); refresh(); }
+  else if(id === "bPrev") step(-1);
+  else if(id === "bNext") step(1);
 });
+
+$("#benchscroll").addEventListener("input", e => {
+  const f = S.sel && S.flags[S.sel]; if(!f) return;
+  if(e.target.id === "note"){ f.note = e.target.value; save(); }
+  if(e.target.id === "draft"){ 
+    const valEl = $("#dwcVal");
+    if(valEl) valEl.textContent = words(e.target.value) + " words"; 
+  }
+});
+
+$("#benchscroll").addEventListener("toggle", e => {
+  const d = e.target; if(!d.dataset || !d.dataset.cat) return;
+  d.open ? S.openCats.add(d.dataset.cat) : S.openCats.delete(d.dataset.cat);
+}, true);
+
+$("#bSample").onclick = () => {
+  if(S.text.trim() && !confirm("Replace current text with sample?")) return;
+  S.text = "It is important to note that the concept of memory has been widely discussed in the literature. Halbwachs (1992) argued that memory is socially framed, although later scholars have questioned how far this claim can be pushed. In this sense, it could be said that remembering is, to a certain extent, a fundamentally collective practice. This chapter argues that commemorative rituals do not simply preserve the past but actively reshape it for present needs.\n\nThe archive, therefore, plays a pivotal role in the broader landscape of knowledge production.";
+  S.flags = {}; S.sel = null; save(); $("#editor").value = S.text; renderAll();
+};
+
+$("#bExportMd").onclick = () => download("sentence-report.md", buildReport(), "text/markdown");
+$("#bSave").onclick = () => download("sentence-session.json", JSON.stringify({text:S.text, flags:S.flags}, null, 2), "application/json");
+$("#bLoad").onclick = () => $("#fileIn").click();
+
+$("#fileIn").onchange = e => {
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const d = JSON.parse(r.result);
+      S.text = d.text || ""; S.flags = d.flags || {}; S.sel = null;
+      save(); $("#editor").value = S.text; renderAll(); toast("Session loaded.");
+    }catch(err){ toast("Couldn't read that file."); }
+  };
+  r.readAsText(file); e.target.value = "";
+};
+
+$("#bClear").onclick = () => {   if(!confirm("Clear all text and checklist flags?")) return;   S.text = ""; S.flags = {}; S.sel = null; save(); $("#editor").value = ""; renderAll();
+};
+
+/* Init */
+load();
+$("#editor").value = S.text;
+renderAll();
 </script>
 </body>
 </html>
