@@ -112,10 +112,20 @@ const copyBtn = $('copy'), dlBtn = $('download');
 const out = $('output'), statusEl = $('status'), countEl = $('count');
 
 // Proxies tried in order until one works.
+// Each proxy has a name (shown in errors), a URL builder, and an optional parser
+// for proxies that wrap the page in JSON.
 const PROXIES = [
-  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
-  u => 'https://corsproxy.io/?' + encodeURIComponent(u),
-  u => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u)
+  { name: 'allorigins (json)',
+    url: u => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u),
+    parse: async res => (await res.json()).contents },
+  { name: 'allorigins (raw)',
+    url: u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u) },
+  { name: 'codetabs',
+    url: u => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u) },
+  { name: 'corsproxy.io',
+    url: u => 'https://corsproxy.io/?url=' + encodeURIComponent(u) },
+  { name: 'thingproxy',
+    url: u => 'https://thingproxy.freeboard.io/fetch/' + u }
 ];
 
 function setStatus(msg, isError = false) {
@@ -130,25 +140,30 @@ function normalizeUrl(raw) {
 }
 
 async function fetchHtml(url) {
-  let lastErr;
-  for (const make of PROXIES) {
+  const failures = [];
+  for (const p of PROXIES) {
+    setStatus('Fetching page via ' + p.name + '…');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000);
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 15000);
-      const res = await fetch(make(url), { signal: ctrl.signal });
-      clearTimeout(timer);
+      const res = await fetch(p.url(url), { signal: ctrl.signal });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const html = await res.text();
-      if (html && html.trim().length > 0) return html;
-      throw new Error('Empty response');
+      const html = p.parse ? await p.parse(res) : await res.text();
+      // Reject proxy error pages / non-HTML bodies
+      if (!html || !/<(html|body|h1|p|div)[\s>]/i.test(html)) throw new Error('no HTML returned');
+      return html;
     } catch (e) {
-      lastErr = e;
+      failures.push(p.name + ': ' + (e.name === 'AbortError' ? 'timed out' : e.message));
+    } finally {
+      clearTimeout(timer);
     }
   }
-  throw new Error('All proxies failed (' + (lastErr ? lastErr.message : 'unknown') + ')');
+  throw new Error('every proxy failed — ' + failures.join('; '));
 }
 
-const NOISE = 'script,style,noscript,template,iframe,svg,canvas,head,link,meta,nav,footer,form,button,select,option';
+// Only remove elements that never hold readable content. Wrappers such as
+// nav/form/footer are kept, because some sites wrap the whole article in them.
+const NOISE = 'script,style,noscript,template,iframe,svg,canvas,head,link,meta,select,option';
 
 function clean(s) {
   return s.replace(/\s+/g, ' ').trim();
@@ -156,7 +171,7 @@ function clean(s) {
 
 function extract(doc, mode) {
   const body = doc.body || doc.documentElement;
-  // Remove non-content elements (keep nav/footer/etc. out of "everything" for cleanliness)
+  // Remove elements that never contain readable page content
   body.querySelectorAll(NOISE).forEach(el => el.remove());
 
   if (mode === 'headings') {
