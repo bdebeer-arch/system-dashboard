@@ -60,6 +60,14 @@
   }
   .out-head span { font-size: .85rem; color: var(--muted); }
   .note { margin-top: 18px; font-size: .8rem; color: var(--muted); }
+  [hidden] { display: none !important; }
+  #paste {
+    min-height: 140px; max-height: 260px; overflow: auto; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    font-size: .85rem; word-break: break-word;
+  }
+  #paste:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  #paste:empty::before { content: attr(data-placeholder); color: var(--muted); }
 </style>
 </head>
 <body>
@@ -70,9 +78,16 @@
   <div class="card">
     <form id="form">
       <div class="row">
-        <div class="field grow">
+        <div class="field">
+          <label for="source">Input</label>
+          <select id="source">
+            <option value="url">Fetch from a URL</option>
+            <option value="paste">Paste the page</option>
+          </select>
+        </div>
+        <div class="field grow" id="urlField">
           <label for="url">Page URL</label>
-          <input id="url" type="text" placeholder="https://example.com/article" autocomplete="off" required>
+          <input id="url" type="text" placeholder="https://example.com/article" autocomplete="off">
         </div>
         <div class="field">
           <label for="mode">Extract</label>
@@ -82,6 +97,11 @@
             <option value="headings">Headings (H1–H6)</option>
           </select>
         </div>
+      </div>
+      <div class="field" id="pasteField" hidden style="margin-bottom:14px">
+        <label for="paste">Paste the page here</label>
+        <div id="paste" contenteditable="true" spellcheck="false"
+             data-placeholder="Open the page, press Ctrl+A then Ctrl+C (Cmd on Mac), click here and paste. You can also paste raw HTML source."></div>
       </div>
       <div class="actions">
         <button class="primary" id="go" type="submit">Scrape</button>
@@ -99,8 +119,10 @@
     <textarea id="output" readonly placeholder="Extracted text will appear here…"></textarea>
 
     <p class="note">
-      Browsers block pages from fetching other sites directly (CORS), so requests go through a public
-      CORS proxy. Pages that need JavaScript to render content, or that block proxies, may come back empty.
+      <strong>Fetch from a URL</strong> goes through public CORS proxies (browsers block direct fetching of other sites),
+      so some sites may refuse it. <strong>Paste the page</strong> always works: copy the whole page
+      (Ctrl+A, Ctrl+C), paste it into the box, and nothing leaves your browser. Rendered pages from
+      JavaScript-heavy sites work best this way.
     </p>
   </div>
 </div>
@@ -219,18 +241,66 @@ function extract(doc, mode) {
   return blocks.join('\n\n');
 }
 
+const sourceEl = $('source'), urlField = $('urlField'), pasteField = $('pasteField'), pasteEl = $('paste');
+let pastedHtml = null;   // HTML captured from the paste box
+let pastedIsPlain = false;
+
+sourceEl.addEventListener('change', () => {
+  const paste = sourceEl.value === 'paste';
+  urlField.hidden = paste;
+  pasteField.hidden = !paste;
+  setStatus('');
+});
+
+// Capture the clipboard's HTML flavour so headings/lists survive a copy from the rendered page.
+pasteEl.addEventListener('paste', e => {
+  e.preventDefault();
+  const cd = e.clipboardData;
+  const html = cd.getData('text/html');
+  const plain = cd.getData('text/plain');
+  pasteEl.textContent = '';
+  if (html && /<[a-z][\s\S]*>/i.test(html)) {
+    pastedHtml = html; pastedIsPlain = false;
+    pasteEl.textContent = '✔ Page pasted (' + Math.round(html.length / 1024) + ' KB of formatted content). Press Scrape.';
+  } else if (/^\s*<(!doctype|html|head|body|div|h[1-6]|p)[\s>]/i.test(plain)) {
+    pastedHtml = plain; pastedIsPlain = false;      // raw HTML source
+    pasteEl.textContent = '✔ HTML source pasted (' + Math.round(plain.length / 1024) + ' KB). Press Scrape.';
+  } else {
+    pastedHtml = plain; pastedIsPlain = true;       // plain text only: no structure available
+    pasteEl.textContent = '⚠ Only plain text was pasted (' + plain.length.toLocaleString() + ' characters), so headings can\'t be detected.';
+  }
+});
+pasteEl.addEventListener('input', () => { if (!pasteEl.textContent.trim()) pastedHtml = null; });
+
 form.addEventListener('submit', async e => {
   e.preventDefault();
+  const usePaste = sourceEl.value === 'paste';
   let url;
-  try { url = normalizeUrl(urlEl.value); }
-  catch { setStatus('That doesn\'t look like a valid URL.', true); return; }
+  if (!usePaste) {
+    try { url = normalizeUrl(urlEl.value); }
+    catch { setStatus('That doesn\'t look like a valid URL.', true); return; }
+  } else if (!pastedHtml) {
+    setStatus('Paste the page into the box first.', true); return;
+  }
 
   goBtn.disabled = true; copyBtn.disabled = dlBtn.disabled = true;
   out.value = ''; countEl.textContent = '';
-  setStatus('Fetching page…');
+  if (!usePaste) setStatus('Fetching page…');
 
   try {
-    const html = await fetchHtml(url);
+    let html;
+    if (usePaste) {
+      if (pastedIsPlain) {
+        // Plain text: wrap lines so "Everything"/"Text" still work; headings are impossible.
+        if (modeEl.value === 'headings') throw new Error('plain text has no heading tags. Copy the page again from the browser (Ctrl+A, Ctrl+C) and paste into the box, or paste the HTML source.');
+        const esc = pastedHtml.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+        html = esc.split(/\n+/).map(l => '<p>' + l + '</p>').join('');
+      } else {
+        html = pastedHtml;
+      }
+    } else {
+      html = await fetchHtml(url);
+    }
     setStatus('Extracting…');
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const text = extract(doc, modeEl.value);
