@@ -28,11 +28,15 @@
     font-family: 'DM Sans', sans-serif;
     background: var(--grey-bg);
     color: var(--text);
-    min-height: 100vh;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   /* ── HEADER ── */
   header {
+    flex: 0 0 auto;
     background: var(--plum);
     color: white;
     padding: 18px 32px;
@@ -81,9 +85,10 @@
   /* ── LAYOUT ── */
   .app {
     display: grid;
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 380px 1fr;
     gap: 0;
-    min-height: calc(100vh - 66px);
+    flex: 1 1 auto;
+    min-height: 0;
     transition: grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .app.collapsed {
@@ -94,29 +99,55 @@
   .sidebar {
     background: var(--white);
     border-right: 1px solid var(--border);
-    padding: 24px 22px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    overflow: hidden;
+    transition: border-color 0.35s ease;
+    position: relative;
+    height: 100%;
+    min-height: 0;
+  }
+  .sidebar-scroll {
+    flex: 1 1 auto;
     overflow-y: auto;
     overflow-x: hidden;
-    transition: padding 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.35s ease;
-    position: relative;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scrollbar-width: thin;
+  }
+  .sidebar-scroll::-webkit-scrollbar { width: 8px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 8px;
+  }
+  .sidebar-footer {
+    flex: 0 0 auto;
+    padding: 14px 22px 16px;
+    background: white;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -6px 18px rgba(61,26,110,0.06);
+  }
+  .footer-note {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--subtext);
+    margin-top: 7px;
+    opacity: 0.8;
   }
   .app.collapsed .sidebar {
-    padding: 0;
     border-color: transparent;
-    overflow: hidden;
     pointer-events: none;
   }
+  .app.collapsed .sidebar-scroll,
+  .app.collapsed .sidebar-footer { display: none; }
 
   /* ── SIDEBAR TOGGLE BUTTON ── */
   .sidebar-toggle {
     position: fixed;
     top: 50%;
     transform: translateY(-50%);
-    left: 360px;
+    left: 380px;
     z-index: 50;
     width: 22px;
     height: 52px;
@@ -153,6 +184,9 @@
     letter-spacing: 0.08em;
     color: var(--plum-mid);
     margin-bottom: 8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
   }
 
   /* ── TEXTAREA / INPUTS ── */
@@ -219,6 +253,7 @@
 
   /* ── CSV UPLOAD ── */
   .csv-drop {
+    display: block;
     border: 2px dashed var(--border);
     border-radius: 8px;
     padding: 14px;
@@ -227,6 +262,7 @@
     font-size: 0.83rem;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
+    background: white;
   }
   .csv-drop:hover, .csv-drop.drag-over {
     border-color: var(--plum-mid);
@@ -239,9 +275,9 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    align-items: end;
   }
-  .num-row label { display: block; font-size: 0.8rem; color: var(--subtext); margin-bottom: 4px; }
-
+  .num-row label { display: block; font-size: 0.8rem; color: var(--subtext); margin-bottom: 4px; font-weight: 600; }
   /* ── RADIO GROUP ── */
   .radio-group { display: flex; flex-direction: column; gap: 8px; }
   .radio-opt {
@@ -348,10 +384,89 @@
   }
   .btn-amber:hover { background: #d48f10; }
 
+  /* ── CLASS LIBRARY ── */
+  .class-lib-card {
+    background: var(--grey-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .library-badge {
+    background: var(--amber);
+    color: var(--plum);
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+  .mapper-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .mapper-grid label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--plum-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    display:block;
+  }
+  .mapper-preview {
+    font-size: 0.76rem;
+    color: var(--subtext);
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    max-height: 110px;
+    overflow:auto;
+    line-height: 1.5;
+  }
+  .class-checklist {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    max-height: 220px;
+    overflow:auto;
+    padding-right:2px;
+  }
+  .class-item {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:white;
+    border:1.5px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+    transition: border-color 0.15s, background 0.15s;
+    gap:8px;
+  }
+  .class-item:hover { border-color: var(--plum-mid); }
+  .class-item.selected { border-color: var(--plum-mid); background: var(--plum-lt); }
+  .class-item input { accent-color: var(--plum); width:16px;height:16px; flex-shrink:0; }
+  .class-name { font-weight:600; font-size:0.88rem; color:var(--plum); }
+  .class-meta { font-size:0.73rem; color:var(--subtext); }
+  .class-count-pill {
+    background: var(--plum);
+    color:white;
+    font-size:0.72rem;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+    flex-shrink:0;
+  }
+  .class-item.selected .class-count-pill { background: var(--amber); color: var(--plum); }
+
   /* ── MAIN RESULTS ── */
   .main {
     padding: 28px 32px;
     overflow-y: auto;
+    min-height: 0;
   }
 
   .results-header {
@@ -494,7 +609,7 @@
   }
   .empty-state .big-icon { font-size: 4rem; opacity: 0.25; }
   .empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--plum); opacity: 0.5; }
-  .empty-state p { font-size: 0.85rem; max-width: 260px; line-height: 1.5; }
+  .empty-state p { font-size: 0.85rem; max-width: 320px; line-height: 1.5; }
 
   /* ── DIVIDER ── */
   hr.divider { border: none; border-top: 1px solid var(--border); }
@@ -517,10 +632,80 @@
   }
   .toast.show { transform: translateY(0); opacity: 1; }
 
+
+  /* ── CLASS LIBRARY EXTRAS ── */
+  .lib-empty {
+    font-size: 0.8rem;
+    color: var(--subtext);
+    text-align: center;
+    padding: 14px 10px;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    background: white;
+    line-height: 1.5;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--plum-mid);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .link-btn:hover { color: var(--plum); }
+  .class-txt { flex: 1; min-width: 0; }
+  .class-name {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .class-item:focus-visible {
+    outline: 2px solid var(--plum-mid);
+    outline-offset: 1px;
+  }
+  .class-checklist { max-height: 168px; }
+  .ws-chip {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--plum);
+    background: var(--amber-lt);
+    border: 1px solid #f0cf95;
+    padding: 2px 7px;
+    border-radius: 20px;
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: none;
+  }
+  .plan-dim { opacity: 0.65; }
+  .plan-link {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.71rem;
+    color: var(--plum-mid);
+  }
+
   /* ── RESPONSIVE ── */
-  @media (max-width: 700px) {
-    .app { grid-template-columns: 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  @media (max-width: 750px) {
+    body { height: auto; overflow: auto; display: block; }
+    .app { grid-template-columns: 1fr; min-height: auto; }
+    .sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      height: auto;
+    }
+    .sidebar-scroll { overflow: visible; }
+    .main { overflow: visible; }
+    .sidebar-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+    }
     .main { padding: 20px 16px; }
     .sidebar-toggle { display: none; }
   }
@@ -549,33 +734,111 @@
 
   <!-- ═══ SIDEBAR ═══ -->
   <aside class="sidebar">
+   <div class="sidebar-scroll">
 
-    <!-- Names input -->
+    <!-- 0 · CLASS LIBRARY -->
     <div>
-      <div class="section-label">1 · Add Names</div>
+      <div class="section-label">
+        <span>📚 Class Library</span>
+        <span id="libraryBadge" class="library-badge" style="display:none;">0</span>
+      </div>
+      <div class="class-lib-card">
+        <label class="csv-drop" id="rosterDrop" style="background:white;">
+          <input type="file" id="rosterFile" accept=".csv,.txt" onchange="handleRosterFile(event)" />
+          <div style="font-size:1.3rem;margin-bottom:4px;">📂</div>
+          <div><strong>Load master roster</strong></div>
+          <div style="margin-top:4px;opacity:0.65;font-size:0.78rem;line-height:1.4;">CSV with username, email and class columns — you tell us which is which.</div>
+        </label>
+
+        <!-- Column mapper -->
+        <div id="columnMapper" style="display:none;margin-top:12px;">
+          <div style="font-size:0.84rem;font-weight:700;color:var(--plum);display:flex;align-items:center;gap:6px;">🔀 Match your columns</div>
+          <div style="font-size:0.73rem;color:var(--subtext);margin:2px 0 10px;" id="mapperSource"></div>
+          <div class="mapper-grid">
+            <div>
+              <label for="mapName">Name / Username *</label>
+              <select id="mapName" onchange="updateMapperPreview()"></select>
+            </div>
+            <div>
+              <label for="mapEmail">Email <span style="font-weight:500;letter-spacing:0;">(optional)</span></label>
+              <select id="mapEmail" onchange="updateMapperPreview()"></select>
+            </div>
+            <div>
+              <label for="mapClass">Class *</label>
+              <select id="mapClass" onchange="updateMapperPreview()"></select>
+            </div>
+          </div>
+          <div class="mapper-preview" id="mapperPreview"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-primary" style="flex:1;padding:9px;font-size:0.84rem;" onclick="saveRosterToLibrary(false)">Add to Library</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="saveRosterToLibrary(true)">Replace</button>
+          </div>
+          <div style="text-align:center;margin-top:8px;">
+            <button class="link-btn" onclick="cancelRosterImport()">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Library -->
+        <div id="libraryPanel" style="margin-top:14px;">
+          <div id="libraryEmpty" class="lib-empty">
+            No classes saved yet.<br>Load a master CSV above — it stays on this device.
+            <div style="margin-top:8px;">
+              <button class="link-btn" onclick="downloadTemplate()">Download a sample CSV template</button>
+            </div>
+          </div>
+          <div id="libraryListWrap" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
+              <div style="font-size:0.82rem;font-weight:700;color:var(--plum);" id="librarySummary"></div>
+              <button class="link-btn" onclick="clearLibrary()">Clear</button>
+            </div>
+            <div id="libraryBody">
+              <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <button class="btn btn-outline" style="flex:1;padding:6px;font-size:0.76rem;" onclick="selectAllClasses(true)">Select all</button>
+                <button class="btn btn-outline" style="flex:1;padding:6px;font-size:0.76rem;" onclick="selectAllClasses(false)">None</button>
+              </div>
+              <div id="classCheckList" class="class-checklist"></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:10px;">
+              <button class="btn btn-amber" style="flex:1.6;font-size:0.84rem;padding:9px;white-space:nowrap;" onclick="loadSelectedClasses(false)">Add <span id="selectedCountBtn">0</span> students</button>
+              <button class="btn btn-outline" style="flex:1;" onclick="loadSelectedClasses(true)">Replace</button>
+            </div>
+            <div class="selected-hint" id="selectedHint">Tick one class, or several to combine.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- 1 · Working list -->
+    <div>
+      <div class="section-label">
+        <span>1 · Working List</span>
+        <span class="ws-chip" id="workingSetSource" style="display:none;"></span>
+      </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <input type="text" id="nameInput" placeholder="Type or paste names, press Enter…" style="flex:1;" />
         <button class="btn btn-outline" onclick="addNameFromInput()" style="white-space:nowrap;padding:8px 12px;">Add</button>
       </div>
       <div class="pill-row" id="pillRow">
-        <span style="color:var(--subtext);font-size:0.78rem;padding:4px 2px;align-self:center;" id="pillPlaceholder">No names yet…</span>
+        <span style="color:var(--subtext);font-size:0.78rem;padding:4px 2px;align-self:center;">No names yet…</span>
       </div>
       <div class="name-count" id="nameCount"></div>
     </div>
 
     <hr class="divider" />
 
-    <!-- CSV upload -->
+    <!-- Simple CSV / TXT import -->
     <div>
-      <div class="section-label">Or Import from CSV</div>
-      <label class="csv-drop" id="csvDrop">
+      <div class="section-label">Or import names from CSV / TXT</div>
+      <label class="csv-drop" id="csvDrop" style="background:white;">
         <input type="file" id="csvFile" accept=".csv,.txt" onchange="handleCSV(event)" />
-        <div style="font-size:1.5rem;margin-bottom:4px;">📄</div>
-        <div><strong>Click to upload</strong> or drag & drop</div>
-        <div style="margin-top:3px;opacity:0.65;">CSV or plain text, one name per line or comma-separated</div>
+        <div style="font-size:1.3rem;margin-bottom:4px;">📄</div>
+        <div><strong>Click to upload</strong> or drag &amp; drop</div>
+        <div style="margin-top:3px;opacity:0.65;font-size:0.78rem;">One name per line, or comma-separated</div>
       </label>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="btn btn-outline" onclick="clearNames()" style="flex:1;">Clear all</button>
+        <button class="btn btn-outline" onclick="clearNames()" style="flex:1;">Clear list</button>
         <button class="btn btn-outline" onclick="loadSample()" style="flex:1;">Load sample</button>
       </div>
     </div>
@@ -584,19 +847,18 @@
 
     <!-- Group settings -->
     <div>
-      <div class="section-label">2 · Group Settings</div>
+      <div class="section-label">2 · Group Settings <span style="font-size:0.65rem;background:var(--plum-lt);color:var(--plum-mid);padding:2px 6px;border-radius:20px;letter-spacing:0.02em;font-weight:700;">🔗 AUTO-SYNC</span></div>
       <div class="num-row">
         <div>
-          <label for="groupSize">Group size</label>
-          <input type="number" id="groupSize" value="3" min="2" max="50" />
+          <label for="groupSize">Group size <span style="font-weight:400;opacity:0.7;">(per group)</span></label>
+          <input type="number" id="groupSize" value="4" min="1" max="50" />
         </div>
         <div>
           <label for="numGroups">No. of groups</label>
-          <input type="number" id="numGroups" placeholder="Auto" min="1" max="100"
-            title="Leave blank to auto-calculate from group size" />
+          <input type="number" id="numGroups" placeholder="Auto" min="1" max="100" />
         </div>
       </div>
-      <div style="font-size:0.77rem;color:var(--subtext);margin-top:6px;" id="groupPreview"></div>
+      <div style="font-size:0.77rem;color:var(--subtext);margin-top:8px;line-height:1.4;background:white;border:1px solid var(--border);border-radius:8px;padding:8px 10px;" id="groupPreview">Add names to see preview</div>
     </div>
 
     <hr class="divider" />
@@ -627,6 +889,7 @@
           </div>
         </label>
       </div>
+      <div style="font-size:0.72rem;color:var(--subtext);margin-top:6px;font-style:italic;" id="remainderNote">Only applies when using “Group size” mode. When “No. of groups” drives the layout, groups are always balanced.</div>
     </div>
 
     <hr class="divider" />
@@ -646,12 +909,15 @@
       </div>
     </div>
 
-    <hr class="divider" />
+   </div><!-- /sidebar-scroll -->
 
-    <!-- Allocate -->
-    <button class="btn btn-primary" onclick="allocate()">
-      🎲 Allocate Groups
-    </button>
+    <!-- Sticky action -->
+    <div class="sidebar-footer">
+      <button class="btn btn-primary" onclick="allocate()">
+        🎲 Allocate Groups
+      </button>
+      <div class="footer-note" id="footerNote">Groups are randomised every time you allocate.</div>
+    </div>
 
   </aside>
 
@@ -660,7 +926,7 @@
     <div class="empty-state" id="emptyState">
       <div class="big-icon">🎲</div>
       <h3>Ready to allocate</h3>
-      <p>Add names on the left, choose your group settings, then hit <strong>Allocate Groups</strong>.</p>
+      <p>Add names on the left, choose your group settings, then hit <strong>Allocate Groups</strong>.<br><br><span style="font-size:0.8rem;opacity:0.7;">Tip: Load your master roster into the <strong>Class Library</strong> above — it stays saved in this browser so you can re-use classes any time. Pick one class or combine several.</span></p>
     </div>
     <div id="resultsArea" style="display:none;">
       <div class="results-header">
@@ -687,34 +953,132 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── STORAGE CONSTANT ──
-const STORAGE_KEY = 'group_allocator_state_v1';
+// ══════════════════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════════════════
+const STORAGE_KEY   = 'group_allocator_state_v1';
+const LIBRARY_KEY   = 'group_allocator_library_v1';
+const SELECTED_KEY  = 'group_allocator_selected_classes_v1';
 
 // ── STATE ──
-let names = [];
+let names = [];              // working list (just display strings)
 let currentGroups = [];
 let unallocated = [];
-let revealState = {}; // groupIdx -> set of revealed indices
+let revealState = {};
+let classLibrary = [];       // [{name, email, className}]
+let selectedClasses = new Set();
+let pendingRoster = null;    // {headers, rows}
+let lastEdited = 'size';     // 'size' | 'groups'
+let workingSetLabel = '';
+let memberInfo = {};         // name -> {email, className}
+let syncLock = false;
 
-// ── SANITISATION HELPER ──
+// ══════════════════════════════════════════════════════
+//  SANITISING
+// ══════════════════════════════════════════════════════
 function cleanName(raw) {
   if (!raw) return '';
-  return raw
-    .replace(/["'“”]/g, '')                // Strip all standard & curly quotation marks
-    .replace(/\s*\([^)]*\)/g, '')          // Strip parenthetical formal names e.g. (Xavier-Leigh)
-    .replace(/^([^,]+),\s*(.+)$/, '$2 $1')  // Swap "Surname, First" to "First Surname"
+  return String(raw)
+    .replace(/["“”]/g, '')                    // drop stray double quotes
+    .replace(/^[\s'‘’]+|[\s'‘’]+$/g, '')      // trim quotes around the name only (keeps O'Brien)
+    .replace(/\s*\([^)]*\)/g, '')            // drop parenthetical formal names
+    .replace(/^([^,]+),\s*(.+)$/, '$2 $1')     // "Surname, First" → "First Surname"
+    .replace(/\s+/g, ' ')
     .trim();
 }
+function cleanClass(raw) {
+  if (!raw) return '';
+  return String(raw).replace(/^["']|["']$/g, '').trim();
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
-// ── LOCAL STORAGE ENGINE ──
+// ══════════════════════════════════════════════════════
+//  CSV PARSING (handles quotes, commas, semicolons, tabs)
+// ══════════════════════════════════════════════════════
+function detectDelimiter(text) {
+  const line = text.split('\n').find(l => l.trim() !== '') || '';
+  const counts = { ',': 0, ';': 0, '\t': 0, '|': 0 };
+  let q = false;
+  for (const ch of line) {
+    if (ch === '"') q = !q;
+    else if (!q && counts[ch] !== undefined) counts[ch]++;
+  }
+  let best = ',', bestN = -1;
+  for (const k in counts) { if (counts[k] > bestN) { bestN = counts[k]; best = k; } }
+  return bestN === 0 ? ',' : best;
+}
+
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const delim = detectDelimiter(text);
+
+  const rowsRaw = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === delim) {
+      row.push(field); field = '';
+    } else if (c === '\n') {
+      row.push(field); rowsRaw.push(row); row = []; field = '';
+    } else {
+      field += c;
+    }
+  }
+  row.push(field); rowsRaw.push(row);
+
+  const cleaned = rowsRaw
+    .map(r => r.map(v => v.trim()))
+    .filter(r => r.some(v => v !== ''));
+
+  if (cleaned.length === 0) return { headers: [], rows: [] };
+
+  const KEYWORDS = /name|user|student|email|e-mail|mail|class|group|form|room|year|house|tutor|cohort|surname|first|last|preferred|display|id\b/i;
+  const first = cleaned[0];
+  const hasHeader = first.some(h => KEYWORDS.test(h));
+
+  const headers = hasHeader
+    ? first.map((h, i) => cleanClass(h) || `Column ${i + 1}`)
+    : first.map((_, i) => `Column ${i + 1}`);
+  const body = hasHeader ? cleaned.slice(1) : cleaned;
+
+  const rows = body.map(arr => {
+    const obj = { _raw: arr };
+    headers.forEach((h, i) => { obj[h] = arr[i] !== undefined ? arr[i] : ''; });
+    return obj;
+  });
+
+  return { headers, rows, hasHeader, delimiter: delim };
+}
+
+// ══════════════════════════════════════════════════════
+//  SAVE / LOAD
+// ══════════════════════════════════════════════════════
 function saveState() {
-  const state = {
-    names,
-    currentGroups,
-    unallocated,
-    settings: getSettings()
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const s = getSettings();
+  const state = { names, currentGroups, unallocated, workingSetLabel, memberInfo, settings: s };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { console.warn('Could not save state', e); }
+}
+function saveLibrary() {
+  try {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify(classLibrary));
+    localStorage.setItem(SELECTED_KEY, JSON.stringify([...selectedClasses]));
+  } catch (e) {
+    showToast('Browser storage is full — try a smaller roster');
+    console.warn(e);
+  }
 }
 
 function loadState() {
@@ -725,96 +1089,97 @@ function loadState() {
     if (Array.isArray(state.names)) names = state.names;
     if (Array.isArray(state.currentGroups)) currentGroups = state.currentGroups;
     if (Array.isArray(state.unallocated)) unallocated = state.unallocated;
+    if (typeof state.workingSetLabel === 'string') workingSetLabel = state.workingSetLabel;
+    if (state.memberInfo && typeof state.memberInfo === 'object') memberInfo = state.memberInfo;
 
     if (state.settings) {
-      if (state.settings.groupSize) document.getElementById('groupSize').value = state.settings.groupSize;
-      if (state.settings.numGroups !== null && state.settings.numGroups !== undefined) {
-        document.getElementById('numGroups').value = state.settings.numGroups;
+      const st = state.settings;
+      if (st.groupSize) document.getElementById('groupSize').value = st.groupSize;
+      if (st.numGroups !== null && st.numGroups !== undefined && st.numGroups !== '') {
+        document.getElementById('numGroups').value = st.numGroups;
       }
-      if (state.settings.remainder) {
-        const rad = document.querySelector(`input[name="remainder"][value="${state.settings.remainder}"]`);
-        if (rad) {
-          rad.checked = true;
-          selectRadio(rad, false);
-        }
+      if (st.remainder) {
+        const rad = document.querySelector(`input[name="remainder"][value="${st.remainder}"]`);
+        if (rad) { rad.checked = true; selectRadio(rad, false); }
       }
-      if (typeof state.settings.revealMode === 'boolean') {
-        document.getElementById('revealToggle').checked = state.settings.revealMode;
+      if (typeof st.revealMode === 'boolean') {
+        document.getElementById('revealToggle').checked = st.revealMode;
       }
+      if (st.lastEdited === 'size' || st.lastEdited === 'groups') lastEdited = st.lastEdited;
     }
 
     renderPills();
-    updatePreview();
-
-    if (currentGroups.length > 0) {
-      renderGroups(getSettings().revealMode);
-    }
+    syncFields();
+    if (currentGroups.length > 0) renderGroups(getSettings().revealMode);
   } catch (e) {
-    console.error('Failed to load state from localStorage:', e);
+    console.error('Failed to load saved state', e);
   }
 }
 
-// ── NAME MANAGEMENT ──
+function loadLibraryState() {
+  try {
+    const raw = localStorage.getItem(LIBRARY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) classLibrary = parsed.filter(x => x && x.name && x.className);
+    }
+    const sel = localStorage.getItem(SELECTED_KEY);
+    if (sel) {
+      const arr = JSON.parse(sel);
+      if (Array.isArray(arr)) selectedClasses = new Set(arr);
+    }
+  } catch (e) { console.error('Failed to load library', e); }
+  renderLibrary();
+}
+
+// ══════════════════════════════════════════════════════
+//  WORKING LIST
+// ══════════════════════════════════════════════════════
 function addName(n) {
   const cleaned = cleanName(n);
-  if (!cleaned) return;
-  if (names.includes(cleaned)) { showToast(`"${cleaned}" already added`); return; }
+  if (!cleaned) return false;
+  if (names.some(x => x.toLowerCase() === cleaned.toLowerCase())) {
+    showToast(`"${cleaned}" already in the list`);
+    return false;
+  }
   names.push(cleaned);
+  return true;
+}
+
+function afterListChange() {
   renderPills();
-  updatePreview();
+  syncFields();
   saveState();
 }
 
 function removeName(n) {
   names = names.filter(x => x !== n);
-  renderPills();
-  updatePreview();
-  saveState();
+  afterListChange();
 }
 
 function clearNames() {
-  names = [];
-  currentGroups = [];
-  unallocated = [];
-  renderPills();
-  updatePreview();
+  names = []; currentGroups = []; unallocated = []; workingSetLabel = '';
+  afterListChange();
   document.getElementById('resultsArea').style.display = 'none';
   document.getElementById('emptyState').style.display = 'flex';
-  saveState();
-  showToast('Cleared all data');
+  showToast('Working list cleared');
 }
 
 function addNameFromInput() {
   const el = document.getElementById('nameInput');
   const rawVal = el.value;
   if (!rawVal.trim()) return;
-
   const lines = rawVal.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  let addedCount = 0;
-
-  lines.forEach(item => {
-    const cleaned = cleanName(item);
-    if (cleaned && !names.includes(cleaned)) {
-      names.push(cleaned);
-      addedCount++;
-    }
-  });
-
-  if (addedCount > 0) {
-    renderPills();
-    updatePreview();
-    saveState();
-    if (lines.length > 1) {
-      showToast(`${addedCount} names added`);
-    }
-  } else if (lines.length === 1 && names.includes(cleanName(lines[0]))) {
-    showToast(`"${cleanName(lines[0])}" already added`);
+  let added = 0;
+  lines.forEach(item => { if (addName(item)) added++; });
+  if (added > 0) {
+    workingSetLabel = '';
+    afterListChange();
+    if (lines.length > 1) showToast(`${added} names added`);
   }
-
   el.value = '';
   el.focus();
 }
-
 document.getElementById('nameInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); addNameFromInput(); }
 });
@@ -822,21 +1187,26 @@ document.getElementById('nameInput').addEventListener('keydown', e => {
 function renderPills() {
   const row = document.getElementById('pillRow');
   const cnt = document.getElementById('nameCount');
+  const chip = document.getElementById('workingSetSource');
   row.innerHTML = '';
+
   if (names.length === 0) {
-    row.appendChild(Object.assign(document.createElement('span'), {
-      className: 'opt-desc',
-      textContent: 'No names yet…',
-      style: 'color:var(--subtext);font-size:0.78rem;padding:4px 2px;align-self:center;'
-    }));
+    const span = document.createElement('span');
+    span.textContent = 'No names yet…';
+    span.style.cssText = 'color:var(--subtext);font-size:0.78rem;padding:4px 2px;align-self:center;';
+    row.appendChild(span);
     cnt.textContent = '';
+    chip.style.display = 'none';
     return;
   }
+
   names.forEach(n => {
     const pill = document.createElement('div');
     pill.className = 'pill';
     const label = document.createElement('span');
     label.textContent = n;
+    const info = memberInfo[n.toLowerCase()];
+    if (info && info.email) pill.title = `${n} · ${info.email}${info.className ? ' · ' + info.className : ''}`;
     const btn = document.createElement('button');
     btn.textContent = '×';
     btn.title = `Remove ${n}`;
@@ -845,95 +1215,641 @@ function renderPills() {
     pill.appendChild(btn);
     row.appendChild(pill);
   });
-  cnt.textContent = `${names.length} name${names.length !== 1 ? 's' : ''}`;
+
+  cnt.textContent = `${names.length} student${names.length !== 1 ? 's' : ''} in the working list`;
+  if (workingSetLabel) {
+    chip.style.display = 'inline-block';
+    chip.textContent = workingSetLabel;
+  } else {
+    chip.style.display = 'none';
+  }
 }
 
 function loadSample() {
-  const sample = ['Alice','Ben','Chloe','Daniel','Emma','Finn','Grace','Harry',
-                  'Isabella','Jack','Kaia','Liam','Mia','Noah','Olivia','Parker','Quinn','Ruby'];
-  names = [...sample];
-  renderPills();
-  updatePreview();
-  saveState();
+  names = ['Alice', 'Ben', 'Chloe', 'Daniel', 'Emma', 'Finn', 'Grace', 'Harry',
+           'Isabella', 'Jack', 'Kaia', 'Liam', 'Mia', 'Noah', 'Olivia', 'Parker', 'Quinn', 'Ruby'];
+  workingSetLabel = 'sample';
+  afterListChange();
   showToast('Sample class loaded');
 }
 
-// ── CSV IMPORT ──
+// ══════════════════════════════════════════════════════
+//  SIMPLE NAME IMPORT (CSV / TXT)
+// ══════════════════════════════════════════════════════
 function handleCSV(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const text = e.target.result;
-    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-    const filtered = lines[0]?.toLowerCase().includes('name') ? lines.slice(1) : lines;
-    
+    const parsed = parseCSV(e.target.result);
     let added = 0;
-    filtered.forEach(rawLine => {
-      const cleaned = cleanName(rawLine);
-      if (cleaned && !names.includes(cleaned)) {
-        names.push(cleaned);
-        added++;
-      }
-    });
-    renderPills();
-    updatePreview();
-    saveState();
-    showToast(`${added} name${added !== 1 ? 's' : ''} imported`);
+
+    if (parsed.hasHeader) {
+      // Pick the most likely name column
+      const guess = parsed.headers.find(h => /username|student name|full name|name|student|user|display|preferred|first/i.test(h)) || parsed.headers[0];
+      parsed.rows.forEach(r => { if (addName(r[guess])) added++; });
+    } else {
+      // No header: every non-empty cell is a name
+      parsed.rows.forEach(r => r._raw.forEach(cell => { if (addName(cell)) added++; }));
+    }
+
+    if (added > 0) { workingSetLabel = ''; afterListChange(); }
+    showToast(added ? `${added} name${added !== 1 ? 's' : ''} imported` : 'No new names found');
   };
   reader.readAsText(file);
   event.target.value = '';
 }
 
-// Drag-drop CSV
 const csvDrop = document.getElementById('csvDrop');
-csvDrop.addEventListener('dragover', e => { e.preventDefault(); csvDrop.classList.add('drag-over'); });
-csvDrop.addEventListener('dragleave', () => csvDrop.classList.remove('drag-over'));
+['dragover', 'dragenter'].forEach(ev => csvDrop.addEventListener(ev, e => {
+  e.preventDefault(); csvDrop.classList.add('drag-over');
+}));
+['dragleave', 'dragend'].forEach(ev => csvDrop.addEventListener(ev, () => csvDrop.classList.remove('drag-over')));
 csvDrop.addEventListener('drop', e => {
   e.preventDefault();
   csvDrop.classList.remove('drag-over');
   const file = e.dataTransfer.files[0];
-  if (file) { const fakeEvt = { target: { files: [file], value: '' } }; handleCSV(fakeEvt); }
+  if (file) handleCSV({ target: { files: [file], value: '' } });
 });
 
-// ── SETTINGS ──
-document.getElementById('groupSize').addEventListener('input', () => { updatePreview(); saveState(); });
-document.getElementById('numGroups').addEventListener('input', () => { updatePreview(); saveState(); });
-document.getElementById('revealToggle').addEventListener('change', saveState);
+// ══════════════════════════════════════════════════════
+//  CLASS LIBRARY
+// ══════════════════════════════════════════════════════
+function handleRosterFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const parsed = parseCSV(e.target.result);
+    if (parsed.rows.length === 0) {
+      showToast('Could not read that file — is it a CSV?');
+      return;
+    }
+    pendingRoster = parsed;
+
+    const nameSel  = document.getElementById('mapName');
+    const emailSel = document.getElementById('mapEmail');
+    const classSel = document.getElementById('mapClass');
+    [nameSel, emailSel, classSel].forEach(sel => { sel.innerHTML = ''; });
+
+    function addOptions(sel, includeNone) {
+      if (includeNone) {
+        const o = document.createElement('option');
+        o.value = '__none__';
+        o.textContent = '— None / ignore —';
+        sel.appendChild(o);
+      }
+      parsed.headers.forEach(h => {
+        const o = document.createElement('option');
+        o.value = h;
+        o.textContent = h;
+        sel.appendChild(o);
+      });
+    }
+    addOptions(nameSel, false);
+    addOptions(emailSel, true);
+    addOptions(classSel, false);
+
+    // ── Work out smart defaults ──
+    const detect = keywords => {
+      for (const k of keywords) {
+        const hit = parsed.headers.find(h => h.toLowerCase().includes(k));
+        if (hit) return hit;
+      }
+      return null;
+    };
+
+    const distinct = {}, sample = {};
+    parsed.headers.forEach(hd => {
+      const vals = parsed.rows.map(r => (r[hd] || '').trim()).filter(Boolean);
+      distinct[hd] = new Set(vals.map(v => v.toLowerCase())).size;
+      sample[hd] = vals.slice(0, 25);
+    });
+    const emailLike = hd => {
+      const s = sample[hd];
+      return s.length > 0 && s.filter(v => v.includes('@')).length / s.length >= 0.6;
+    };
+
+    const byDistinctDesc = [...parsed.headers].sort((a, b) => distinct[b] - distinct[a]);
+
+    // Email: header keyword first, then anything that looks like an email address
+    const emailGuess = detect(['e-mail', 'email', 'mail']) || parsed.headers.find(emailLike) || null;
+
+    // Name: header keyword first, then the column with the most distinct values
+    const nameGuess = detect(['username', 'student name', 'full name', 'name', 'student', 'user', 'display', 'preferred', 'first'])
+      || byDistinctDesc.find(hd => hd !== emailGuess) || parsed.headers[0];
+
+    // Class: header keyword first, then the column (other than name/email)
+    // with the FEWEST distinct values — that's almost always the class
+    const classKeywords = ['class', 'form', 'group', 'room', 'tutor', 'cohort', 'house', 'year', 'level', 'grade'];
+    let classGuess = detect(classKeywords);
+    if (!classGuess || classGuess === nameGuess || classGuess === emailGuess) {
+      const candidates = parsed.headers.filter(hd => hd !== nameGuess && hd !== emailGuess);
+      candidates.sort((a, b) => distinct[a] - distinct[b]);        // fewest distinct first
+      classGuess = candidates[0] || parsed.headers.find(hd => hd !== nameGuess) || parsed.headers[0];
+    }
+
+    nameSel.value = nameGuess;
+    classSel.value = classGuess;
+    emailSel.value = (emailGuess && emailGuess !== nameGuess && emailGuess !== classGuess) ? emailGuess : '__none__';
+
+    document.getElementById('mapperSource').textContent =
+      `${file.name} · ${parsed.rows.length} rows · ${parsed.headers.length} columns found`;
+    document.getElementById('columnMapper').style.display = 'block';
+    document.getElementById('rosterDrop').style.display = 'none';
+    updateMapperPreview();
+    document.getElementById('columnMapper').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function updateMapperPreview() {
+  if (!pendingRoster) return;
+  const nameCol  = document.getElementById('mapName').value;
+  const emailCol = document.getElementById('mapEmail').value;
+  const classCol = document.getElementById('mapClass').value;
+  const preview  = document.getElementById('mapperPreview');
+
+  const valid = pendingRoster.rows.filter(r => cleanName(r[nameCol]) && cleanClass(r[classCol]));
+  const classSet = new Set(valid.map(r => cleanClass(r[classCol])));
+
+  let html = `<div style="font-weight:700;color:var(--plum);margin-bottom:4px;">Preview (first ${Math.min(3, valid.length)}):</div>`;
+  valid.slice(0, 3).forEach((r, i) => {
+    const n = cleanName(r[nameCol]);
+    const em = emailCol === '__none__' ? '' : (r[emailCol] || '');
+    const c = cleanClass(r[classCol]);
+    html += `<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);">
+      <span style="min-width:14px;color:var(--subtext);">${i + 1}.</span>
+      <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        <strong style="color:var(--plum);">${escapeHtml(n)}</strong>
+        ${em ? `<span style="color:var(--subtext);"> · ${escapeHtml(em)}</span>` : ''}
+      </span>
+      <span style="margin-left:auto;background:var(--plum-lt);color:var(--plum);padding:1px 7px;border-radius:10px;font-size:0.7rem;font-weight:700;white-space:nowrap;">${escapeHtml(c)}</span>
+    </div>`;
+  });
+  if (valid.length === 0) html = `<span style="color:#b00020;">No usable rows with those columns.</span>`;
+
+  html += `<div style="margin-top:6px;font-size:0.72rem;color:var(--subtext);line-height:1.4;">
+    <strong>${valid.length}</strong> students across <strong>${classSet.size}</strong> class${classSet.size === 1 ? '' : 'es'}${valid.length < pendingRoster.rows.length ? ` · <span style="color:#b00020;">${pendingRoster.rows.length - valid.length} row(s) skipped</span>` : ''}.
+  </div>`;
+  preview.innerHTML = html;
+}
+
+function saveRosterToLibrary(replace) {
+  if (!pendingRoster) { showToast('No roster loaded'); return; }
+  const nameCol  = document.getElementById('mapName').value;
+  const emailCol = document.getElementById('mapEmail').value;
+  const classCol = document.getElementById('mapClass').value;
+
+  if (nameCol === classCol) { showToast('Name and Class need different columns'); return; }
+  if (emailCol !== '__none__' && (emailCol === nameCol || emailCol === classCol)) {
+    showToast('Pick a different column for email'); return;
+  }
+
+  const entries = [];
+  pendingRoster.rows.forEach(r => {
+    const name = cleanName(r[nameCol]);
+    const cls  = cleanClass(r[classCol]);
+    if (!name || !cls) return;
+    entries.push({
+      name,
+      email: emailCol === '__none__' ? '' : String(r[emailCol] || '').trim(),
+      className: cls
+    });
+  });
+  if (entries.length === 0) { showToast('No valid rows — check your column mapping'); return; }
+
+  const keyOf = e => `${e.name.toLowerCase()}|${e.className.toLowerCase()}|${(e.email || '').toLowerCase()}`;
+
+  if (replace) {
+    classLibrary = [];
+  }
+  const existing = new Set(classLibrary.map(keyOf));
+  let added = 0;
+  entries.forEach(e => {
+    if (!existing.has(keyOf(e))) { classLibrary.push(e); existing.add(keyOf(e)); added++; }
+  });
+
+  const newClasses = [...new Set(entries.map(e => e.className))];
+  newClasses.forEach(c => selectedClasses.add(c));
+
+  saveLibrary();
+  renderLibrary();
+  cancelRosterImport();
+  showToast(replace
+    ? `Library replaced — ${entries.length} students in ${newClasses.length} classes`
+    : `${added} student${added !== 1 ? 's' : ''} added${added === 0 ? ' (all were already saved)' : ''} · ${newClasses.length} classes ready`);
+}
+
+function cancelRosterImport() {
+  pendingRoster = null;
+  document.getElementById('columnMapper').style.display = 'none';
+  document.getElementById('rosterDrop').style.display = 'block';
+  document.getElementById('rosterFile').value = '';
+}
+
+function renderLibrary() {
+  const badge  = document.getElementById('libraryBadge');
+  const empty  = document.getElementById('libraryEmpty');
+  const wrap   = document.getElementById('libraryListWrap');
+  const summary = document.getElementById('librarySummary');
+  const list   = document.getElementById('classCheckList');
+
+  const classes = [...new Set(classLibrary.map(e => e.className))]
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  // Drop selections for classes that no longer exist
+  [...selectedClasses].forEach(c => { if (!classes.includes(c)) selectedClasses.delete(c); });
+
+  if (classLibrary.length === 0) {
+    badge.style.display = 'none';
+    empty.style.display = 'block';
+    wrap.style.display = 'none';
+    return;
+  }
+
+  badge.style.display = 'inline-block';
+  badge.textContent = `${classLibrary.length} · ${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`;
+  empty.style.display = 'none';
+  wrap.style.display = 'block';
+  summary.textContent = `${classLibrary.length} students · ${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`;
+
+  const counts = {};
+  classLibrary.forEach(e => { counts[e.className] = (counts[e.className] || 0) + 1; });
+
+  const scrollPos = list.scrollTop;
+  list.innerHTML = '';
+  classes.forEach(cls => {
+    const count = counts[cls];
+    const isSel = selectedClasses.has(cls);
+
+    const item = document.createElement('div');
+    item.className = 'class-item' + (isSel ? ' selected' : '');
+    item.setAttribute('role', 'checkbox');
+    item.setAttribute('aria-checked', String(isSel));
+    item.tabIndex = 0;
+    item.title = `${cls} — ${count} student${count !== 1 ? 's' : ''}`;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = isSel;
+    cb.tabIndex = -1;
+    cb.addEventListener('change', () => toggleClass(cls, cb.checked));
+    cb.addEventListener('click', e => e.stopPropagation());
+
+    const txt = document.createElement('div');
+    txt.className = 'class-txt';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'class-name';
+    nameEl.textContent = cls;
+    const metaEl = document.createElement('div');
+    metaEl.className = 'class-meta';
+    metaEl.textContent = `${count} student${count !== 1 ? 's' : ''}`;
+    txt.appendChild(nameEl);
+    txt.appendChild(metaEl);
+
+    const pill = document.createElement('span');
+    pill.className = 'class-count-pill';
+    pill.textContent = count;
+
+    item.appendChild(cb);
+    item.appendChild(txt);
+    item.appendChild(pill);
+
+    const toggle = () => toggleClass(cls, !selectedClasses.has(cls));
+    item.addEventListener('click', toggle);
+    item.addEventListener('keydown', e => {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }
+    });
+
+    list.appendChild(item);
+  });
+
+  list.scrollTop = scrollPos;
+  updateSelectedCount();
+}
+
+function toggleClass(cls, checked) {
+  if (checked) selectedClasses.add(cls);
+  else selectedClasses.delete(cls);
+  saveLibrary();
+  renderLibrary();
+}
+
+function selectAllClasses(all) {
+  const classes = [...new Set(classLibrary.map(e => e.className))];
+  selectedClasses = new Set(all ? classes : []);
+  saveLibrary();
+  renderLibrary();
+}
+
+function updateSelectedCount() {
+  const chosen = classLibrary.filter(e => selectedClasses.has(e.className));
+  const btn  = document.getElementById('selectedCountBtn');
+  const hint = document.getElementById('selectedHint');
+  if (btn) btn.textContent = chosen.length;
+
+  if (!hint) return;
+  const sel = [...selectedClasses];
+  if (sel.length === 0) hint.textContent = 'Tick one class, or several to combine.';
+  else if (sel.length <= 3) hint.textContent = `${sel.join(' + ')} — ${chosen.length} student${chosen.length !== 1 ? 's' : ''} ready.`;
+  else hint.textContent = `${sel.length} classes combined — ${chosen.length} students ready.`;
+}
+
+function loadSelectedClasses(replace) {
+  if (selectedClasses.size === 0) { showToast('Tick at least one class first'); return; }
+
+  const chosen = classLibrary.filter(e => selectedClasses.has(e.className));
+
+  // A student is the same person if they share an email (or, failing that, a name).
+  const personKey = s => (s.email ? 'e:' + s.email.toLowerCase() : 'n:' + s.name.toLowerCase());
+  const seen = new Set();
+  const picked = [];
+  chosen.forEach(s => {
+    const k = personKey(s);
+    if (!seen.has(k)) { seen.add(k); picked.push(s); }
+  });
+
+  if (replace) { names = []; memberInfo = {}; }
+
+  const takenLabels = new Set(names.map(n => n.toLowerCase()));
+  const addedBefore = names.length;
+
+  picked.forEach(s => {
+    if (!replace && names.some(n => {
+      const inf = memberInfo[n.toLowerCase()];
+      return personKey({ name: n, email: inf ? inf.email : '' }) === personKey(s);
+    })) return;                              // already have this person
+
+    // Two different students can share a name — keep both, label by class
+    let label = s.name;
+    if (takenLabels.has(label.toLowerCase())) {
+      label = `${s.name} (${s.className})`;
+      let i = 2;
+      while (takenLabels.has(label.toLowerCase())) label = `${s.name} (${s.className} ${i++})`;
+    }
+    takenLabels.add(label.toLowerCase());
+    names.push(label);
+    memberInfo[label.toLowerCase()] = { email: s.email, className: s.className };
+  });
+
+  const added = names.length - addedBefore;
+  if (!replace && added === 0) { showToast('Those students are already in the working list'); return; }
+
+  const cls = [...selectedClasses];
+  workingSetLabel = cls.length === 1 ? cls[0]
+    : cls.length <= 3 ? cls.join(' + ')
+    : `${cls.length} classes`;
+
+  afterListChange();
+  showToast(`${replace ? 'Loaded' : 'Added'} ${replace ? names.length : added} student${(replace ? names.length : added) !== 1 ? 's' : ''} from ${cls.length === 1 ? cls[0] : cls.length + ' classes'}`);
+
+  const row = document.getElementById('pillRow');
+  if (row.animate) row.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.015)' }, { transform: 'scale(1)' }],
+    { duration: 260, easing: 'ease-out' }
+  );
+}
+
+function clearLibrary() {
+  if (classLibrary.length === 0) return;
+  if (!confirm(`Clear all ${classLibrary.length} students from the library?\n\nThis only clears the saved copy on this device — you can always re-load your CSV.`)) return;
+  classLibrary = [];
+  selectedClasses.clear();
+  saveLibrary();
+  renderLibrary();
+  showToast('Class library cleared');
+}
+
+function downloadTemplate() {
+  const csv = [
+    'Username,Email,Class',
+    'j.smith@school.nz,j.smith@school.nz,10A',
+    'a.ngata@school.nz,a.ngata@school.nz,10A',
+    'b.chen@school.nz,b.chen@school.nz,10B',
+    'c.kumar@school.nz,c.kumar@school.nz,10B',
+    'd.wilson@school.nz,d.wilson@school.nz,11C',
+    'e.taylor@school.nz,e.taylor@school.nz,11C'
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'class-roster-template.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  showToast('Sample CSV template downloaded');
+}
+
+// drag & drop onto roster box
+const rosterDropEl = document.getElementById('rosterDrop');
+['dragover', 'dragenter'].forEach(ev => rosterDropEl.addEventListener(ev, e => {
+  e.preventDefault(); rosterDropEl.classList.add('drag-over');
+}));
+['dragleave', 'dragend'].forEach(ev => rosterDropEl.addEventListener(ev, () => rosterDropEl.classList.remove('drag-over')));
+rosterDropEl.addEventListener('drop', e => {
+  e.preventDefault();
+  rosterDropEl.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleRosterFile({ target: { files: [file], value: '' } });
+});
+
+// ══════════════════════════════════════════════════════
+//  GROUP SETTINGS  (size ⇄ number of groups)
+// ══════════════════════════════════════════════════════
+const groupSizeEl = document.getElementById('groupSize');
+const numGroupsEl = document.getElementById('numGroups');
+
+function currentRemainder() {
+  const el = document.querySelector('input[name="remainder"]:checked');
+  return el ? el.value : 'spread';
+}
 
 function getSettings() {
-  const groupSize = parseInt(document.getElementById('groupSize').value) || 3;
-  const numGroupsRaw = document.getElementById('numGroups').value;
-  const numGroups = numGroupsRaw ? parseInt(numGroupsRaw) : null;
-  const remainderEl = document.querySelector('input[name="remainder"]:checked');
-  const remainder = remainderEl ? remainderEl.value : 'spread';
-  const revealMode = document.getElementById('revealToggle').checked;
-  return { groupSize, numGroups, remainder, revealMode };
+  const groupSize = parseInt(groupSizeEl.value) || 4;
+  const ngRaw = numGroupsEl.value;
+  const numGroups = ngRaw ? parseInt(ngRaw) : null;
+  return {
+    groupSize,
+    numGroups,
+    remainder: currentRemainder(),
+    revealMode: document.getElementById('revealToggle').checked,
+    lastEdited
+  };
 }
 
-function updatePreview() {
-  const { groupSize, numGroups } = getSettings();
-  const n = names.length;
-  const el = document.getElementById('groupPreview');
-  if (n === 0) { el.textContent = 'Add names to see preview'; return; }
-  if (numGroups) {
-    const perGroup = Math.floor(n / numGroups);
-    const rem = n % numGroups;
-    el.textContent = `${n} names → ${numGroups} groups (~${perGroup}${rem ? '–'+(perGroup+1) : ''} each)`;
-  } else {
-    const g = Math.floor(n / groupSize);
-    const rem = n % groupSize;
-    el.textContent = `${n} names → ${g} group${g!==1?'s':''} of ${groupSize}` + (rem ? ` + ${rem} remainder` : '');
+/**
+ * One source of truth for "what will happen".
+ * Sizes describe exactly the groups allocate() will build.
+ */
+function computePlan() {
+  const N = names.length;
+  const S = Math.max(1, parseInt(groupSizeEl.value) || 4);
+  const R = currentRemainder();
+  const plan = { N, S, R, mode: lastEdited, groups: 0, sizes: [], leftOver: 0, note: '' };
+
+  if (N === 0) return plan;
+
+  if (lastEdited === 'groups') {
+    const raw = parseInt(numGroupsEl.value) || Math.ceil(N / S);
+    const G = Math.max(1, Math.min(N, raw));
+    const base = Math.floor(N / G), extra = N % G;
+    plan.groups = G;
+    plan.sizes = Array.from({ length: G }, (_, i) => base + (i < extra ? 1 : 0));
+    plan.S = Math.ceil(N / G);
+    return plan;
   }
+
+  // ── size-driven ──
+  const full = Math.floor(N / S);
+  const rem = N % S;
+  plan.full = full;
+  plan.rem = rem;
+
+  if (full === 0) {
+    plan.groups = 1;
+    plan.sizes = [N];
+    plan.note = 'The class is smaller than the group size, so everyone stays in one group.';
+    return plan;
+  }
+  if (rem === 0) {
+    plan.groups = full;
+    plan.sizes = Array(full).fill(S);
+    return plan;
+  }
+  if (R === 'spread') {
+    plan.groups = full;
+    const add = Math.floor(rem / full);       // every group takes this many extras
+    const spare = rem % full;                 // first few groups take one more
+    plan.sizes = Array.from({ length: full }, (_, i) => S + add + (i < spare ? 1 : 0));
+  } else if (R === 'separate') {
+    plan.groups = full + 1;
+    plan.sizes = [...Array(full).fill(S), rem];
+  } else { // drop
+    plan.groups = full;
+    plan.sizes = Array(full).fill(S);
+    plan.leftOver = rem;
+  }
+  return plan;
 }
+
+function syncFields() {
+  if (syncLock) return;
+  syncLock = true;
+  const plan = computePlan();
+
+  if (plan.N > 0) {
+    if (lastEdited === 'size') {
+      numGroupsEl.value = plan.groups;
+    } else {
+      groupSizeEl.value = plan.S;
+    }
+  }
+  updatePreview(plan);
+  updateRemainderNote(plan);
+  syncLock = false;
+}
+
+function describePlan(plan) {
+  const { N } = plan;
+  if (N === 0) return 'Add names to see the plan <span style="opacity:0.6;">— the two fields stay linked</span>';
+
+  const unit = `student${N !== 1 ? 's' : ''}`;
+
+  if (plan.mode === 'groups') {
+    const g = plan.groups;
+    const min = Math.min(...plan.sizes), max = Math.max(...plan.sizes);
+    const each = min === max ? `${min} each` : `${min}–${max} each`;
+    return `${N} ${unit} → <strong>${g} group${g !== 1 ? 's' : ''}</strong> · ${each} <span class="plan-dim">— driven by “No. of groups”</span>`;
+  }
+
+  if (plan.groups === 1 && plan.N < plan.S) {
+    return `${N} ${unit} → <strong>1 group</strong> <span class="plan-dim">— group size (${plan.S}) is bigger than the class</span>`;
+  }
+  if (plan.leftOver > 0) {
+    return `${N} ${unit} → <strong>${plan.groups} group${plan.groups !== 1 ? 's' : ''} of ${plan.S}</strong> + <strong>${plan.leftOver} left unallocated</strong>`;
+  }
+  if (plan.R === 'separate' && plan.rem > 0) {
+    return `${N} ${unit} → <strong>${plan.full} × ${plan.S}</strong> + <strong>1 × ${plan.rem}</strong> (smaller group)`;
+  }
+  if (plan.groups === 1) {
+    return `${N} ${unit} → <strong>1 group of ${N}</strong> <span class="plan-dim">(remainder spread in)</span>`;
+  }
+  const sizes = plan.sizes;
+  const mn = Math.min(...sizes), mx = Math.max(...sizes);
+  const each = mn === mx ? `${mn} each` : `${mn}–${mx} each`;
+  const dim = plan.rem > 0 ? ' <span class="plan-dim">(remainder spread in)</span>' : ' <span class="plan-dim">(exact)</span>';
+  return `${N} ${unit} → <strong>${plan.groups} group${plan.groups !== 1 ? 's' : ''}</strong> · ${each}${dim}`;
+}
+
+function updatePreview(plan) {
+  plan = plan || computePlan();
+  const el = document.getElementById('groupPreview');
+  el.innerHTML = describePlan(plan) +
+    `<div class="plan-link">🔗 Linked — editing either field updates the other.</div>`;
+}
+
+function updateRemainderNote(plan) {
+  const note = document.getElementById('remainderNote');
+  if (!note) return;
+  plan = plan || computePlan();
+  const active = plan.mode === 'size';
+  note.style.opacity = active ? '1' : '0.55';
+  note.innerHTML = active
+    ? `Applies while <strong>Group size</strong> is driving. Type in <em>No. of groups</em> to switch to balanced groups instead.`
+    : `You're driving by <strong>No. of groups</strong>, so groups are balanced automatically — this rule is ignored. Type in <em>Group size</em> to use it.`;
+}
+
+function handleGroupSizeInput() {
+  if (syncLock) return;
+  const v = parseInt(groupSizeEl.value);
+  if (!v || v < 1) return;                // let them clear/retype
+  lastEdited = 'size';
+  syncFields();
+  saveState();
+}
+
+function handleNumGroupsInput() {
+  if (syncLock) return;
+  const v = parseInt(numGroupsEl.value);
+  if (!v || v < 1) return;
+  lastEdited = 'groups';
+  syncFields();
+  saveState();
+}
+
+groupSizeEl.addEventListener('input', handleGroupSizeInput);
+numGroupsEl.addEventListener('input', handleNumGroupsInput);
+groupSizeEl.addEventListener('blur', () => {
+  if (!parseInt(groupSizeEl.value)) groupSizeEl.value = computePlan().S || 4;
+  handleGroupSizeInput();
+});
+numGroupsEl.addEventListener('blur', () => {
+  const plan = computePlan();
+  if (!parseInt(numGroupsEl.value)) numGroupsEl.value = Math.max(1, plan.groups);
+  else if (parseInt(numGroupsEl.value) > Math.max(1, names.length)) numGroupsEl.value = Math.max(1, names.length);
+  handleNumGroupsInput();
+});
+document.getElementById('revealToggle').addEventListener('change', () => {
+  const on = document.getElementById('revealToggle').checked;
+  if (currentGroups.length > 0) {
+    revealState = {};
+    if (on) currentGroups.forEach((_, gi) => { revealState[gi] = new Set(); });
+    renderGroups(on);
+  }
+  saveState();
+});
 
 function selectRadio(el, shouldSave = true) {
   document.querySelectorAll('.radio-opt').forEach(opt => opt.classList.remove('selected'));
   el.closest('.radio-opt').classList.add('selected');
+  syncFields();
   if (shouldSave) saveState();
 }
 
-// ── ALLOCATION ──
+// ══════════════════════════════════════════════════════
+//  ALLOCATION
+// ══════════════════════════════════════════════════════
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -944,50 +1860,26 @@ function shuffle(arr) {
 }
 
 function allocate() {
-  if (names.length === 0) { showToast('Add some names first!'); return; }
-  const { groupSize, numGroups, remainder, revealMode } = getSettings();
+  if (names.length === 0) { showToast('Add some names first'); return; }
+
+  const plan = computePlan();
+  const revealMode = document.getElementById('revealToggle').checked;
   const shuffled = shuffle(names);
 
-  let groups = [];
-  let leftover = [];
+  const groups = [];
+  let idx = 0;
+  plan.sizes.forEach(size => {
+    groups.push(shuffled.slice(idx, idx + size));
+    idx += size;
+  });
+  const leftover = shuffled.slice(idx); // only populated in "leave unallocated" mode
 
-  if (numGroups) {
-    const base = Math.floor(shuffled.length / numGroups);
-    const extra = shuffled.length % numGroups;
-    let idx = 0;
-    for (let g = 0; g < numGroups; g++) {
-      const size = base + (g < extra ? 1 : 0);
-      groups.push(shuffled.slice(idx, idx + size));
-      idx += size;
-    }
-  } else {
-    let idx = 0;
-    while (idx + groupSize <= shuffled.length) {
-      groups.push(shuffled.slice(idx, idx + groupSize));
-      idx += groupSize;
-    }
-    leftover = shuffled.slice(idx);
-
-    if (leftover.length > 0) {
-      if (remainder === 'spread') {
-        leftover.forEach((name, i) => {
-          if (groups[i % groups.length]) groups[i % groups.length].push(name);
-        });
-        leftover = [];
-      } else if (remainder === 'separate') {
-        groups.push(leftover);
-        leftover = [];
-      }
-    }
-  }
-
-  currentGroups = groups;
+  currentGroups = groups.filter(g => g.length > 0);
   unallocated = leftover;
-
   revealState = {};
-  if (revealMode) {
-    groups.forEach((_, gi) => { revealState[gi] = new Set(); });
-  }
+  if (revealMode) currentGroups.forEach((_, gi) => { revealState[gi] = new Set(); });
+
+  if (plan.note) showToast(plan.note);
 
   renderGroups(revealMode);
   saveState();
@@ -995,29 +1887,30 @@ function allocate() {
 
 function renderGroups(revealMode) {
   document.getElementById('emptyState').style.display = 'none';
-  const area = document.getElementById('resultsArea');
-  area.style.display = 'block';
+  document.getElementById('resultsArea').style.display = 'block';
 
-  const title = document.getElementById('resultsTitle');
-  const meta  = document.getElementById('resultsMeta');
-  title.textContent = `${currentGroups.length} Group${currentGroups.length !== 1 ? 's' : ''}`;
   const total = currentGroups.reduce((s, g) => s + g.length, 0) + unallocated.length;
-  meta.textContent = `${total} ${total !== 1 ? 'people' : 'person'} · group size ${getSettings().groupSize}${unallocated.length ? ` · ${unallocated.length} unallocated` : ''}`;
+  const sizes = currentGroups.map(g => g.length);
+  const mn = sizes.length ? Math.min(...sizes) : 0;
+  const mx = sizes.length ? Math.max(...sizes) : 0;
+  const sizeText = sizes.length ? (mn === mx ? `${mn} per group` : `${mn}–${mx} per group`) : '';
+
+  document.getElementById('resultsTitle').textContent =
+    `${currentGroups.length} Group${currentGroups.length !== 1 ? 's' : ''}`;
+  document.getElementById('resultsMeta').textContent =
+    `${total} ${total !== 1 ? 'people' : 'person'}${sizes.length ? ` · ${sizeText}` : ''}` +
+    (unallocated.length ? ` · ${unallocated.length} unallocated` : '');
 
   const grid = document.getElementById('groupsGrid');
   grid.innerHTML = '';
 
-  const isRemainder = (gi) => {
-    if (!getSettings().numGroups) {
-      const baseSize = parseInt(document.getElementById('groupSize').value) || 3;
-      return currentGroups[gi]?.length !== baseSize && gi === currentGroups.length - 1;
-    }
-    return false;
-  };
-
+  const remainderMode = currentRemainder() === 'separate';
+  const targetSize = Math.max(1, parseInt(groupSizeEl.value) || 4);
   currentGroups.forEach((members, gi) => {
+    const isRemainder = remainderMode && lastEdited === 'size' && currentGroups.length > 1 &&
+      gi === currentGroups.length - 1 && members.length < targetSize;
     const card = document.createElement('div');
-    card.className = 'group-card' + (isRemainder(gi) ? ' remainder' : '') + (revealMode ? ' reveal-mode' : '');
+    card.className = 'group-card' + (isRemainder ? ' remainder' : '') + (revealMode ? ' reveal-mode' : '');
 
     const header = document.createElement('div');
     header.className = 'group-header';
@@ -1032,10 +1925,10 @@ function renderGroups(revealMode) {
       item.className = 'member-item' + (revealMode ? ' hidden' : '');
       item.dataset.gi = gi;
       item.dataset.mi = mi;
-      item.innerHTML = `<span class="member-num">${mi + 1}</span><span class="member-name">${name}</span>`;
-      if (revealMode) {
-        item.addEventListener('click', () => revealOne(item, gi, mi, name));
-      }
+      const info = memberInfo[name.toLowerCase()];
+      if (info && info.email) item.title = info.email;
+      item.innerHTML = `<span class="member-num">${mi + 1}</span><span class="member-name">${escapeHtml(name)}</span>`;
+      if (revealMode) item.addEventListener('click', () => revealOne(item, gi, mi));
       list.appendChild(item);
     });
 
@@ -1043,8 +1936,7 @@ function renderGroups(revealMode) {
     grid.appendChild(card);
   });
 
-  const hint = document.getElementById('revealHint');
-  hint.style.display = revealMode ? 'block' : 'none';
+  document.getElementById('revealHint').style.display = revealMode ? 'block' : 'none';
 
   const uArea = document.getElementById('unallocatedArea');
   const uList = document.getElementById('unallocatedList');
@@ -1063,7 +1955,7 @@ function renderGroups(revealMode) {
   }
 }
 
-function revealOne(item, gi, mi, name) {
+function revealOne(item, gi, mi) {
   if (!revealState[gi]) revealState[gi] = new Set();
   if (revealState[gi].has(mi)) return;
   revealState[gi].add(mi);
@@ -1073,32 +1965,48 @@ function revealOne(item, gi, mi, name) {
 
 function revealAll() {
   document.querySelectorAll('.member-item.hidden').forEach(item => {
-    const gi = parseInt(item.dataset.gi);
-    const mi = parseInt(item.dataset.mi);
-    const name = item.querySelector('.member-name').textContent;
-    revealOne(item, gi, mi, name);
+    revealOne(item, parseInt(item.dataset.gi), parseInt(item.dataset.mi));
   });
   document.getElementById('revealHint').style.display = 'none';
 }
 
-// ── COPY ──
 function copyGroups() {
+  if (currentGroups.length === 0) { showToast('Nothing to copy yet'); return; }
   const lines = currentGroups.map((members, gi) =>
-    `Group ${gi + 1}:\n${members.map((m, i) => `  ${i+1}. ${m}`).join('\n')}`
+    `Group ${gi + 1}:\n${members.map((m, i) => `  ${i + 1}. ${m}`).join('\n')}`
   );
   if (unallocated.length) lines.push(`Unallocated:\n${unallocated.map(m => `  - ${m}`).join('\n')}`);
-  navigator.clipboard.writeText(lines.join('\n\n')).then(() => showToast('Copied to clipboard!'));
+  const text = lines.join('\n\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('Copied to clipboard'))
+      .catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('Copied to clipboard'); }
+  catch (e) { showToast('Could not copy — select the text manually'); }
+  document.body.removeChild(ta);
 }
 
-// ── TOAST ──
+// ── UI BITS ──
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-// ── SIDEBAR TOGGLE ──
 function toggleSidebar() {
   const app = document.getElementById('app');
   const btn = document.getElementById('sidebarToggle');
@@ -1107,8 +2015,15 @@ function toggleSidebar() {
   btn.title = collapsed ? 'Show settings panel' : 'Hide settings panel';
 }
 
-// ── INIT ──
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+loadLibraryState();
 loadState();
+syncFields();
+updateRemainderNote();
+if (names.length > 0 && !numGroupsEl.value) saveState();
+
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4d373e468a02c5b',t:'MTc5MjQ1MTM5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
