@@ -287,6 +287,349 @@
             cursor: pointer;
             font-weight: bold;
         }
+
+        .btn-link {
+            background-color: #cba6f7;
+            color: #1e1e2e;
+        }
+
+        .btn-link.active {
+            background-color: #f5c2e7;
+            box-shadow: 0 0 0 2px #cba6f7;
+        }
+
+        .btn-sample {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px dashed var(--border-color);
+        }
+
+        header {
+            flex-wrap: wrap;
+        }
+
+        .node-text {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 150px;
+        }
+
+        .floating-node {
+            overflow: visible;
+        }
+
+        .floating-node.expanded .node-text {
+            white-space: normal;
+            word-break: break-word;
+            max-width: 370px;
+        }
+
+        .floating-node.has-links {
+            box-shadow: 0 0 0 1px #cba6f7, 0 4px 10px rgba(0, 0, 0, 0.18);
+        }
+
+        .floating-node.link-source {
+            z-index: 11;
+            box-shadow: 0 0 0 3px #cba6f7, 0 0 18px rgba(203, 166, 247, 0.45);
+        }
+
+        .floating-node.link-hot {
+            box-shadow: 0 0 0 2px #f5c2e7, 0 0 14px rgba(245, 194, 231, 0.4);
+        }
+
+        .link-count-badge {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 9px;
+            background: #cba6f7;
+            color: #1e1e2e;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #link-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .link-line {
+            stroke: #cba6f7;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            opacity: 0.9;
+        }
+
+        .link-line.is-hot {
+            stroke: #f5c2e7;
+            stroke-width: 3.5;
+        }
+
+        .link-rubber {
+            stroke: #f5c2e7;
+            stroke-width: 2;
+            stroke-dasharray: 6 6;
+            stroke-linecap: round;
+            opacity: 0.85;
+        }
+
+        .link-label {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            z-index: 12;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 180px;
+            background: #313244;
+            color: #f5e0dc;
+            border: 1px solid #cba6f7;
+            border-radius: 999px;
+            padding: 3px 8px 3px 10px;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            line-height: 1.3;
+        }
+
+        .link-label-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .link-label-x {
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e1e2e;
+            background: #f5c2e7;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .link-label.is-hot {
+            border-color: #f5c2e7;
+            background: #45475a;
+        }
+
+        .link-status {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 16;
+            max-width: min(420px, calc(100% - 32px));
+            background: rgba(37, 37, 56, 0.94);
+            border: 1px solid #cba6f7;
+            color: var(--text-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+        }
+
+        .link-popover {
+            position: absolute;
+            z-index: 30;
+            width: 260px;
+            background: var(--panel-bg);
+            border: 1px solid #cba6f7;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .link-popover[hidden],
+        .link-status[hidden],
+        .empty-state[hidden] {
+            display: none;
+        }
+
+        .link-popover-title {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .link-popover-ends {
+            font-size: 11px;
+            opacity: 0.75;
+            line-height: 1.4;
+        }
+
+        .link-popover input {
+            width: 100%;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+            outline: none;
+        }
+
+        .link-popover input:focus {
+            border-color: #cba6f7;
+        }
+
+        .link-popover-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .link-popover-actions .btn {
+            flex: 1;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #f38ba8;
+            border: 1px solid #f38ba8;
+        }
+
+        .empty-state {
+            position: absolute;
+            inset: 0;
+            z-index: 14;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            padding: 24px;
+        }
+
+        .empty-card {
+            max-width: 460px;
+            background: rgba(37, 37, 56, 0.92);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 22px 24px;
+            text-align: center;
+        }
+
+        .empty-card h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .empty-card p {
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.85;
+        }
+
+        .empty-card p + p {
+            margin-top: 8px;
+        }
+
+        .links-panel {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .links-help {
+            font-size: 12px;
+            line-height: 1.45;
+            opacity: 0.7;
+        }
+
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .link-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .link-row.is-hot {
+            border-color: #cba6f7;
+        }
+
+        .link-row-text {
+            flex: 1;
+            min-width: 0;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .link-end {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .link-rel {
+            display: inline-block;
+            margin: 3px 0;
+            color: #1e1e2e;
+            background: #cba6f7;
+            border-radius: 999px;
+            padding: 1px 7px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .link-row-delete {
+            flex: 0 0 auto;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .link-row-delete:hover {
+            border-color: #f38ba8;
+            color: #f38ba8;
+        }
+
+        .link-empty {
+            font-size: 12px;
+            opacity: 0.55;
+        }
+
+        #canvas-container.link-mode {
+            cursor: crosshair;
+        }
+
+        #canvas-container.link-mode .floating-node {
+            cursor: crosshair;
+        }
     </style>
 </head>
 <body>
@@ -301,7 +644,9 @@
         <div>
             <select id="view-variable" disabled><option>Upload CSV</option></select>
         </div>
+        <button class="btn btn-sample" id="sample-btn">Load sample</button>
         <button class="btn btn-secondary" id="reshuffle-btn" disabled>Reshuffle</button>
+        <button class="btn btn-link" id="link-mode-btn" disabled>Link notes</button>
         <button class="btn" id="export-btn" disabled>Export CSV</button>
         <div class="stats-banner" id="stats-display">Remaining: 0 | Grouped: 0</div>
     </header>
@@ -327,10 +672,40 @@
             </div>
 
             <div class="category-list" id="category-list"></div>
+
+            <div class="links-panel">
+                <div class="creator-title">Note links</div>
+                <p class="links-help">Click two floating notes to draw a labeled link. Notes keep drifting, but each link slows that note down.</p>
+                <div class="link-list" id="link-list">
+                    <div class="link-empty">No links yet.</div>
+                </div>
+            </div>
         </div>
 
         <div id="canvas-container">
-            <div id="canvas-stage"></div>
+            <div id="canvas-stage">
+                <svg id="link-layer" aria-hidden="true">
+                    <line id="link-rubber" class="link-rubber" x1="0" y1="0" x2="0" y2="0" style="display:none"></line>
+                </svg>
+            </div>
+            <div id="link-status" class="link-status" hidden></div>
+            <div id="link-popover" class="link-popover" hidden>
+                <div class="link-popover-title" id="link-popover-title">Label this link</div>
+                <div class="link-popover-ends" id="link-popover-ends"></div>
+                <input type="text" id="link-label-input" placeholder="e.g. causes, contrasts, same theme" maxlength="80" autocomplete="off">
+                <div class="link-popover-actions">
+                    <button class="btn btn-link" id="link-confirm-btn" type="button">Add link</button>
+                    <button class="btn btn-secondary" id="link-cancel-btn" type="button">Cancel</button>
+                </div>
+                <button class="btn btn-danger" id="link-delete-btn" type="button" hidden>Remove link</button>
+            </div>
+            <div id="empty-state" class="empty-state">
+                <div class="empty-card">
+                    <h2>Floating notes</h2>
+                    <p>Upload a CSV, or load sample notes to try it immediately.</p>
+                    <p>Press <strong>Link notes</strong>, click two notes, and name the connection. They keep floating — just slower the more links they have.</p>
+                </div>
+            </div>
             <div class="zoom-controls">
                 <button class="zoom-btn" id="zoom-out">-</button>
                 <button class="zoom-btn" id="zoom-reset">100%</button>
@@ -373,15 +748,87 @@
 
         const speedMultiplier = 0.4;
 
+        let links = [];
+        let linkIdSeq = 0;
+        let linkMode = false;
+        let linkSourceId = null;
+        let pendingLink = null;
+        let editingLinkId = null;
+        let pointerStage = null;
+
+        const linkModeBtn = document.getElementById('link-mode-btn');
+        const sampleBtn = document.getElementById('sample-btn');
+        const linkLayer = document.getElementById('link-layer');
+        const linkRubber = document.getElementById('link-rubber');
+        const linkStatus = document.getElementById('link-status');
+        const linkPopover = document.getElementById('link-popover');
+        const linkPopoverTitle = document.getElementById('link-popover-title');
+        const linkPopoverEnds = document.getElementById('link-popover-ends');
+        const linkLabelInput = document.getElementById('link-label-input');
+        const linkConfirmBtn = document.getElementById('link-confirm-btn');
+        const linkCancelBtn = document.getElementById('link-cancel-btn');
+        const linkDeleteBtn = document.getElementById('link-delete-btn');
+        const linkList = document.getElementById('link-list');
+        const emptyState = document.getElementById('empty-state');
+
         fileInput.addEventListener('change', handleFileUpload);
         viewSelect.addEventListener('change', (e) => { displayVariable = e.target.value; updateFloatingLabels(); updateUI(); });
         reshuffleBtn.addEventListener('click', () => { clearFloatingPool(); populateFloatingPool(); });
+        linkModeBtn.addEventListener('click', () => setLinkMode(!linkMode));
+        sampleBtn.addEventListener('click', loadSampleNotes);
+        linkConfirmBtn.addEventListener('click', confirmLinkLabel);
+        linkCancelBtn.addEventListener('click', hideLinkPopover);
+        linkDeleteBtn.addEventListener('click', () => {
+            if (editingLinkId != null) removeLink(editingLinkId);
+            hideLinkPopover();
+            linkSourceId = null;
+            markLinkSource();
+            updateLinkStatus();
+        });
+        linkLabelInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); confirmLinkLabel(); }
+            if (e.key === 'Escape') { e.preventDefault(); hideLinkPopover(); }
+        });
         addGroupBtn.addEventListener('click', generatePrimaryCategory);
         addSubgroupBtn.addEventListener('click', generateSubcategory);
         exportBtn.addEventListener('click', exportProcessedCSV);
         backToRootBtn.addEventListener('click', navigateToRoot);
 
         canvasContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
+        canvasContainer.addEventListener('mousemove', (e) => {
+            if (!linkMode || linkSourceId == null || !linkPopover.hidden) return;
+            const rect = canvasStage.getBoundingClientRect();
+            pointerStage = {
+                x: (e.clientX - rect.left) / zoomScale,
+                y: (e.clientY - rect.top) / zoomScale
+            };
+        });
+        canvasContainer.addEventListener('mouseleave', () => { pointerStage = null; });
+        canvasContainer.addEventListener('click', (e) => {
+            if (!linkMode || !linkPopover.hidden) return;
+            if (e.target.closest('.floating-node, .link-label, .link-popover, .zoom-controls')) return;
+            linkSourceId = null;
+            markLinkSource();
+            updateLinkStatus();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!linkPopover.hidden) { hideLinkPopover(); return; }
+                if (linkSourceId != null) {
+                    linkSourceId = null;
+                    markLinkSource();
+                    updateLinkStatus();
+                    return;
+                }
+                if (linkMode) setLinkMode(false);
+                return;
+            }
+            if ((e.key === 'l' || e.key === 'L') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                if (e.target.matches('input, textarea, select')) return;
+                if (linkModeBtn.disabled) return;
+                setLinkMode(!linkMode);
+            }
+        });
         document.getElementById('zoom-in').addEventListener('click', () => adjustZoom(0.1));
         document.getElementById('zoom-out').addEventListener('click', () => adjustZoom(-0.1));
         document.getElementById('zoom-reset').addEventListener('click', () => { zoomScale = 1; applyZoomTransform(); });
@@ -398,6 +845,8 @@
             const lines = text.split(/\r?\n/).map(row => row.trim()).filter(row => row.length > 0);
             if (lines.length < 2) return;
 
+            resetLinks();
+            setLinkMode(false);
             headers = lines[0].split(csvSplitter).map(h => h.replace(/^["']|["']$/g, '').trim());
             dataset = lines.slice(1).map((row, index) => {
                 const values = row.split(csvSplitter);
@@ -416,8 +865,28 @@
                 opt.value = h; opt.textContent = h; viewSelect.appendChild(opt);
             });
 
-            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = false;
+            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = linkModeBtn.disabled = false;
+            emptyState.hidden = true;
             navigateToRoot();
+        }
+
+        function loadSampleNotes() {
+            const rows = [
+                'excerpt',
+                'Waiting room feels chaotic',
+                'Nurses skip breaks',
+                'Patients repeat their story',
+                'Discharge instructions unclear',
+                'Family not updated',
+                'Night shift is understaffed',
+                'Charts take too long',
+                'Triage delays compound',
+                'Handoff loses details',
+                'Patients feel unheard',
+                'Medication timing slips',
+                'Rooms turn over slowly'
+            ];
+            processCSVData(rows.join('\n'));
         }
 
         function populateFloatingPool() {
@@ -435,31 +904,45 @@
                 
                 item.x = Math.random() * ((canvasContainer.clientWidth / zoomScale) - 180);
                 item.y = Math.random() * ((canvasContainer.clientHeight / zoomScale) - 50);
-                item.vx = (Math.random() - 0.5) * 3 * speedMultiplier;
-                item.vy = (Math.random() - 0.5) * 3 * speedMultiplier;
+                item.baseVx = (Math.random() - 0.5) * 3 * speedMultiplier;
+                item.baseVy = (Math.random() - 0.5) * 3 * speedMultiplier;
+                if (Math.abs(item.baseVx) < 0.15) item.baseVx = item.baseVx < 0 ? -0.25 : 0.25;
+                if (Math.abs(item.baseVy) < 0.15) item.baseVy = item.baseVy < 0 ? -0.2 : 0.2;
                 
                 floatingItems.push(item);
                 createFloatingElementDOM(item);
             }
+            refreshLinkBadges();
         }
 
         function createFloatingElementDOM(item) {
             const el = document.createElement('div');
             el.className = `floating-node ${currentWorkspace !== 'root' ? 'sub-node' : ''}`;
             el.id = `node-${item._id}`;
-            el.textContent = item[displayVariable] || '(Empty)';
-            el.draggable = true;
+            el.draggable = !linkMode;
             el.style.left = `${item.x}px`;
             el.style.top = `${item.y}px`;
 
-            el.addEventListener('click', () => {
+            const text = document.createElement('span');
+            text.className = 'node-text';
+            text.textContent = item[displayVariable] || '(Empty)';
+            el.appendChild(text);
+
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (el.dataset.dragged === 'true') { el.dataset.dragged = 'false'; return; }
+                if (linkMode || e.shiftKey) {
+                    if (!linkMode) setLinkMode(true);
+                    handleLinkPick(item._id, e);
+                    return;
+                }
                 const isExp = el.classList.contains('expanded');
                 document.querySelectorAll('.floating-node').forEach(n => n.classList.remove('expanded'));
                 if (!isExp) el.classList.add('expanded');
             });
 
             el.addEventListener('dragstart', (e) => {
+                if (linkMode) { e.preventDefault(); return; }
                 e.dataTransfer.setData('text/plain', item._id);
                 el.dataset.dragged = 'true';
                 setTimeout(() => el.style.opacity = '0.4', 0);
@@ -546,8 +1029,9 @@
                         <div class="inspect-container">
                             ${matchedItems.map(item => `
                                 <div class="inspect-card" onclick="toggleInspectCard(event, this)">
-                                    <div class="inspect-card-text">${item[displayVariable] || '(Empty)'}</div>
-                                    ${item.assigned_subcategory ? `<div class="inspect-card-subtag">Sub: ${item.assigned_subcategory}</div>` : ''}
+                                    <div class="inspect-card-text">${escapeHtml(item[displayVariable] || '(Empty)')}</div>
+                                    ${item.assigned_subcategory ? `<div class="inspect-card-subtag">Sub: ${escapeHtml(item.assigned_subcategory)}</div>` : ''}
+                                    ${inspectLinkMarkup(item)}
                                 </div>
                             `).join('')}
                         </div>
@@ -573,7 +1057,8 @@
                         <div class="inspect-container">
                             ${matchedSubItems.map(item => `
                                 <div class="inspect-card" onclick="toggleInspectCard(event, this)">
-                                    <div class="inspect-card-text">${item[displayVariable] || '(Empty)'}</div>
+                                    <div class="inspect-card-text">${escapeHtml(item[displayVariable] || '(Empty)')}</div>
+                                    ${inspectLinkMarkup(item)}
                                 </div>
                             `).join('')}
                         </div>
@@ -584,7 +1069,8 @@
             }
 
             const totalGrouped = dataset.filter(item => item.assigned_group).length;
-            statsDisplay.textContent = `Remaining: ${dataset.length - totalGrouped} | Grouped: ${totalGrouped}`;
+            statsDisplay.textContent = `Remaining: ${dataset.length - totalGrouped} | Grouped: ${totalGrouped} | Links: ${links.length}`;
+            renderLinkList();
         }
 
         function toggleInspectCard(event, cardElement) {
@@ -605,7 +1091,8 @@
 
         function updateFloatingLabels() {
             floatingItems.forEach(item => {
-                if (item.domElement) item.domElement.textContent = item[displayVariable] || '(Empty)';
+                const text = item.domElement && item.domElement.querySelector('.node-text');
+                if (text) text.textContent = item[displayVariable] || '(Empty)';
             });
         }
 
@@ -627,27 +1114,35 @@
                 const height = canvasContainer.clientHeight / zoomScale;
                 floatingItems.forEach(item => {
                     if (!item.domElement) return;
-                    item.x += item.vx; item.y += item.vy;
-                    const r = item.domElement.getBoundingClientRect();
-                    const w = r.width / zoomScale; const h = r.height / zoomScale;
-                    if (item.x <= 0) { item.x = 0; item.vx *= -1; }
-                    if (item.x + w >= width) { item.x = width - w; item.vx *= -1; }
-                    if (item.y <= 0) { item.y = 0; item.vy *= -1; }
-                    if (item.y + h >= height) { item.y = height - h; item.vy *= -1; }
-                    item.domElement.style.left = `${item.x}px`; item.domElement.style.top = `${item.y}px`;
+                    if (item.baseVx == null) item.baseVx = item.vx || 0.3;
+                    if (item.baseVy == null) item.baseVy = item.vy || 0.2;
+                    const factor = driftFactor(linkCount(item._id));
+                    item.x += item.baseVx * factor;
+                    item.y += item.baseVy * factor;
+                    const w = item.domElement.offsetWidth;
+                    const h = item.domElement.offsetHeight;
+                    if (item.x <= 0) { item.x = 0; item.baseVx *= -1; }
+                    if (item.x + w >= width) { item.x = width - w; item.baseVx *= -1; }
+                    if (item.y <= 0) { item.y = 0; item.baseVy *= -1; }
+                    if (item.y + h >= height) { item.y = height - h; item.baseVy *= -1; }
+                    item.domElement.style.left = `${item.x}px`;
+                    item.domElement.style.top = `${item.y}px`;
                 });
             }
+            updateLinkVisuals();
             requestAnimationFrame(physicsLoop);
         }
         requestAnimationFrame(physicsLoop);
 
         function exportProcessedCSV() {
             if (dataset.length === 0) return;
-            const outputHeaders = [...headers, 'assigned_group', 'assigned_subcategory'];
+            const outputHeaders = [...headers, 'assigned_group', 'assigned_subcategory', 'links'];
             const csvRows = [outputHeaders.join(',')];
             dataset.forEach(item => {
                 const rowValues = outputHeaders.map(header => {
-                    const value = item[header] !== undefined ? item[header] : '';
+                    const value = header === 'links'
+                        ? linksExportValue(item)
+                        : (item[header] !== undefined ? item[header] : '');
                     return `"${String(value).replace(/"/g, '""')}"`;
                 });
                 csvRows.push(rowValues.join(','));
