@@ -662,6 +662,72 @@
         #canvas-container.link-mode .floating-node {
             cursor: crosshair;
         }
+
+        #manual-notes-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #manual-notes-input {
+            width: 100%;
+            min-height: 88px;
+            resize: vertical;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font: inherit;
+            font-size: 13px;
+            line-height: 1.4;
+            outline: none;
+        }
+
+        #manual-notes-input:focus {
+            border-color: #cba6f7;
+        }
+
+        .manual-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .manual-actions .btn {
+            flex: 1 1 auto;
+        }
+
+        .manual-hint,
+        .save-status {
+            font-size: 12px;
+            line-height: 1.4;
+            opacity: 0.7;
+        }
+
+        .save-status.is-warn {
+            color: #f9e2af;
+            opacity: 1;
+        }
+
+        .text-btn {
+            align-self: flex-start;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            opacity: 0.65;
+            font: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        .text-btn:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -672,7 +738,7 @@
         
         <button class="btn btn-secondary" id="back-to-root-btn" style="display:none;">← Back to Root</button>
         <span id="current-view-title" style="font-weight: bold; font-size: 16px;">Root Workspace</span>
-        <input type="file" id="csv-file" accept=".csv">
+        <input type="file" id="csv-file" accept=".csv,.json,text/csv,application/json">
         <div>
             <select id="view-variable" disabled><option>Upload CSV</option></select>
         </div>
@@ -686,6 +752,23 @@
     <div class="main-container">
         <div id="sidebar">
             <h3 id="sidebar-context-title">Primary Categories</h3>
+
+            <div id="manual-notes-block">
+                <div class="creator-title">Add a list</div>
+                <textarea id="manual-notes-input" rows="4" placeholder="One note per line&#10;or alpha, beta, gamma"></textarea>
+                <div class="manual-actions">
+                    <button class="btn" id="add-notes-btn" type="button">Add notes</button>
+                    <button class="btn btn-secondary" id="replace-notes-btn" type="button" title="Replace the note list and clear links. Categories stay.">Replace</button>
+                </div>
+                <p class="manual-hint">New lines keep commas inside a note. A single line is split on commas. Ctrl+Enter adds.</p>
+                <div class="manual-actions">
+                    <button class="btn btn-secondary" id="save-file-btn" type="button">Save file</button>
+                    <button class="btn btn-secondary" id="open-file-btn" type="button">Open file</button>
+                </div>
+                <input type="file" id="workspace-file" accept=".json,application/json" hidden>
+                <div id="save-status" class="save-status">Changes save in this browser automatically.</div>
+                <button type="button" id="forget-save-btn" class="text-btn">Clear local save</button>
+            </div>
             
             <div id="primary-creator-block">
                 <div class="creator-title">Add Primary Category</div>
@@ -734,7 +817,7 @@
             <div id="empty-state" class="empty-state">
                 <div class="empty-card">
                     <h2>Floating notes</h2>
-                    <p>Upload a CSV, or load sample notes to try it immediately.</p>
+                    <p>Paste a list in the sidebar, upload a CSV, or load sample notes.</p>
                     <p>Press <strong>Link notes</strong>, click two notes, and name the connection. They keep floating — just slower the more links they have.</p>
                     <button class="btn btn-link" id="empty-sample-btn" type="button" style="margin-top: 14px; pointer-events: auto;">Load sample notes</button>
                 </div>
@@ -778,6 +861,20 @@
         const statsDisplay = document.getElementById('stats-display');
         const backToRootBtn = document.getElementById('back-to-root-btn');
         const currentViewTitle = document.getElementById('current-view-title');
+        const manualNotesInput = document.getElementById('manual-notes-input');
+        const addNotesBtn = document.getElementById('add-notes-btn');
+        const replaceNotesBtn = document.getElementById('replace-notes-btn');
+        const saveFileBtn = document.getElementById('save-file-btn');
+        const openFileBtn = document.getElementById('open-file-btn');
+        const workspaceFileInput = document.getElementById('workspace-file');
+        const forgetSaveBtn = document.getElementById('forget-save-btn');
+        const saveStatus = document.getElementById('save-status');
+        const STORAGE_KEY = 'linknotes.workspace.v1';
+        let saveTimer = null;
+        let saveSuspended = false;
+        let persistEnabled = true;
+        let replaceArmed = false;
+        let forgetArmed = false;
 
         const speedMultiplier = 0.4;
 
@@ -814,6 +911,18 @@
         linkModeBtn.addEventListener('click', () => setLinkMode(!linkMode));
         sampleBtn.addEventListener('click', loadSampleNotes);
         document.getElementById('empty-sample-btn').addEventListener('click', loadSampleNotes);
+        addNotesBtn.addEventListener('click', () => addManualNotes(manualNotesInput.value, { replace: false }));
+        replaceNotesBtn.addEventListener('click', armReplaceNotes);
+        saveFileBtn.addEventListener('click', () => saveLocally({ download: true }));
+        openFileBtn.addEventListener('click', () => workspaceFileInput.click());
+        workspaceFileInput.addEventListener('change', handleWorkspaceFile);
+        forgetSaveBtn.addEventListener('click', armForgetSave);
+        manualNotesInput.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                addManualNotes(manualNotesInput.value, { replace: false });
+            }
+        });
         linkConfirmBtn.addEventListener('click', confirmLinkLabel);
         linkCancelBtn.addEventListener('click', hideLinkPopover);
         linkDeleteBtn.addEventListener('click', () => {
@@ -854,6 +963,11 @@
             updateLinkStatus();
         });
         document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                saveLocally({ download: true });
+                return;
+            }
             if (e.key === 'Escape') {
                 if (!linkPopover.hidden) { hideLinkPopover(); return; }
                 if (linkSourceId != null) {
@@ -879,8 +993,16 @@
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => processCSVData(ev.target.result);
+            reader.onload = (ev) => {
+                const text = String(ev.target.result || '');
+                if (looksLikeWorkspace(file.name, text)) {
+                    openWorkspaceText(text);
+                } else {
+                    processCSVData(text);
+                }
+            };
             reader.readAsText(file);
+            e.target.value = '';
         }
 
         function processCSVData(text) {
@@ -1130,6 +1252,7 @@
             const totalGrouped = dataset.filter(item => item.assigned_group).length;
             statsDisplay.textContent = `Remaining: ${dataset.length - totalGrouped} | Grouped: ${totalGrouped} | Links: ${links.length}`;
             renderLinkList();
+            scheduleSave();
         }
 
         function toggleInspectCard(event, cardElement) {
@@ -1805,6 +1928,404 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        function parseManualList(text) {
+            const raw = String(text || '').replace(/^\uFEFF/, '');
+            if (!raw.trim()) return [];
+            const parts = /\r?\n/.test(raw) ? raw.split(/\r?\n/) : raw.split(',');
+            return parts.map(part => part.trim()).filter(Boolean);
+        }
+
+        function nextNoteId() {
+            return dataset.reduce((max, item) => Math.max(max, Number(item._id) || 0), -1) + 1;
+        }
+
+        function rebuildViewSelect() {
+            viewSelect.innerHTML = '';
+            if (!headers.length) {
+                const opt = document.createElement('option');
+                opt.textContent = 'Upload CSV';
+                viewSelect.appendChild(opt);
+                return;
+            }
+            headers.forEach(header => {
+                const opt = document.createElement('option');
+                opt.value = header;
+                opt.textContent = header;
+                if (header === displayVariable) opt.selected = true;
+                viewSelect.appendChild(opt);
+            });
+        }
+
+        function enableWorkspace() {
+            const hasNotes = dataset.length > 0;
+            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = linkModeBtn.disabled = !hasNotes;
+            emptyState.hidden = hasNotes;
+        }
+
+        function armReplaceNotes() {
+            if (!manualNotesInput.value.trim()) {
+                setSaveStatus('Paste a list first.', true);
+                return;
+            }
+            if (!dataset.length) {
+                addManualNotes(manualNotesInput.value, { replace: true });
+                return;
+            }
+            if (!replaceArmed) {
+                replaceArmed = true;
+                replaceNotesBtn.textContent = 'Confirm replace';
+                setSaveStatus('Replace clears the current notes and links. Click again to confirm.', true);
+                setTimeout(() => {
+                    replaceArmed = false;
+                    replaceNotesBtn.textContent = 'Replace';
+                }, 2800);
+                return;
+            }
+            replaceArmed = false;
+            replaceNotesBtn.textContent = 'Replace';
+            addManualNotes(manualNotesInput.value, { replace: true });
+        }
+
+        function addManualNotes(text, { replace = false } = {}) {
+            const notes = parseManualList(text);
+            if (!notes.length) {
+                setSaveStatus('Paste a list first.', true);
+                return;
+            }
+            if (replace || !dataset.length) {
+                resetLinks();
+                setLinkMode(false);
+                headers = ['note'];
+                displayVariable = 'note';
+                dataset = notes.map((note, index) => ({
+                    _id: index,
+                    note,
+                    assigned_group: '',
+                    assigned_subcategory: ''
+                }));
+                rebuildViewSelect();
+                enableWorkspace();
+                manualNotesInput.value = '';
+                navigateToRoot();
+                noteSaved(replace ? `Replaced with ${notes.length} notes.` : `Added ${notes.length} notes.`);
+                return;
+            }
+
+            const field = displayVariable || headers[0] || 'note';
+            if (!headers.includes(field)) headers.push(field);
+            let id = nextNoteId();
+            const addedIds = [];
+            notes.forEach(note => {
+                const item = { _id: id, assigned_group: '', assigned_subcategory: '' };
+                headers.forEach(header => { item[header] = ''; });
+                item[field] = note;
+                dataset.push(item);
+                addedIds.push(id);
+                id += 1;
+            });
+            rebuildViewSelect();
+            enableWorkspace();
+            addedIds.forEach(noteId => {
+                const item = dataset.find(row => row._id === noteId);
+                if (item) ensureFloating(item);
+            });
+            refreshLinkBadges();
+            relaxLayout();
+            manualNotesInput.value = '';
+            updateUI();
+            const shown = floatingItems.filter(item => addedIds.includes(item._id)).length;
+            if (currentWorkspace !== 'root') {
+                noteSaved(`Added ${notes.length} notes to the root workspace.`);
+            } else if (shown < notes.length) {
+                noteSaved(`Added ${notes.length} notes. Reshuffle to bring the rest on screen.`);
+            } else {
+                noteSaved(`Added ${notes.length} notes.`);
+            }
+        }
+
+        function noteSaved(message) {
+            persistEnabled = true;
+            const stored = persistLocalOnly();
+            setSaveStatus(stored ? `${message} Saved locally.` : `${message} Use Save file — browser storage is blocked.`, !stored);
+        }
+
+        function ensureFloating(item) {
+            if (!item || floatingItems.some(floating => floating._id === item._id)) return;
+            if (currentWorkspace === 'root' && item.assigned_group) return;
+            if (currentWorkspace !== 'root' && (item.assigned_group !== currentWorkspace || item.assigned_subcategory)) return;
+            if (floatingItems.length >= POOL_SIZE) {
+                const victim = floatingItems.findIndex(floating => floating._id !== item._id);
+                if (victim !== -1) {
+                    floatingItems[victim].domElement?.remove();
+                    floatingItems.splice(victim, 1);
+                }
+            }
+            if (floatingItems.length >= POOL_SIZE) return;
+            const stageW = canvasContainer.clientWidth / zoomScale;
+            const stageH = canvasContainer.clientHeight / zoomScale;
+            item.x = Math.random() * Math.max(40, stageW - 250);
+            item.y = Math.random() * Math.max(40, stageH - 90);
+            item.baseVx = (Math.random() - 0.5) * 3 * speedMultiplier;
+            item.baseVy = (Math.random() - 0.5) * 3 * speedMultiplier;
+            if (Math.abs(item.baseVx) < 0.15) item.baseVx = item.baseVx < 0 ? -0.25 : 0.25;
+            if (Math.abs(item.baseVy) < 0.15) item.baseVy = item.baseVy < 0 ? -0.2 : 0.2;
+            floatingItems.push(item);
+            createFloatingElementDOM(item);
+        }
+
+        function workspaceSnapshot() {
+            return {
+                kind: 'linknotes-workspace',
+                version: 1,
+                savedAt: new Date().toISOString(),
+                headers,
+                displayVariable,
+                currentWorkspace,
+                categories: [...categories],
+                subcategories: Object.fromEntries(Object.entries(subcategories).map(([name, set]) => [name, [...set]])),
+                linkIdSeq,
+                links: links.map(({ id, a, b, label }) => ({ id, a, b, label })),
+                dataset: dataset.map(item => {
+                    const copy = { ...item };
+                    delete copy.domElement;
+                    delete copy.x;
+                    delete copy.y;
+                    delete copy.baseVx;
+                    delete copy.baseVy;
+                    delete copy.vx;
+                    delete copy.vy;
+                    return copy;
+                })
+            };
+        }
+
+        function setSaveStatus(message, warn = false) {
+            saveStatus.textContent = message;
+            saveStatus.classList.toggle('is-warn', warn);
+        }
+
+        function persistLocalOnly() {
+            if (!persistEnabled) return false;
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(workspaceSnapshot()));
+                return true;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        function scheduleSave() {
+            if (saveSuspended) return;
+            persistEnabled = true;
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                if (saveSuspended) return;
+                if (!persistLocalOnly()) {
+                    setSaveStatus('Browser storage is blocked here. Use Save file.', true);
+                }
+            }, 300);
+        }
+
+        function saveLocally({ download = false } = {}) {
+            persistEnabled = true;
+            const snapshot = workspaceSnapshot();
+            let stored = false;
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+                stored = true;
+            } catch (err) {
+                stored = false;
+            }
+            if (download || !stored) downloadWorkspaceFile(snapshot);
+            if (!stored) {
+                setSaveStatus('Browser storage is blocked here, so a save file was downloaded.', true);
+            } else if (download) {
+                setSaveStatus('Saved locally and downloaded a copy.');
+            } else {
+                setSaveStatus('Saved locally.');
+            }
+            return stored;
+        }
+
+        function downloadWorkspaceFile(snapshot) {
+            const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'linknotes-workspace.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function looksLikeWorkspace(name, text) {
+            const trimmed = String(text || '').trim();
+            if (/\.json$/i.test(name || '')) return true;
+            return trimmed.startsWith('{') && trimmed.includes('linknotes-workspace');
+        }
+
+        function openWorkspaceText(text) {
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (err) {
+                setSaveStatus('That file is not valid JSON.', true);
+                return;
+            }
+            if (!data || data.kind !== 'linknotes-workspace' || !Array.isArray(data.dataset)) {
+                setSaveStatus('That file is not a linknotes save.', true);
+                return;
+            }
+            applyWorkspace(data);
+            saveLocally();
+            setSaveStatus('Opened save file.');
+        }
+
+        function handleWorkspaceFile(e) {
+            const file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => openWorkspaceText(String(ev.target.result || ''));
+            reader.readAsText(file);
+        }
+
+        function clearCategoryState() {
+            categories.clear();
+            Object.keys(subcategories).forEach(key => delete subcategories[key]);
+        }
+
+        function applyWorkspace(data) {
+            saveSuspended = true;
+            resetLinks();
+            setLinkMode(false);
+            headers = Array.isArray(data.headers) && data.headers.length ? data.headers.map(String) : ['note'];
+            displayVariable = headers.includes(data.displayVariable) ? data.displayVariable : headers[0];
+            dataset = data.dataset.map((item, index) => {
+                const copy = { ...item };
+                delete copy.domElement;
+                if (copy._id === undefined || copy._id === null || copy._id === '') copy._id = index;
+                copy.assigned_group = copy.assigned_group || '';
+                copy.assigned_subcategory = copy.assigned_subcategory || '';
+                return copy;
+            });
+            clearCategoryState();
+            (data.categories || []).forEach(name => {
+                categories.add(String(name));
+                subcategories[name] = new Set((data.subcategories && data.subcategories[name]) || []);
+            });
+            Object.entries(data.subcategories || {}).forEach(([name, values]) => {
+                if (!subcategories[name]) subcategories[name] = new Set();
+                (values || []).forEach(value => subcategories[name].add(String(value)));
+                categories.add(name);
+            });
+            linkIdSeq = Number(data.linkIdSeq) || 0;
+            (data.links || []).forEach(link => {
+                const id = Number(link.id);
+                if (!Number.isFinite(id)) return;
+                links.push({
+                    id,
+                    a: link.a,
+                    b: link.b,
+                    label: String(link.label || 'related'),
+                    line: null,
+                    labelEl: null
+                });
+                linkIdSeq = Math.max(linkIdSeq, id);
+            });
+            rebuildViewSelect();
+            enableWorkspace();
+            const savedWorkspace = data.currentWorkspace && categories.has(data.currentWorkspace)
+                ? data.currentWorkspace
+                : 'root';
+            if (savedWorkspace === 'root') navigateToRoot();
+            else navigateToCategory(savedWorkspace);
+            bringLinkedPartnersOnscreen();
+            refreshLinkBadges();
+            relaxLayout();
+            saveSuspended = false;
+        }
+
+        function bringLinkedPartnersOnscreen() {
+            links.forEach(link => {
+                [link.a, link.b].forEach(id => {
+                    if (floatingItems.some(item => item._id === id)) return;
+                    const item = dataset.find(row => row._id === id);
+                    if (item) ensureFloating(item);
+                });
+            });
+        }
+
+        function loadWorkspaceFromStorage() {
+            let raw = null;
+            try {
+                raw = localStorage.getItem(STORAGE_KEY);
+            } catch (err) {
+                setSaveStatus('Browser storage is blocked here. Use Save file / Open file.', true);
+                return;
+            }
+            if (!raw) return;
+            try {
+                const data = JSON.parse(raw);
+                if (!data || data.kind !== 'linknotes-workspace' || !Array.isArray(data.dataset)) return;
+                if (!data.dataset.length && !(data.categories || []).length && !(data.links || []).length) return;
+                applyWorkspace(data);
+                setSaveStatus('Restored local save.');
+            } catch (err) {
+                setSaveStatus('Local save could not be read.', true);
+            }
+        }
+
+        function armForgetSave() {
+            if (!forgetArmed) {
+                forgetArmed = true;
+                forgetSaveBtn.textContent = 'Confirm clear';
+                setSaveStatus('This removes the saved workspace from this browser. Click again to confirm.', true);
+                setTimeout(() => {
+                    forgetArmed = false;
+                    forgetSaveBtn.textContent = 'Clear local save';
+                }, 2800);
+                return;
+            }
+            forgetArmed = false;
+            forgetSaveBtn.textContent = 'Clear local save';
+            forgetLocalSave();
+        }
+
+        function forgetLocalSave() {
+            clearTimeout(saveTimer);
+            saveSuspended = true;
+            persistEnabled = false;
+            try { localStorage.removeItem(STORAGE_KEY); } catch (err) { /* storage may be blocked */ }
+            resetLinks();
+            setLinkMode(false);
+            dataset = [];
+            headers = [];
+            displayVariable = '';
+            clearCategoryState();
+            clearFloatingPool();
+            rebuildViewSelect();
+            enableWorkspace();
+            currentWorkspace = 'root';
+            backToRootBtn.style.display = 'none';
+            currentViewTitle.textContent = 'Root Workspace';
+            document.getElementById('primary-creator-block').style.display = 'block';
+            document.getElementById('subcategory-creator-block').style.display = 'none';
+            document.getElementById('sidebar-context-title').textContent = 'Primary Categories';
+            categoryList.innerHTML = '';
+            renderLinkList();
+            statsDisplay.textContent = 'Remaining: 0 | Grouped: 0 | Links: 0';
+            saveSuspended = false;
+            setSaveStatus('Local save cleared.');
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (!saveSuspended) persistLocalOnly();
+        });
+
+        loadWorkspaceFromStorage();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4e3b21c19291f42',t:'MTc5MjYyMTcxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
