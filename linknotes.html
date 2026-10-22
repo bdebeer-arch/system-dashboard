@@ -578,6 +578,17 @@
             margin-top: 4px;
         }
 
+        .links-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .links-heading .creator-title {
+            margin-top: 0;
+        }
+
         .links-help {
             font-size: 12px;
             line-height: 1.45;
@@ -728,6 +739,12 @@
         .text-btn:hover {
             opacity: 1;
         }
+
+        .btn.is-armed,
+        .btn-secondary.is-armed {
+            border-color: #f38ba8;
+            color: #f38ba8;
+        }
     </style>
 </head>
 <body>
@@ -762,6 +779,10 @@
                 </div>
                 <p class="manual-hint">New lines keep commas inside a note. A single line is split on commas. Ctrl+Enter adds.</p>
                 <div class="manual-actions">
+                    <button class="btn btn-secondary" id="clear-list-btn" type="button" title="Remove every note and its links. Categories stay.">Clear list</button>
+                    <button class="btn btn-secondary" id="clear-links-btn" type="button" title="Remove every link. Notes stay.">Clear links</button>
+                </div>
+                <div class="manual-actions">
                     <button class="btn btn-secondary" id="save-file-btn" type="button">Save file</button>
                     <button class="btn btn-secondary" id="open-file-btn" type="button">Open file</button>
                 </div>
@@ -789,7 +810,10 @@
             <div class="category-list" id="category-list"></div>
 
             <div class="links-panel">
-                <div class="creator-title">Note links</div>
+                <div class="links-heading">
+                    <div class="creator-title">Note links</div>
+                    <button type="button" id="clear-links-inline-btn" class="text-btn">Clear links</button>
+                </div>
                 <p class="links-help">Link notes, or Shift-click two of them. They keep floating; each link slows that note down. Hover a label to edit or remove it.</p>
                 <div class="link-list" id="link-list">
                     <div class="link-empty">No links yet.</div>
@@ -868,6 +892,9 @@
         const openFileBtn = document.getElementById('open-file-btn');
         const workspaceFileInput = document.getElementById('workspace-file');
         const forgetSaveBtn = document.getElementById('forget-save-btn');
+        const clearListBtn = document.getElementById('clear-list-btn');
+        const clearLinksBtn = document.getElementById('clear-links-btn');
+        const clearLinksInlineBtn = document.getElementById('clear-links-inline-btn');
         const saveStatus = document.getElementById('save-status');
         const STORAGE_KEY = 'linknotes.workspace.v1';
         let saveTimer = null;
@@ -875,6 +902,9 @@
         let persistEnabled = true;
         let replaceArmed = false;
         let forgetArmed = false;
+        let clearListArmed = false;
+        let clearLinksArmed = false;
+        let clearArmToken = 0;
 
         const speedMultiplier = 0.4;
 
@@ -917,6 +947,9 @@
         openFileBtn.addEventListener('click', () => workspaceFileInput.click());
         workspaceFileInput.addEventListener('change', handleWorkspaceFile);
         forgetSaveBtn.addEventListener('click', armForgetSave);
+        clearListBtn.addEventListener('click', () => armClear('list'));
+        clearLinksBtn.addEventListener('click', () => armClear('links'));
+        clearLinksInlineBtn.addEventListener('click', () => armClear('links'));
         manualNotesInput.addEventListener('keydown', (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                 e.preventDefault();
@@ -2276,6 +2309,74 @@
             } catch (err) {
                 setSaveStatus('Local save could not be read.', true);
             }
+        }
+
+        function disarmClearButtons() {
+            clearListArmed = false;
+            clearLinksArmed = false;
+            clearListBtn.classList.remove('is-armed');
+            clearLinksBtn.classList.remove('is-armed');
+            clearLinksInlineBtn.classList.remove('is-armed');
+            clearListBtn.textContent = 'Clear list';
+            clearLinksBtn.textContent = 'Clear links';
+            clearLinksInlineBtn.textContent = 'Clear links';
+        }
+
+        function armClear(kind) {
+            const clearingList = kind === 'list';
+            if (clearingList && !dataset.length) {
+                setSaveStatus('The list is already empty.');
+                return;
+            }
+            if (!clearingList && !links.length) {
+                setSaveStatus('No links to clear.');
+                return;
+            }
+            const armed = clearingList ? clearListArmed : clearLinksArmed;
+            if (!armed) {
+                disarmClearButtons();
+                if (clearingList) clearListArmed = true;
+                else clearLinksArmed = true;
+                const buttons = clearingList ? [clearListBtn] : [clearLinksBtn, clearLinksInlineBtn];
+                buttons.forEach(button => {
+                    button.textContent = 'Confirm';
+                    button.classList.add('is-armed');
+                });
+                setSaveStatus(clearingList
+                    ? 'Clear the note list and its links? Categories stay. Click Confirm again.'
+                    : 'Clear every link? Notes stay. Click Confirm again.', true);
+                const token = ++clearArmToken;
+                setTimeout(() => {
+                    if (token !== clearArmToken) return;
+                    disarmClearButtons();
+                }, 2800);
+                return;
+            }
+            clearArmToken += 1;
+            disarmClearButtons();
+            if (clearingList) clearNoteList();
+            else clearAllLinks();
+        }
+
+        function clearNoteList() {
+            resetLinks();
+            setLinkMode(false);
+            dataset = [];
+            headers = [];
+            displayVariable = '';
+            clearFloatingPool();
+            rebuildViewSelect();
+            enableWorkspace();
+            navigateToRoot();
+            noteSaved('Cleared the note list and its links.');
+        }
+
+        function clearAllLinks() {
+            resetLinks();
+            setLinkMode(false);
+            refreshLinkBadges();
+            updateUI();
+            noteSaved('Cleared all links.');
         }
 
         function armForgetSave() {
