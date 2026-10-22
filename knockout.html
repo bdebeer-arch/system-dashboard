@@ -12,7 +12,10 @@
             --grey: #2A2A2A;
             --light-grey: #E0E0E0;
             --text-light: #F5F5F5;
+            --workspace-height: clamp(540px, 76vh, 900px);
         }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -65,7 +68,6 @@
             border: 1px solid var(--gold);
             border-radius: 4px;
             padding: 12px;
-            box-sizing: border-box;
             font-family: inherit;
             resize: vertical;
             font-size: 1rem;
@@ -93,7 +95,6 @@
             cursor: pointer;
             border-radius: 4px;
             transition: background-color 0.2s, color 0.2s;
-            margin-top: 15px;
         }
 
         .btn:hover {
@@ -112,10 +113,45 @@
             color: var(--black);
         }
 
+        .setup-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Live sizing readout under the textarea */
+        .bracket-preview {
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 8px 14px;
+            background-color: rgba(212, 175, 55, 0.10);
+            border: 1px solid rgba(212, 175, 55, 0.45);
+            border-radius: 999px;
+            color: var(--gold);
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+        }
+
+        .bracket-preview strong {
+            color: var(--white);
+            font-weight: 700;
+        }
+
+        .bracket-preview .preview-warning {
+            color: #ff8080;
+            font-weight: 700;
+        }
+
         .controls-bar {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             margin-bottom: 15px;
             background-color: var(--grey);
             padding: 10px 20px;
@@ -127,6 +163,7 @@
             color: var(--gold);
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .button-group {
@@ -139,30 +176,34 @@
             grid-template-columns: 1fr;
             gap: 20px;
             width: 100%;
-            height: 650px;
             position: relative;
         }
 
         /* View Mode Windows */
         .global-window {
             width: 100%;
-            height: 100%;
+            height: var(--workspace-height);
             background-color: #1a1a1a;
             border: 1px solid var(--grey);
             border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .window-scroll {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 16px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
+            flex-direction: column;
         }
 
         .match-window {
             display: none;
-            grid-template-columns: 70% 30%;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
             gap: 20px;
             width: 100%;
-            height: 100%;
+            height: var(--workspace-height);
             position: relative;
         }
 
@@ -175,7 +216,7 @@
             justify-content: center;
             align-items: center;
             padding: 40px;
-            box-sizing: border-box;
+            overflow-y: auto;
         }
 
         .mini-map-panel {
@@ -183,11 +224,9 @@
             border: 1px solid var(--grey);
             border-radius: 8px;
             padding: 10px;
-            box-sizing: border-box;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
             font-size: 0.6rem;
             opacity: 0.85;
             cursor: pointer;
@@ -214,7 +253,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            box-sizing: border-box;
+            padding: 30px;
+            text-align: center;
             cursor: pointer;
             opacity: 0;
             transform: scale(0.95);
@@ -239,8 +279,15 @@
             color: var(--white);
             font-size: 2.8rem;
             font-weight: bold;
-            text-align: center;
             line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .announce-vs-sep {
+            font-size: 1.5rem;
+            color: var(--gold);
+            font-style: italic;
+            margin: 6px 0;
         }
 
         .announce-prompt {
@@ -259,12 +306,40 @@
         }
 
         /* Structural Layout Nodes */
+        .bracket-canvas {
+            display: flex;
+            gap: 14px;
+            align-items: stretch;
+            flex: 1 0 auto;
+            width: 100%;
+            margin: 0 auto;
+        }
+
         .round {
             display: flex;
             flex-direction: column;
+            flex: 1 1 0;
+            min-width: 158px;
+        }
+
+        .round-title {
+            flex: 0 0 auto;
+            text-align: center;
+            color: var(--gold);
+            margin: 0 0 12px 0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .round-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
             justify-content: space-around;
-            height: 100%;
-            width: 18%;
+            gap: 6px;
+            min-height: 0;
         }
 
         .matchup {
@@ -274,23 +349,36 @@
             border: 2px solid #444;
             border-radius: 6px;
             padding: 6px;
-            margin: 5px 0;
-            box-sizing: border-box;
+            margin: 4px 0;
             cursor: pointer;
+            align-self: center;
+            width: 100%;
+            max-width: 232px;
+            transition: border-color 0.2s;
+        }
+
+        .matchup:hover {
+            border-color: var(--gold);
         }
 
         .team {
-            padding: 8px 12px;
+            padding: 6px 10px;
             background-color: var(--black);
             margin: 2px 0;
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
-            min-height: 20px;
+            font-size: 0.82rem;
+            min-height: 18px;
             user-select: none;
             transition: background-color 0.2s;
+        }
+
+        .team span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .team:hover {
@@ -309,6 +397,26 @@
             font-style: italic;
         }
 
+        /* Dense draws (32-slot brackets and up) shrink cards so the bracket stays scannable */
+        .bracket-canvas.compact .matchup {
+            padding: 4px;
+            margin: 2px 0;
+        }
+
+        .bracket-canvas.compact .team {
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            min-height: 14px;
+            margin: 1px 0;
+        }
+
+        .bracket-canvas.compact .round-body { gap: 4px; }
+
+        .bracket-canvas.compact .round-title {
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+        }
+
         .focus-card {
             background-color: var(--grey);
             border: 3px solid var(--gold);
@@ -317,7 +425,7 @@
             max-width: 500px;
             padding: 30px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .focus-team-btn {
@@ -332,6 +440,7 @@
             cursor: pointer;
             display: block;
             width: 100%;
+            word-break: break-word;
             transition: transform 0.2s, border-color 0.2s;
         }
 
@@ -350,12 +459,11 @@
         }
 
         .champion-container {
+            flex: 0 0 150px;
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            height: 100%;
-            width: 18%;
+            align-items: stretch;
         }
 
         .champion-box {
@@ -366,10 +474,17 @@
             text-align: center;
             border: 2px dashed var(--gold);
             background-color: var(--grey);
-            padding: 20px;
+            padding: 20px 14px;
             border-radius: 8px;
             width: 100%;
-            box-sizing: border-box;
+        }
+
+        .champion-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--white);
+            font-weight: bold;
+            letter-spacing: 1px;
         }
 
         .champion-name {
@@ -377,29 +492,105 @@
             color: var(--gold);
             font-weight: bold;
             margin-top: 8px;
+            word-break: break-word;
+        }
+
+        /* Mini map */
+        .mini-title {
+            flex: 0 0 auto;
+            text-align: center;
+            color: var(--gold);
+            font-weight: bold;
+            border-bottom: 1px solid var(--grey);
+            padding-bottom: 3px;
+            margin-bottom: 6px;
+            font-size: 0.55rem;
+            letter-spacing: 1px;
+        }
+
+        .mini-container {
+            flex: 1 1 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+            min-height: 0;
         }
 
         .mini-round {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
+            gap: 2px;
             height: 100%;
-            width: 18%;
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 0;
         }
+
         .mini-matchup {
             background-color: var(--grey);
             border: 1px solid #444;
-            margin: 2px 0;
+            border-left: 2px solid transparent;
+            margin: 1px 0;
             padding: 2px;
             border-radius: 3px;
             font-size: 0.55rem;
+            line-height: 1.2;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            flex: 0 0 auto;
         }
+
+        .mini-matchup div {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mini-matchup.decided {
+            border-left-color: var(--gold);
+        }
+
         .mini-matchup.active-focus {
             border-color: var(--gold);
             background-color: #332a12;
+        }
+
+        /* Very large draws: collapse mini-map boxes into bars */
+        .mini-matchup.dense {
+            flex: 1 1 0;
+            min-height: 2px;
+            max-height: 14px;
+            padding: 0;
+            margin: 0;
+            border-left-width: 2px;
+        }
+
+        @media (max-width: 760px) {
+            body { padding: 12px; }
+
+            h1 { font-size: 1.5rem; }
+
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .controls-bar > div { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+            .match-window {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .focus-panel { min-height: 480px; padding: 24px 16px; }
+            .mini-map-panel { display: none; }
+
+            .announce-vs { font-size: 2rem; }
+
+            .round { min-width: 150px; }
         }
     </style>
 </head>
@@ -413,23 +604,27 @@
 
     <div class="setup-section" id="setupSection">
         <h3>Configure Competitors</h3>
-        <p class="note">Enter entries below (one per line or separated by commas). Use the Randomise button to shuffle names evenly before creating the grid.</p>
+        <p class="note">
+            Enter entries below (one per line or separated by commas). The draw automatically scales to the next power of
+            two — 2, 4, 8, 16, 32… — and any leftover slots become byes.
+        </p>
         <textarea id="competitorInput" onfocus="clearDefaultPlaceholder(this)" onblur="restoreDefaultPlaceholder(this)"></textarea>
-        <div>
+        <div class="bracket-preview" id="bracketPreview"></div>
+        <div class="setup-actions">
             <button class="btn" onclick="buildTournament()">Generate Bracket</button>
-            <button class="btn btn-secondary" style="margin-left: 10px;" onclick="randomiseInputList()">Randomise Entries</button>
+            <button class="btn btn-secondary" onclick="randomiseInputList()">Randomise Entries</button>
         </div>
     </div>
 
     <div id="bracketView" style="display: none;">
         <div class="controls-bar">
             <div>
-                <button class="btn" id="beginTournamentBtn" style="margin:0; background-color: var(--gold); color: var(--black);" onclick="enterMatchMode(true)">Begin Tournament Presentation</button>
-                <button class="btn btn-secondary" id="macroToggleBtn" style="margin:0; margin-left: 10px;" onclick="toggleViewMode('global')">Macro Grid View</button>
+                <button class="btn" id="beginTournamentBtn" onclick="enterMatchMode(true)">Begin Tournament Presentation</button>
+                <button class="btn btn-secondary" id="macroToggleBtn" onclick="toggleViewMode('global')">Macro Grid View</button>
             </div>
             <div class="nav-status" id="navigationStatus">Macro View Mode</div>
             <div class="button-group">
-                <button class="btn" style="margin:0; background-color: #cc0000; color: white;" onclick="resetToSetup()">Full Reset</button>
+                <button class="btn" style="background-color: #cc0000; color: white;" onclick="resetToSetup()">Full Reset</button>
             </div>
         </div>
 
@@ -437,10 +632,10 @@
             <div class="global-window" id="globalWindow"></div>
 
             <div class="match-window" id="matchWindow">
-                
+
                 <div class="announcement-cover" id="announcementCover" onclick="dismissAnnouncement()">
                     <div class="announce-title" id="announceTitle">Round X</div>
-                    <div class="announce-vs" id="announceVs">Competitor A<br><span style="font-size:1.5rem; color:var(--gold); font-style:italic;">vs</span><br>Competitor B</div>
+                    <div class="announce-vs" id="announceVs"></div>
                     <div class="announce-prompt">Click Screen to Enter Matchup</div>
                 </div>
 
@@ -453,21 +648,31 @@
 
 <script>
     const defaultPlaceholderText = "Competitor A\nCompetitor B\nCompetitor C\nCompetitor D\nCompetitor E\nCompetitor F\nCompetitor G\nCompetitor H\nCompetitor I\nCompetitor J\nCompetitor K\nCompetitor L\nCompetitor M\nCompetitor N\nCompetitor O\nCompetitor P";
-    let bracketData = [];
-    const maxEntries = 16;
-    
-    let currentViewMode = "global"; 
+
+    const BYE = "BYE";
+    const MIN_ENTRIES = 2;
+    const MAX_ENTRIES = 128;
+    const ROW_HEIGHT = 92;          // px of vertical space budgeted per first-round match
+    const COMPACT_ROW_HEIGHT = 62;  // same, for draws too tall for full-size cards
+
+    let bracketData = { rounds: [], champion: null };
+    let bracketSize = 16;
+    let numRounds = 4;
+
+    let currentViewMode = "global";
     let currentRoundIdx = 0;
     let currentMatchIdx = 0;
 
     const txtArea = document.getElementById('competitorInput');
     txtArea.value = defaultPlaceholderText;
     txtArea.style.color = "#777";
+    txtArea.addEventListener('input', updateBracketPreview);
 
     function clearDefaultPlaceholder(element) {
         if (element.value.trim() === defaultPlaceholderText.trim()) {
             element.value = "";
             element.style.color = "#ffffff";
+            updateBracketPreview();
         }
     }
 
@@ -475,103 +680,174 @@
         if (element.value.trim() === "") {
             element.value = defaultPlaceholderText;
             element.style.color = "#777";
+            updateBracketPreview();
         }
     }
 
     function parseCompetitors(text) {
-        let entries = [];
-        if (text.includes('\n')) {
-            entries = text.split('\n');
-        } else if (text.includes(',')) {
-            entries = text.split(',');
-        } else {
-            entries = [text];
-        }
-        return entries.map(e => e.trim()).filter(e => e !== "");
+        return text.split(/[\n,]+/).map(e => e.trim()).filter(e => e !== "");
     }
 
-    // New Function to shuffle current input text lines using the Fisher-Yates algorithm
-    function randomiseInputList() {
-        const inputField = document.getElementById('competitorInput');
-        let currentText = inputField.value;
+    /* ---------- Draw sizing ---------- */
 
-        // Fallback to active placeholder values if empty or untouched
-        if (currentText.trim() === "" || currentText === defaultPlaceholderText) {
+    function nextPowerOfTwo(n) {
+        let size = 2;
+        while (size < n) size *= 2;
+        return size;
+    }
+
+    function roundLabel(teamCount) {
+        if (teamCount <= 2) return "Grand Final";
+        if (teamCount === 4) return "Semi-Finals";
+        if (teamCount === 8) return "Quarter-Finals";
+        return `Round of ${teamCount}`;
+    }
+
+    function roundName(roundIdx) {
+        return roundLabel(bracketSize >> roundIdx);
+    }
+
+    function updateBracketPreview() {
+        const el = document.getElementById('bracketPreview');
+        let text = txtArea.value;
+        if (text.trim() === "" || text.trim() === defaultPlaceholderText.trim()) {
+            text = defaultPlaceholderText;
+        }
+
+        const entries = parseCompetitors(text);
+        if (entries.length === 0) {
+            el.textContent = "Add at least " + MIN_ENTRIES + " competitors to size the draw.";
+            return;
+        }
+
+        const capped = entries.length > MAX_ENTRIES;
+        const count = Math.min(entries.length, MAX_ENTRIES);
+        const size = nextPowerOfTwo(Math.max(count, MIN_ENTRIES));
+        const rounds = Math.round(Math.log2(size));
+        const byes = size - count;
+
+        el.innerHTML =
+            `<strong>${count}</strong> competitor${count === 1 ? '' : 's'}` +
+            ` &rarr; <strong>${size}</strong>-slot draw` +
+            ` &middot; <strong>${rounds}</strong> round${rounds === 1 ? '' : 's'}` +
+            ` &middot; ` + (byes === 0 ? "no byes" : `<strong>${byes}</strong> bye${byes === 1 ? '' : 's'}`) +
+            (capped ? ` <span class="preview-warning">(capped at ${MAX_ENTRIES})</span>` : "");
+    }
+
+    // Spread the byes as evenly as possible across first-round matches.
+    function pickByeMatches(matchCount, byeCount) {
+        const set = new Set();
+        for (let i = 0; i < byeCount; i++) {
+            set.add(Math.floor((i + 0.5) * matchCount / byeCount));
+        }
+        return set;
+    }
+
+    /* ---------- Bracket construction ---------- */
+
+    function buildTournament() {
+        let elements = parseCompetitors(txtArea.value);
+        if (elements.length === 0 || txtArea.value.trim() === defaultPlaceholderText.trim()) {
+            elements = parseCompetitors(defaultPlaceholderText);
+        }
+        if (elements.length > MAX_ENTRIES) {
+            elements = elements.slice(0, MAX_ENTRIES);
+        }
+
+        bracketSize = nextPowerOfTwo(Math.max(elements.length, MIN_ENTRIES));
+        numRounds = Math.round(Math.log2(bracketSize));
+
+        const matchCount = bracketSize / 2;
+        const byeCount = bracketSize - elements.length;
+        const byeMatches = pickByeMatches(matchCount, byeCount);
+
+        const firstRound = [];
+        let next = 0;
+        for (let m = 0; m < matchCount; m++) {
+            if (byeMatches.has(m)) {
+                const player = elements[next++];
+                firstRound.push(m % 2 === 0
+                    ? { team1: player, team2: BYE, winner: null }
+                    : { team1: BYE, team2: player, winner: null });
+            } else {
+                firstRound.push({ team1: elements[next++], team2: elements[next++], winner: null });
+            }
+        }
+
+        const rounds = [firstRound];
+        for (let count = matchCount / 2; count >= 1; count /= 2) {
+            rounds.push(Array.from({ length: count }, () => ({ team1: "", team2: "", winner: null })));
+        }
+
+        bracketData = { rounds, champion: null };
+        cascadeAutoAdvances();
+
+        document.getElementById('setupSection').style.display = 'none';
+        document.getElementById('bracketView').style.display = 'block';
+
+        currentViewMode = "global";
+        currentRoundIdx = 0;
+        currentMatchIdx = 0;
+        hideMatchAnnouncement();
+        refreshAllViews();
+    }
+
+    // Push every bye through to the next round (and ultimately the champion slot).
+    function cascadeAutoAdvances() {
+        for (let r = 0; r < numRounds; r++) {
+            bracketData.rounds[r].forEach((match, mIdx) => {
+                const hasBye = match.team1 === BYE || match.team2 === BYE;
+                if (!hasBye || match.winner) return;
+                const survivor = match.team1 === BYE ? match.team2 : match.team1;
+                if (!survivor || survivor === BYE) return;
+                match.winner = survivor;
+                advanceToNextRound(r, mIdx, survivor);
+            });
+        }
+    }
+
+    function advanceToNextRound(rIdx, mIdx, name) {
+        if (rIdx + 1 < numRounds) {
+            const targetMatchIdx = Math.floor(mIdx / 2);
+            const slot = (mIdx % 2 === 0) ? 'team1' : 'team2';
+            bracketData.rounds[rIdx + 1][targetMatchIdx][slot] = name;
+        } else {
+            bracketData.champion = name;
+        }
+    }
+
+    /* ---------- Input helpers ---------- */
+
+    function randomiseInputList() {
+        let currentText = txtArea.value;
+
+        if (currentText.trim() === "" || currentText.trim() === defaultPlaceholderText.trim()) {
             currentText = defaultPlaceholderText;
-            inputField.style.color = "#ffffff";
+            txtArea.style.color = "#ffffff";
         }
 
         let entries = parseCompetitors(currentText);
         if (entries.length === 0) return;
 
-        // In-place random array permutation
         for (let i = entries.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [entries[i], entries[j]] = [entries[j], entries[i]];
         }
 
-        // Reassemble back into newline formatting format
-        inputField.value = entries.join("\n");
+        txtArea.value = entries.join("\n");
+        updateBracketPreview();
     }
 
-    function buildTournament() {
-        const inputVal = document.getElementById('competitorInput').value;
-        let elements = parseCompetitors(inputVal);
-
-        if (elements.length === 0 || inputVal === defaultPlaceholderText) {
-            elements = parseCompetitors(defaultPlaceholderText);
-        }
-
-        if (elements.length > maxEntries) {
-            elements = elements.slice(0, maxEntries);
-        }
-
-        while (elements.length < maxEntries) {
-            elements.push("BYE");
-        }
-
-        bracketData = [];
-        let leg1 = [];
-        for (let i = 0; i < maxEntries; i += 2) {
-            let p1 = elements[i];
-            let p2 = elements[i+1];
-            let autoWinner = null;
-            
-            if (p1 === "BYE" && p2 === "BYE") autoWinner = "BYE";
-            else if (p2 === "BYE") autoWinner = p1;
-            else if (p1 === "BYE") autoWinner = p2;
-
-            leg1.push({ team1: p1, team2: p2, winner: autoWinner });
-        }
-        bracketData.push(leg1);
-
-        bracketData.push(Array(4).fill(null).map(() => ({ team1: "", team2: "", winner: null })));
-        bracketData.push(Array(2).fill(null).map(() => ({ team1: "", team2: "", winner: null })));
-        bracketData.push(Array(1).fill(null).map(() => ({ team1: "", team2: "", winner: null })));
-        bracketData.push({ champion: null });
-
-        cascadeAdvanceLogic(1);
-        cascadeAdvanceLogic(2);
-
-        document.getElementById('setupSection').style.display = 'none';
-        document.getElementById('bracketView').style.display = 'block';
-        
-        currentViewMode = "global";
-        currentRoundIdx = 0;
-        currentMatchIdx = 0;
-
-        refreshAllViews();
-    }
+    /* ---------- View switching ---------- */
 
     function toggleViewMode(mode) {
         currentViewMode = mode;
         const gWindow = document.getElementById('globalWindow');
         const mWindow = document.getElementById('matchWindow');
-        
+
         if (mode === 'global') {
-            gWindow.style.display = 'flex';
+            gWindow.style.display = 'block';
             mWindow.style.display = 'none';
-            document.getElementById('navigationStatus').innerText = "Macro View Mode";
             hideMatchAnnouncement();
         } else {
             gWindow.style.display = 'none';
@@ -580,28 +856,65 @@
         refreshAllViews();
     }
 
-    function enterMatchMode(triggerIntroCard) {
+    function isPlayableMatch(match) {
+        return !!match && !match.winner && !!match.team1 && !!match.team2 &&
+            match.team1 !== BYE && match.team2 !== BYE;
+    }
+
+    function findNextActiveMatch() {
+        for (let r = 0; r < numRounds; r++) {
+            const round = bracketData.rounds[r];
+            for (let m = 0; m < round.length; m++) {
+                if (isPlayableMatch(round[m])) {
+                    currentRoundIdx = r;
+                    currentMatchIdx = m;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function enterMatchMode(triggerIntroCard, keepSelection) {
+        const selected = bracketData.rounds[currentRoundIdx] && bracketData.rounds[currentRoundIdx][currentMatchIdx];
+        if (!keepSelection || !isPlayableMatch(selected)) {
+            findNextActiveMatch();
+        }
+
         toggleViewMode('match');
-        findNextActiveMatch();
-        
-        if (triggerIntroCard && !bracketData[4].champion) {
-            showMatchAnnouncement();
+
+        if (triggerIntroCard && !bracketData.champion) {
+            const active = bracketData.rounds[currentRoundIdx] && bracketData.rounds[currentRoundIdx][currentMatchIdx];
+            if (isPlayableMatch(active)) showMatchAnnouncement();
+            else hideMatchAnnouncement();
         } else {
             hideMatchAnnouncement();
         }
-        refreshAllViews();
     }
+
+    /* ---------- Announcement cover ---------- */
+
+    let announceHideTimer = null;
 
     function showMatchAnnouncement() {
         const cover = document.getElementById('announcementCover');
-        const roundNames = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
-        const match = bracketData[currentRoundIdx][currentMatchIdx];
+        const match = bracketData.rounds[currentRoundIdx] && bracketData.rounds[currentRoundIdx][currentMatchIdx];
+        if (!isPlayableMatch(match)) return;
 
-        if (!match || (!match.team1 && !match.team2)) return;
+        clearTimeout(announceHideTimer);
+        document.getElementById('announceTitle').textContent = roundName(currentRoundIdx);
 
-        document.getElementById('announceTitle').innerText = roundNames[currentRoundIdx];
-        document.getElementById('announceVs').innerHTML = `${match.team1 || '---'}<br><span style="font-size:1.5rem; color:var(--gold); font-style:italic;">vs</span><br>${match.team2 || '---'}`;
-        
+        const vs = document.getElementById('announceVs');
+        vs.innerHTML = '';
+        const a = document.createElement('div');
+        a.textContent = match.team1;
+        const sep = document.createElement('div');
+        sep.className = 'announce-vs-sep';
+        sep.textContent = 'vs';
+        const b = document.createElement('div');
+        b.textContent = match.team2;
+        vs.append(a, sep, b);
+
         cover.style.display = 'flex';
         setTimeout(() => cover.classList.add('visible'), 5);
     }
@@ -609,116 +922,151 @@
     function dismissAnnouncement() {
         const cover = document.getElementById('announcementCover');
         cover.classList.remove('visible');
-        setTimeout(() => cover.style.display = 'none', 400);
+        clearTimeout(announceHideTimer);
+        announceHideTimer = setTimeout(() => { cover.style.display = 'none'; }, 400);
     }
 
     function hideMatchAnnouncement() {
         const cover = document.getElementById('announcementCover');
+        clearTimeout(announceHideTimer);
         cover.classList.remove('visible');
         cover.style.display = 'none';
     }
 
-    function findNextActiveMatch() {
-        for (let r = 0; r < 4; r++) {
-            for (let m = 0; m < bracketData[r].length; m++) {
-                let match = bracketData[r][m];
-                if (!match.winner && match.team1 && match.team2 && match.team1 !== "BYE" && match.team2 !== "BYE") {
-                    currentRoundIdx = r;
-                    currentMatchIdx = m;
-                    return;
-                }
-            }
-        }
-    }
+    /* ---------- Rendering ---------- */
 
     function refreshAllViews() {
         renderGlobalCanvas();
         renderFocusPanel();
         renderMiniMap();
+        updateStatusLabel();
+    }
+
+    function updateStatusLabel() {
+        const el = document.getElementById('navigationStatus');
+        if (bracketData.champion) {
+            el.textContent = "Champion Proclaimed";
+        } else if (currentViewMode === 'global') {
+            el.textContent = "Macro View Mode";
+        } else {
+            el.textContent = `${roundName(currentRoundIdx)} \u2014 Match ${currentMatchIdx + 1}`;
+        }
+    }
+
+    function buildMatchCard(match, r, mIdx) {
+        const card = document.createElement('div');
+        card.className = 'matchup';
+        card.onclick = () => {
+            currentRoundIdx = r;
+            currentMatchIdx = mIdx;
+            enterMatchMode(true, true);
+        };
+
+        const makeTeam = (name, otherName) => {
+            const div = document.createElement('div');
+            div.className = 'team';
+            if (name === BYE) div.classList.add('bye');
+            if (name && name !== BYE && match.winner === name) div.classList.add('winner');
+
+            const span = document.createElement('span');
+            span.textContent = name || '---';
+            div.appendChild(span);
+
+            if (name && name !== BYE && otherName && otherName !== BYE) {
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    assignWinnerNode(r, mIdx, name, false);
+                };
+            }
+            return div;
+        };
+
+        card.appendChild(makeTeam(match.team1, match.team2));
+        card.appendChild(makeTeam(match.team2, match.team1));
+        return card;
     }
 
     function renderGlobalCanvas() {
         const win = document.getElementById('globalWindow');
+        const prevScroller = win.querySelector('.window-scroll');
+        const prevTop = prevScroller ? prevScroller.scrollTop : 0;
+        const prevLeft = prevScroller ? prevScroller.scrollLeft : 0;
         win.innerHTML = '';
-        const roundHeaders = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
 
-        for (let r = 0; r < 4; r++) {
-            const roundColumn = document.createElement('div');
-            roundColumn.className = 'round';
-            roundColumn.innerHTML = `<h4 style="text-align:center; color: var(--gold); margin: 0 0 10px 0; font-size:0.9rem; text-transform:uppercase;">${roundHeaders[r]}</h4>`;
+        const scroller = document.createElement('div');
+        scroller.className = 'window-scroll';
 
-            bracketData[r].forEach((match, mIdx) => {
-                const matchCard = document.createElement('div');
-                matchCard.className = 'matchup';
-                
-                matchCard.onclick = () => {
-                    currentRoundIdx = r;
-                    currentMatchIdx = mIdx;
-                    enterMatchMode(true);
-                };
+        const canvas = document.createElement('div');
+        canvas.className = 'bracket-canvas';
+        const firstRoundMatches = bracketData.rounds[0] ? bracketData.rounds[0].length : 0;
+        const compact = firstRoundMatches >= 16;
+        if (compact) canvas.classList.add('compact');
+        // Tall draws scroll; short draws stretch to fill the window.
+        canvas.style.minHeight = (firstRoundMatches * (compact ? COMPACT_ROW_HEIGHT : ROW_HEIGHT)) + 'px';
+        // Keep columns a readable width instead of stretching edge to edge.
+        canvas.style.maxWidth = (numRounds * 246 + 164) + 'px';
 
-                const p1Div = document.createElement('div');
-                p1Div.className = 'team' + (match.winner === match.team1 && match.team1 ? ' winner' : '') + (match.team1 === 'BYE' ? ' bye' : '');
-                p1Div.innerHTML = `<span>${match.team1 || '---'}</span>`;
-                p1Div.onclick = (e) => {
-                    if (match.team1 && match.team1 !== 'BYE' && match.team2 !== 'BYE') {
-                        e.stopPropagation(); 
-                        assignWinnerNode(r, mIdx, match.team1, false);
-                    }
-                };
+        bracketData.rounds.forEach((round, r) => {
+            const col = document.createElement('div');
+            col.className = 'round';
 
-                const p2Div = document.createElement('div');
-                p2Div.className = 'team' + (match.winner === match.team2 && match.team2 ? ' winner' : '') + (match.team2 === 'BYE' ? ' bye' : '');
-                p2Div.innerHTML = `<span>${match.team2 || '---'}</span>`;
-                p2Div.onclick = (e) => {
-                    if (match.team2 && match.team2 !== 'BYE' && match.team1 !== 'BYE') {
-                        e.stopPropagation();
-                        assignWinnerNode(r, mIdx, match.team2, false);
-                    }
-                };
+            const title = document.createElement('h4');
+            title.className = 'round-title';
+            title.textContent = roundName(r);
+            col.appendChild(title);
 
-                matchCard.appendChild(p1Div);
-                matchCard.appendChild(p2Div);
-                roundColumn.appendChild(matchCard);
-            });
-            win.appendChild(roundColumn);
-        }
+            const body = document.createElement('div');
+            body.className = 'round-body';
+            round.forEach((match, mIdx) => body.appendChild(buildMatchCard(match, r, mIdx)));
+            col.appendChild(body);
 
-        const champColumn = document.createElement('div');
-        champColumn.className = 'champion-container';
+            canvas.appendChild(col);
+        });
+
+        const champCol = document.createElement('div');
+        champCol.className = 'champion-container';
         const champBox = document.createElement('div');
         champBox.className = 'champion-box';
-        const finalName = bracketData[4].champion || "TBD";
-        champBox.innerHTML = `
-            <div style="font-size:0.75rem; text-transform:uppercase; color:var(--white); font-weight:bold; letter-spacing:1px;">Shield Champion</div>
-            <div class="champion-name">${finalName}</div>
-        `;
-        champColumn.appendChild(champBox);
-        win.appendChild(champColumn);
+
+        const champLabel = document.createElement('div');
+        champLabel.className = 'champion-label';
+        champLabel.textContent = 'Shield Champion';
+
+        const champName = document.createElement('div');
+        champName.className = 'champion-name';
+        champName.textContent = bracketData.champion || 'TBD';
+
+        champBox.append(champLabel, champName);
+        champCol.appendChild(champBox);
+        canvas.appendChild(champCol);
+
+        scroller.appendChild(canvas);
+        win.appendChild(scroller);
+
+        scroller.scrollTop = prevTop;
+        scroller.scrollLeft = prevLeft;
     }
 
     function renderFocusPanel() {
         const panel = document.getElementById('focusPanel');
         panel.innerHTML = '';
 
-        if (bracketData[4].champion) {
+        if (bracketData.champion) {
             panel.innerHTML = `
-                <div style="font-size: 2rem; color: var(--gold); font-weight: bold; text-transform: uppercase; margin-bottom: 20px;">Tournament Complete</div>
+                <div style="font-size: 2rem; color: var(--gold); font-weight: bold; text-transform: uppercase; margin-bottom: 20px; text-align:center;">Tournament Complete</div>
                 <div class="focus-card">
                     <h2 style="color:var(--white); margin:0;">Grand Champion</h2>
-                    <div style="font-size: 2.5rem; color: var(--gold); font-weight: bold; margin-top: 15px;">${bracketData[4].champion}</div>
+                    <div style="font-size: 2.5rem; color: var(--gold); font-weight: bold; margin-top: 15px; word-break: break-word;"></div>
                 </div>
             `;
-            document.getElementById('navigationStatus').innerText = "Champion Proclaimed";
+            panel.querySelector('.focus-card > div').textContent = bracketData.champion;
             return;
         }
 
-        const roundNames = ["Round of 16", "Quarter-Finals", "Semi-Finals", "Grand Final"];
-        document.getElementById('navigationStatus').innerText = `${roundNames[currentRoundIdx]} — Match ${currentMatchIdx + 1}`;
+        const round = bracketData.rounds[currentRoundIdx];
+        const activeMatch = round ? round[currentMatchIdx] : null;
 
-        const activeMatch = bracketData[currentRoundIdx][currentMatchIdx];
-        
-        if (!activeMatch.team1 && !activeMatch.team2) {
+        if (!isPlayableMatch(activeMatch)) {
             panel.innerHTML = `
                 <div style="color: var(--light-grey); font-size: 1.2rem; text-align:center;">
                     Waiting for winners from previous rounds to advance into this slot.<br><br>
@@ -730,82 +1078,99 @@
 
         const card = document.createElement('div');
         card.className = 'focus-card';
-        card.innerHTML = `<h3 style="color: var(--gold); text-transform: uppercase; margin: 0 0 15px 0; font-size: 1rem; letter-spacing:1px;">Select the Winner</h3>`;
 
-        const btn1 = document.createElement('button');
-        btn1.className = 'focus-team-btn';
-        btn1.innerText = activeMatch.team1 || '---';
-        if (activeMatch.winner === activeMatch.team1 && activeMatch.team1) btn1.style.borderColor = "var(--gold)";
-        btn1.onclick = () => { if(activeMatch.team1) assignWinnerNode(currentRoundIdx, currentMatchIdx, activeMatch.team1, true); };
+        const heading = document.createElement('h3');
+        heading.style.cssText = 'color: var(--gold); text-transform: uppercase; margin: 0 0 15px 0; font-size: 1rem; letter-spacing:1px;';
+        heading.textContent = 'Select the Winner';
+        card.appendChild(heading);
+
+        const makeBtn = (name) => {
+            const btn = document.createElement('button');
+            btn.className = 'focus-team-btn';
+            btn.textContent = name;
+            if (activeMatch.winner === name) btn.style.borderColor = 'var(--gold)';
+            btn.onclick = () => assignWinnerNode(currentRoundIdx, currentMatchIdx, name, true);
+            return btn;
+        };
 
         const vs = document.createElement('div');
         vs.className = 'focus-vs';
-        vs.innerText = "VS";
+        vs.textContent = 'VS';
 
-        const btn2 = document.createElement('button');
-        btn2.className = 'focus-team-btn';
-        btn2.innerText = activeMatch.team2 || '---';
-        if (activeMatch.winner === activeMatch.team2 && activeMatch.team2) btn2.style.borderColor = "var(--gold)";
-        btn2.onclick = () => { if(activeMatch.team2) assignWinnerNode(currentRoundIdx, currentMatchIdx, activeMatch.team2, true); };
-
-        card.appendChild(btn1);
+        card.appendChild(makeBtn(activeMatch.team1));
         card.appendChild(vs);
-        card.appendChild(btn2);
+        card.appendChild(makeBtn(activeMatch.team2));
         panel.appendChild(card);
     }
 
     function renderMiniMap() {
         const map = document.getElementById('miniMapPanel');
-        map.innerHTML = '<div style="text-align:center; color: var(--gold); font-weight: bold; border-bottom: 1px solid var(--grey); padding-bottom: 2px; margin-bottom: 5px; font-size: 0.55rem;">MACRO MINI-MAP</div>';
-        
-        const miniContainer = document.createElement('div');
-        miniContainer.style.display = 'flex';
-        miniContainer.style.justify = 'space-between';
-        miniContainer.style.height = 'calc(100% - 20px)';
-        miniContainer.style.alignItems = 'center';
+        map.innerHTML = '';
 
-        for (let r = 0; r < 4; r++) {
+        const title = document.createElement('div');
+        title.className = 'mini-title';
+        title.textContent = 'MACRO MINI-MAP';
+        map.appendChild(title);
+
+        const miniContainer = document.createElement('div');
+        miniContainer.className = 'mini-container';
+        const dense = (bracketData.rounds[0] ? bracketData.rounds[0].length : 0) > 8;
+        const abbrev = (name) => {
+            if (!name) return '---';
+            return name.length > 6 ? name.slice(0, 6) : name;
+        };
+
+        bracketData.rounds.forEach((round, r) => {
             const col = document.createElement('div');
             col.className = 'mini-round';
-            bracketData[r].forEach((match, mIdx) => {
-                const mBox = document.createElement('div');
-                mBox.className = 'mini-matchup';
+
+            round.forEach((match, mIdx) => {
+                const box = document.createElement('div');
+                box.className = 'mini-matchup';
+                if (match.winner) box.classList.add('decided');
                 if (r === currentRoundIdx && mIdx === currentMatchIdx && currentViewMode === 'match') {
-                    mBox.style.borderColor = "var(--gold)";
-                    mBox.style.backgroundColor = "#332a12";
+                    box.classList.add('active-focus');
                 }
-                
-                let t1Display = match.team1 ? match.team1.substring(0, 5) : '---';
-                let t2Display = match.team2 ? match.team2.substring(0, 5) : '---';
-                if(match.winner) {
-                    mBox.style.borderLeft = "2px solid var(--gold)";
+
+                if (dense) {
+                    box.classList.add('dense');
+                    box.title = `${match.team1 || '---'} vs ${match.team2 || '---'}`;
+                } else {
+                    const t1 = document.createElement('div');
+                    t1.textContent = abbrev(match.team1);
+                    const t2 = document.createElement('div');
+                    t2.textContent = abbrev(match.team2);
+                    box.append(t1, t2);
                 }
-                mBox.innerHTML = `<div>${t1Display}</div><div>${t2Display}</div>`;
-                col.appendChild(mBox);
+                col.appendChild(box);
             });
+
             miniContainer.appendChild(col);
-        }
+        });
+
         map.appendChild(miniContainer);
     }
 
-    function assignWinnerNode(rIdx, mIdx, winnerName, advanceIntroCard) {
-        bracketData[rIdx][mIdx].winner = winnerName;
-        let nextRound = rIdx + 1;
+    /* ---------- Winner logic ---------- */
 
-        if (nextRound < 4) {
-            let targetMatchIdx = Math.floor(mIdx / 2);
-            let slot = (mIdx % 2 === 0) ? 'team1' : 'team2';
-            
-            severDownstreamLineage(nextRound, targetMatchIdx, slot);
-            bracketData[nextRound][targetMatchIdx][slot] = winnerName;
-            cascadeAdvanceLogic(nextRound);
-        } else if (nextRound === 4) {
-            bracketData[4].champion = winnerName;
+    function assignWinnerNode(rIdx, mIdx, winnerName, advanceIntroCard) {
+        if (!winnerName || winnerName === BYE) return;
+
+        const match = bracketData.rounds[rIdx][mIdx];
+        match.winner = winnerName;
+
+        if (rIdx + 1 < numRounds) {
+            const targetMatchIdx = Math.floor(mIdx / 2);
+            const slot = (mIdx % 2 === 0) ? 'team1' : 'team2';
+            severDownstreamLineage(rIdx + 1, targetMatchIdx, slot);
+            bracketData.rounds[rIdx + 1][targetMatchIdx][slot] = winnerName;
+        } else {
+            bracketData.champion = winnerName;
         }
 
         if (currentViewMode === 'match') {
             findNextActiveMatch();
-            if (advanceIntroCard && !bracketData[4].champion) {
+            if (advanceIntroCard && !bracketData.champion) {
                 showMatchAnnouncement();
             }
         }
@@ -813,47 +1178,32 @@
     }
 
     function severDownstreamLineage(rIdx, mIdx, slot) {
-        if (rIdx >= 4) return;
-        bracketData[rIdx][mIdx][slot] = "";
-        bracketData[rIdx][mIdx].winner = null;
-        
-        let nextTarget = Math.floor(mIdx / 2);
-        let nextSlot = (mIdx % 2 === 0) ? 'team1' : 'team2';
-        severDownstreamLineage(rIdx + 1, nextTarget, nextSlot);
-        if (rIdx === 3) bracketData[4].champion = null;
-    }
+        if (rIdx >= numRounds) {
+            bracketData.champion = null;
+            return;
+        }
+        const match = bracketData.rounds[rIdx][mIdx];
+        match[slot] = "";
+        match.winner = null;
 
-    function cascadeAdvanceLogic(rIdx) {
-        if (rIdx >= 4) return;
-        bracketData[rIdx].forEach((match, mIdx) => {
-            if (match.team1 === "BYE" || match.team2 === "BYE") {
-                let validCompetitor = (match.team1 === "BYE") ? match.team2 : match.team1;
-                if (validCompetitor) {
-                    match.winner = validCompetitor;
-                    let nextRound = rIdx + 1;
-                    if (nextRound < 4) {
-                        let targetMatchIdx = Math.floor(mIdx / 2);
-                        let slot = (mIdx % 2 === 0) ? 'team1' : 'team2';
-                        bracketData[nextRound][targetMatchIdx][slot] = validCompetitor;
-                    } else {
-                        bracketData[4].champion = validCompetitor;
-                    }
-                }
-            }
-        });
+        const nextTarget = Math.floor(mIdx / 2);
+        const nextSlot = (mIdx % 2 === 0) ? 'team1' : 'team2';
+        severDownstreamLineage(rIdx + 1, nextTarget, nextSlot);
     }
 
     function resetToSetup() {
         if (confirm("Are you sure you want to reset the entire tournament layout?")) {
             document.getElementById('bracketView').style.display = 'none';
             document.getElementById('setupSection').style.display = 'block';
-            const inputField = document.getElementById('competitorInput');
-            inputField.value = defaultPlaceholderText;
-            inputField.style.color = "#777";
+            txtArea.value = defaultPlaceholderText;
+            txtArea.style.color = "#777";
             currentViewMode = "global";
             hideMatchAnnouncement();
+            updateBracketPreview();
         }
     }
+
+    updateBracketPreview();
 </script>
 
 </body>
