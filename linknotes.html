@@ -473,6 +473,55 @@
             pointer-events: none;
         }
 
+        .link-fullscreen-bar {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            z-index: 18;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: calc(100% - 28px);
+            padding: 6px;
+            background: rgba(37, 37, 56, 0.94);
+            border: 1px solid #cba6f7;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+        }
+
+        body.is-link-fullscreen .link-fullscreen-bar {
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
+            padding: 6px 8px 6px 14px;
+        }
+
+        .link-fullscreen-bar[hidden] {
+            display: none;
+        }
+
+        .link-fullscreen-bar span {
+            min-width: 0;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .link-fullscreen-count {
+            opacity: 0.7;
+            white-space: nowrap;
+            font-size: 12px;
+        }
+
+        .link-fullscreen-bar .btn {
+            padding: 6px 12px;
+            white-space: nowrap;
+        }
+
+        body.is-link-fullscreen header,
+        body.is-link-fullscreen #sidebar {
+            display: none;
+        }
+
         .link-popover {
             position: absolute;
             z-index: 30;
@@ -745,6 +794,107 @@
             border-color: #f38ba8;
             color: #f38ba8;
         }
+
+        .export-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            background: rgba(17, 17, 27, 0.72);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .export-modal[hidden] {
+            display: none;
+        }
+
+        .export-dialog {
+            width: min(740px, 100%);
+            max-height: min(84vh, 820px);
+            overflow: auto;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+        }
+
+        .export-dialog h2 {
+            font-size: 18px;
+        }
+
+        .export-dialog p {
+            font-size: 13px;
+            line-height: 1.45;
+            opacity: 0.8;
+        }
+
+        .export-loops {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .export-loop {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: rgba(24, 24, 37, 0.45);
+        }
+
+        .export-loop-title {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .export-choice {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 8px;
+            align-items: end;
+        }
+
+        .export-choice label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+            min-width: 0;
+        }
+
+        .export-choice select {
+            width: 100%;
+        }
+
+        .export-preview {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: var(--nested-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12.5px;
+            line-height: 1.55;
+            max-height: 300px;
+            overflow: auto;
+        }
+
+        .export-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
     </style>
 </head>
 <body>
@@ -763,6 +913,7 @@
         <button class="btn btn-secondary" id="reshuffle-btn" disabled>Reshuffle</button>
         <button class="btn btn-link" id="link-mode-btn" disabled title="Load notes, then click two of them to connect and label the link">Link notes</button>
         <button class="btn" id="export-btn" disabled>Export CSV</button>
+        <button class="btn btn-secondary" id="export-text-btn" disabled title="Export chains and loops as text, with arrows">Export text</button>
         <div class="stats-banner" id="stats-display">Remaining: 0 | Grouped: 0 | Links: 0</div>
     </header>
 
@@ -814,7 +965,7 @@
                     <div class="creator-title">Note links</div>
                     <button type="button" id="clear-links-inline-btn" class="text-btn">Clear links</button>
                 </div>
-                <p class="links-help">Link notes, or Shift-click two of them. They keep floating; each link slows that note down. Hover a label to edit or remove it.</p>
+                <p class="links-help">Link notes, or Shift-click two of them. They keep floating; each link slows that note down. Full screen clears the side panel if the canvas is tight. Hover a label to edit or remove it.</p>
                 <div class="link-list" id="link-list">
                     <div class="link-empty">No links yet.</div>
                 </div>
@@ -828,6 +979,11 @@
                 </svg>
             </div>
             <div id="link-status" class="link-status" hidden></div>
+            <div id="link-fullscreen-bar" class="link-fullscreen-bar" hidden>
+                <span id="link-fullscreen-status"></span>
+                <span id="link-fullscreen-count" class="link-fullscreen-count"></span>
+                <button type="button" id="link-fullscreen-btn" class="btn btn-secondary" title="Hide the side panel and header so the notes fill the window. Esc leaves full screen.">Full screen</button>
+            </div>
             <div id="link-popover" class="link-popover" hidden>
                 <div class="link-popover-title" id="link-popover-title">Label this link</div>
                 <div class="link-popover-ends" id="link-popover-ends"></div>
@@ -842,7 +998,7 @@
                 <div class="empty-card">
                     <h2>Floating notes</h2>
                     <p>Paste a list in the sidebar, upload a CSV, or load sample notes.</p>
-                    <p>Press <strong>Link notes</strong>, click two notes, and name the connection. They keep floating — just slower the more links they have.</p>
+                    <p>Press <strong>Link notes</strong>, click two notes, and name the connection. They keep floating — just slower the more links they have. Use <strong>Full screen</strong> if the canvas gets crowded.</p>
                     <button class="btn btn-link" id="empty-sample-btn" type="button" style="margin-top: 14px; pointer-events: auto;">Load sample notes</button>
                 </div>
             </div>
@@ -850,6 +1006,20 @@
                 <button class="zoom-btn" id="zoom-out">-</button>
                 <button class="zoom-btn" id="zoom-reset">100%</button>
                 <button class="zoom-btn" id="zoom-in">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-modal" class="export-modal" hidden>
+        <div class="export-dialog" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+            <h2 id="export-modal-title">Export text</h2>
+            <p id="export-modal-help">Chains are written with directional arrows. A loop is written like a polymer ring, —[ ... ]—, once you choose where the sequence starts and ends.</p>
+            <div id="export-loops" class="export-loops"></div>
+            <pre id="export-preview" class="export-preview"></pre>
+            <div class="export-actions">
+                <button class="btn" id="export-download-btn" type="button">Download text</button>
+                <button class="btn btn-secondary" id="export-copy-btn" type="button">Copy</button>
+                <button class="btn btn-secondary" id="export-close-btn" type="button">Close</button>
             </div>
         </div>
     </div>
@@ -875,6 +1045,13 @@
         const viewSelect = document.getElementById('view-variable');
         const reshuffleBtn = document.getElementById('reshuffle-btn');
         const exportBtn = document.getElementById('export-btn');
+        const exportTextBtn = document.getElementById('export-text-btn');
+        const exportModal = document.getElementById('export-modal');
+        const exportLoops = document.getElementById('export-loops');
+        const exportPreview = document.getElementById('export-preview');
+        const exportHelp = document.getElementById('export-modal-help');
+        let exportAnalysis = null;
+        let exportChoices = [];
         const canvasContainer = document.getElementById('canvas-container');
         const canvasStage = document.getElementById('canvas-stage');
         const categoryList = document.getElementById('category-list');
@@ -911,6 +1088,9 @@
         let links = [];
         let linkIdSeq = 0;
         let linkMode = false;
+        let linkFullscreen = false;
+        let usingBrowserFs = false;
+        let fullscreenExitAt = 0;
         let linkSourceId = null;
         let pendingLink = null;
         let editingLinkId = null;
@@ -921,6 +1101,10 @@
         const linkLayer = document.getElementById('link-layer');
         const linkRubber = document.getElementById('link-rubber');
         const linkStatus = document.getElementById('link-status');
+        const linkFullscreenBar = document.getElementById('link-fullscreen-bar');
+        const linkFullscreenStatus = document.getElementById('link-fullscreen-status');
+        const linkFullscreenCount = document.getElementById('link-fullscreen-count');
+        const linkFullscreenBtn = document.getElementById('link-fullscreen-btn');
         const linkPopover = document.getElementById('link-popover');
         const linkPopoverTitle = document.getElementById('link-popover-title');
         const linkPopoverEnds = document.getElementById('link-popover-ends');
@@ -939,6 +1123,11 @@
             populateFloatingPool();
         });
         linkModeBtn.addEventListener('click', () => setLinkMode(!linkMode));
+        linkFullscreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setLinkFullscreen(!linkFullscreen);
+        });
         sampleBtn.addEventListener('click', loadSampleNotes);
         document.getElementById('empty-sample-btn').addEventListener('click', loadSampleNotes);
         addNotesBtn.addEventListener('click', () => addManualNotes(manualNotesInput.value, { replace: false }));
@@ -972,6 +1161,10 @@
         addGroupBtn.addEventListener('click', generatePrimaryCategory);
         addSubgroupBtn.addEventListener('click', generateSubcategory);
         exportBtn.addEventListener('click', exportProcessedCSV);
+        exportTextBtn.addEventListener('click', openExportModal);
+        document.getElementById('export-download-btn').addEventListener('click', downloadExportText);
+        document.getElementById('export-copy-btn').addEventListener('click', copyExportText);
+        document.getElementById('export-close-btn').addEventListener('click', closeExportModal);
         backToRootBtn.addEventListener('click', navigateToRoot);
 
         canvasContainer.addEventListener('wheel', handleWheelZoom, { passive: false });
@@ -990,15 +1183,26 @@
                 return;
             }
             if (!linkMode) return;
-            if (e.target.closest('.floating-node, .link-label, .link-popover, .zoom-controls, .empty-state')) return;
+            if (e.target.closest('.floating-node, .link-label, .link-popover, .zoom-controls, .empty-state, .link-fullscreen-bar')) return;
             linkSourceId = null;
             markLinkSource();
             updateLinkStatus();
+        });
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && usingBrowserFs) {
+                usingBrowserFs = false;
+                fullscreenExitAt = Date.now();
+                if (linkFullscreen) setLinkFullscreen(false);
+            }
         });
         document.addEventListener('keydown', (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
                 saveLocally({ download: true });
+                return;
+            }
+            if (!exportModal.hidden) {
+                if (e.key === 'Escape') closeExportModal();
                 return;
             }
             if (e.key === 'Escape') {
@@ -1009,6 +1213,8 @@
                     updateLinkStatus();
                     return;
                 }
+                if (linkFullscreen) { setLinkFullscreen(false); return; }
+                if (Date.now() - fullscreenExitAt < 400) return;
                 if (linkMode) setLinkMode(false);
                 return;
             }
@@ -1062,7 +1268,7 @@
                 opt.value = h; opt.textContent = h; viewSelect.appendChild(opt);
             });
 
-            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = linkModeBtn.disabled = false;
+            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = exportTextBtn.disabled = linkModeBtn.disabled = false;
             emptyState.hidden = true;
             navigateToRoot();
         }
@@ -1284,6 +1490,7 @@
 
             const totalGrouped = dataset.filter(item => item.assigned_group).length;
             statsDisplay.textContent = `Remaining: ${dataset.length - totalGrouped} | Grouped: ${totalGrouped} | Links: ${links.length}`;
+            refreshFullscreenCount();
             renderLinkList();
             scheduleSave();
         }
@@ -1386,7 +1593,15 @@
                     maxY = Math.min(maxY, Math.max(0, bannerTop - h));
                 }
             }
-            return { minX: 0, minY: 0, maxX, maxY };
+            let minY = 0;
+            if (linkFullscreenBar && !linkFullscreenBar.hidden) {
+                const barBottom = (linkFullscreenBar.offsetHeight + 20) / zoomScale;
+                const reserveTop = linkFullscreen || item.x + w > width - (linkFullscreenBar.offsetWidth + 28) / zoomScale;
+                if (reserveTop && item.y < barBottom) {
+                    minY = Math.min(Math.max(0, height - h), barBottom);
+                }
+            }
+            return { minX: 0, minY, maxX, maxY };
         }
 
         function relaxLayout() {
@@ -1577,6 +1792,7 @@
         }
 
         function setLinkMode(on) {
+            if (!on && linkFullscreen) setLinkFullscreen(false);
             linkMode = on;
             linkSourceId = null;
             pointerStage = null;
@@ -1590,6 +1806,54 @@
             });
             hideRubber();
             updateLinkStatus();
+        }
+
+        function stageSize() {
+            return {
+                w: canvasContainer.clientWidth / zoomScale,
+                h: canvasContainer.clientHeight / zoomScale
+            };
+        }
+
+        function refitNotes(before, after) {
+            if (before.w > 40 && before.h > 40 && after.w > 40 && after.h > 40) {
+                const sx = after.w / before.w;
+                const sy = after.h / before.h;
+                if (Math.abs(sx - 1) > 0.02 || Math.abs(sy - 1) > 0.02) {
+                    floatingItems.forEach(item => {
+                        item.x *= sx;
+                        item.y *= sy;
+                    });
+                }
+            }
+            relaxLayout();
+            syncLinkLayerSize();
+        }
+
+        function setLinkFullscreen(on) {
+            if (on === linkFullscreen) return;
+            if (on && linkModeBtn.disabled) return;
+            if (on && !linkMode) setLinkMode(true);
+            const before = stageSize();
+            linkFullscreen = on;
+            document.body.classList.toggle('is-link-fullscreen', on);
+            updateLinkStatus();
+            void canvasContainer.offsetWidth;
+            refitNotes(before, stageSize());
+            if (on && document.fullscreenEnabled && !document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    usingBrowserFs = true;
+                }).catch(() => { usingBrowserFs = false; });
+            } else if (!on && document.fullscreenElement) {
+                usingBrowserFs = false;
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function refreshFullscreenCount() {
+            if (!linkFullscreenCount) return;
+            const count = links.length;
+            linkFullscreenCount.textContent = `${count} link${count === 1 ? '' : 's'}`;
         }
 
         function clearLinkSelection() {
@@ -1609,16 +1873,24 @@
         }
 
         function updateLinkStatus() {
-            if (!linkMode || !linkPopover.hidden) {
-                linkStatus.hidden = true;
-                return;
-            }
-            linkStatus.hidden = false;
-            if (linkSourceId == null) {
-                linkStatus.textContent = 'Click the first note. Shift-click also starts a link. Esc cancels.';
+            const linking = linkMode && linkPopover.hidden;
+            linkFullscreenBar.hidden = !linking;
+            linkStatus.hidden = !linking || linkFullscreen;
+            linkFullscreenStatus.hidden = !linkFullscreen;
+            linkFullscreenCount.hidden = !linkFullscreen;
+            if (!linking) return;
+            refreshFullscreenCount();
+            if (!linkFullscreen) {
+                linkStatus.textContent = linkSourceId == null
+                    ? 'Click the first note. Shift-click also starts a link. Esc cancels.'
+                    : `Now click a second note to connect with “${noteLabel(linkSourceId)}”. More links, slower drift.`;
+            } else if (linkSourceId == null) {
+                linkFullscreenStatus.textContent = 'Click the first note. Esc leaves full screen.';
             } else {
-                linkStatus.textContent = `Now click a second note to connect with “${noteLabel(linkSourceId)}”. More links, slower drift.`;
+                linkFullscreenStatus.textContent = `Now click a second note to connect with “${noteLabel(linkSourceId)}”.`;
             }
+            linkFullscreenBtn.textContent = linkFullscreen ? 'Exit full screen' : 'Full screen';
+            linkFullscreenBtn.setAttribute('aria-pressed', linkFullscreen ? 'true' : 'false');
         }
 
         function positionLinkPopover(event) {
@@ -1962,6 +2234,540 @@
             document.body.removeChild(link);
         }
 
+        function noteName(id) {
+            const item = dataset.find(row => String(row._id) === String(id));
+            const text = item ? (item[displayVariable] || '(Empty)') : 'Missing note';
+            const dupes = dataset.filter(row => (row[displayVariable] || '(Empty)') === text);
+            return dupes.length > 1 ? `${text} (#${id})` : text;
+        }
+
+        function edgeKey(a, b) {
+            const left = String(a);
+            const right = String(b);
+            return left < right ? `${left}|${right}` : `${right}|${left}`;
+        }
+
+        function linkBetween(a, b) {
+            return links.find(link => edgeKey(link.a, link.b) === edgeKey(a, b)) || null;
+        }
+
+        function buildAdjacency() {
+            const adj = new Map();
+            const ensure = (id) => {
+                const key = String(id);
+                if (!adj.has(key)) adj.set(key, []);
+                return adj.get(key);
+            };
+            links.forEach(link => {
+                ensure(link.a).push({ to: link.b, link });
+                ensure(link.b).push({ to: link.a, link });
+            });
+            return adj;
+        }
+
+        function findComponents(adj) {
+            const seen = new Set();
+            const components = [];
+            adj.forEach((_, start) => {
+                if (seen.has(start)) return;
+                const comp = [];
+                const queue = [start];
+                seen.add(start);
+                while (queue.length) {
+                    const id = queue.shift();
+                    comp.push(id);
+                    (adj.get(id) || []).forEach(edge => {
+                        const next = String(edge.to);
+                        if (!seen.has(next)) {
+                            seen.add(next);
+                            queue.push(next);
+                        }
+                    });
+                }
+                components.push(comp);
+            });
+            return components;
+        }
+
+        function componentDegrees(nodes, adj) {
+            const set = new Set(nodes.map(String));
+            const deg = new Map();
+            nodes.forEach(id => {
+                deg.set(String(id), (adj.get(String(id)) || []).filter(edge => set.has(String(edge.to))).length);
+            });
+            return deg;
+        }
+
+        function fundamentalCycles(nodes, adj) {
+            const inComp = new Set(nodes.map(String));
+            const visited = new Set();
+            const parent = new Map();
+            const parentLink = new Map();
+            const depth = new Map();
+            const cycles = [];
+            const seen = new Set();
+
+            function canonicalKey(cycleNodes) {
+                const count = cycleNodes.length;
+                let minIdx = 0;
+                for (let i = 1; i < count; i++) {
+                    if (String(cycleNodes[i]) < String(cycleNodes[minIdx])) minIdx = i;
+                }
+                const forward = [];
+                const backward = [];
+                for (let i = 0; i < count; i++) {
+                    forward.push(String(cycleNodes[(minIdx + i) % count]));
+                    backward.push(String(cycleNodes[(minIdx - i + count) % count]));
+                }
+                const a = forward.join(',');
+                const b = backward.join(',');
+                return a < b ? a : b;
+            }
+
+            function dfs(u, d) {
+                visited.add(u);
+                depth.set(u, d);
+                (adj.get(u) || []).forEach(edge => {
+                    const v = String(edge.to);
+                    if (!inComp.has(v)) return;
+                    if (!visited.has(v)) {
+                        parent.set(v, u);
+                        parentLink.set(v, edge.link);
+                        dfs(v, d + 1);
+                        return;
+                    }
+                    if (v !== parent.get(u) && depth.get(v) < depth.get(u)) {
+                        const cycleNodes = [u];
+                        let cur = u;
+                        const guard = new Set();
+                        while (cur !== v) {
+                            if (guard.has(cur) || !parent.has(cur)) return;
+                            guard.add(cur);
+                            cur = parent.get(cur);
+                            cycleNodes.push(cur);
+                        }
+                        if (cycleNodes.length < 3) return;
+                        const key = canonicalKey(cycleNodes);
+                        if (seen.has(key)) return;
+                        seen.add(key);
+                        cycles.push({ nodes: cycleNodes });
+                    }
+                });
+            }
+
+            nodes.forEach(id => {
+                if (!visited.has(id)) dfs(id, 0);
+            });
+            return cycles;
+        }
+
+        function cycleEdgeKeys(cycles) {
+            const keys = new Set();
+            cycles.forEach(cycle => {
+                const count = cycle.nodes.length;
+                for (let i = 0; i < count; i++) {
+                    keys.add(edgeKey(cycle.nodes[i], cycle.nodes[(i + 1) % count]));
+                }
+            });
+            return keys;
+        }
+
+        function formatWalk(nodes, edges) {
+            if (!nodes.length) return '';
+            let text = noteName(nodes[0]);
+            for (let i = 0; i < nodes.length - 1; i++) {
+                const link = edges[i];
+                const label = link && String(link.label || '').trim();
+                text += label ? ` —${label}→ ${noteName(nodes[i + 1])}` : ` → ${noteName(nodes[i + 1])}`;
+            }
+            return text;
+        }
+
+        function rememberDirection(directed, nodes) {
+            for (let i = 0; i < nodes.length - 1; i++) {
+                const key = edgeKey(nodes[i], nodes[i + 1]);
+                if (!directed.has(key)) directed.set(key, { from: nodes[i], to: nodes[i + 1] });
+            }
+        }
+
+        function walkCycle(cycle, startId, endId, reverse) {
+            let nodes = cycle.nodes.map(String);
+            if (reverse) nodes = [nodes[0], ...nodes.slice(1).reverse()];
+            const start = nodes.findIndex(id => id === String(startId));
+            if (start === -1) return { nodes: [], edges: [] };
+            const outNodes = [nodes[start]];
+            const outEdges = [];
+            const count = nodes.length;
+            for (let step = 0; step < count; step++) {
+                const from = nodes[(start + step) % count];
+                const to = nodes[(start + step + 1) % count];
+                outEdges.push(linkBetween(from, to));
+                outNodes.push(to);
+                if (String(startId) !== String(endId) && to === String(endId)) break;
+            }
+            return { nodes: outNodes, edges: outEdges };
+        }
+
+        function reverseWalk(walk) {
+            return {
+                nodes: [...walk.nodes].reverse(),
+                edges: [...walk.edges].reverse()
+            };
+        }
+
+        function shorterWalk(cycle, startId, endId) {
+            const forward = walkCycle(cycle, startId, endId, false);
+            const backward = walkCycle(cycle, startId, endId, true);
+            if (forward.edges.length === backward.edges.length) {
+                const forwardNext = noteName(forward.nodes[1] || forward.nodes[0]);
+                const backwardNext = noteName(backward.nodes[1] || backward.nodes[0]);
+                return forwardNext.localeCompare(backwardNext) <= 0
+                    ? { main: forward, closure: backward }
+                    : { main: backward, closure: forward };
+            }
+            return forward.edges.length <= backward.edges.length
+                ? { main: forward, closure: backward }
+                : { main: backward, closure: forward };
+        }
+
+        function formatPolymer(cycle, choice, directed) {
+            const startId = choice.startId;
+            const endId = choice.endId;
+            const closed = String(startId) === String(endId);
+            if (closed) {
+                const walked = walkCycle(cycle, startId, startId, !!choice.flip);
+                rememberDirection(directed, walked.nodes);
+                return {
+                    caption: `Ring closed at “${noteName(startId)}”. Arrows run around the ring and return to that note.`,
+                    text: `—[ ${formatWalk(walked.nodes, walked.edges)} ]—`
+                };
+            }
+            const walks = shorterWalk(cycle, startId, endId);
+            const main = choice.flip ? walks.closure : walks.main;
+            const closure = reverseWalk(choice.flip ? walks.main : walks.closure);
+            rememberDirection(directed, main.nodes);
+            rememberDirection(directed, closure.nodes);
+            return {
+                caption: `Opened from “${noteName(startId)}” to “${noteName(endId)}”. The bracketed line is the return path that closes the ring.`,
+                text: `${formatWalk(main.nodes, main.edges)}\n—[ ${formatWalk(closure.nodes, closure.edges)} ]—`
+            };
+        }
+
+        function formatPath(nodes, adj) {
+            const set = new Set(nodes.map(String));
+            const deg = componentDegrees(nodes, adj);
+            const ends = nodes.filter(id => (deg.get(String(id)) || 0) <= 1);
+            let start = ends[0] || nodes[0];
+            let finish = ends[1] || start;
+            if (ends.length >= 2 && noteName(ends[1]).localeCompare(noteName(ends[0])) < 0) {
+                start = ends[1];
+                finish = ends[0];
+            }
+            const ordered = [String(start)];
+            const edges = [];
+            let prev = null;
+            let cur = String(start);
+            const guard = new Set([cur]);
+            while (cur !== String(finish) && ordered.length <= nodes.length) {
+                const nextEdge = (adj.get(cur) || []).find(edge => set.has(String(edge.to)) && String(edge.to) !== prev && !guard.has(String(edge.to)));
+                if (!nextEdge) break;
+                edges.push(nextEdge.link);
+                cur = String(nextEdge.to);
+                ordered.push(cur);
+                guard.add(cur);
+                prev = ordered[ordered.length - 2];
+            }
+            return { text: formatWalk(ordered, edges), nodes: ordered };
+        }
+
+        function formatTree(root, adj, nodeSet) {
+            const lines = [noteName(root)];
+            const pairs = [];
+            function walk(id, parent, indent) {
+                const children = (adj.get(String(id)) || [])
+                    .map(edge => String(edge.to))
+                    .filter(to => nodeSet.has(to) && to !== String(parent));
+                children.sort((a, b) => noteName(a).localeCompare(noteName(b)));
+                children.forEach(child => {
+                    pairs.push([id, child]);
+                    const link = linkBetween(id, child);
+                    const label = link && String(link.label || '').trim();
+                    lines.push(`${'  '.repeat(indent)}${label ? `—${label}→` : '→'} ${noteName(child)}`);
+                    walk(child, id, indent + 1);
+                });
+            }
+            walk(String(root), null, 1);
+            return { text: lines.join('\n'), pairs };
+        }
+
+        function analyzeLinkGraph() {
+            const adj = buildAdjacency();
+            const components = findComponents(adj);
+            const loops = [];
+            const chains = [];
+            components.forEach(nodes => {
+                const cycles = fundamentalCycles(nodes, adj);
+                if (!cycles.length) {
+                    const deg = componentDegrees(nodes, adj);
+                    const maxDeg = Math.max(...nodes.map(id => deg.get(String(id)) || 0));
+                    if (maxDeg <= 2) {
+                        const path = formatPath(nodes, adj);
+                        chains.push({ kind: 'path', text: path.text, nodes: path.nodes, pairs: path.nodes.slice(1).map((id, index) => [path.nodes[index], id]) });
+                    } else {
+                        const root = [...nodes].sort((a, b) => {
+                            const degreeGap = (deg.get(String(b)) || 0) - (deg.get(String(a)) || 0);
+                            return degreeGap || noteName(a).localeCompare(noteName(b));
+                        })[0];
+                        const tree = formatTree(root, adj, new Set(nodes.map(String)));
+                        chains.push({ kind: 'tree', text: tree.text, nodes, pairs: tree.pairs });
+                    }
+                    return;
+                }
+                cycles.forEach(cycle => loops.push(cycle));
+                const cycleKeys = cycleEdgeKeys(cycles);
+                const cycleNodeSet = new Set(cycles.flatMap(cycle => cycle.nodes.map(String)));
+                const visited = new Set();
+                [...cycleNodeSet].sort((a, b) => noteName(a).localeCompare(noteName(b))).forEach(root => {
+                    const children = (adj.get(String(root)) || [])
+                        .map(edge => String(edge.to))
+                        .filter(to => !cycleKeys.has(edgeKey(root, to)) && !visited.has(to) && !cycleNodeSet.has(to));
+                    if (!children.length) return;
+                    const set = new Set([String(root)]);
+                    const queue = [];
+                    children.forEach(child => {
+                        if (visited.has(child)) return;
+                        visited.add(child);
+                        set.add(child);
+                        queue.push(child);
+                    });
+                    while (queue.length) {
+                        const id = queue.shift();
+                        (adj.get(id) || []).forEach(edge => {
+                            const to = String(edge.to);
+                            if (visited.has(to) || cycleNodeSet.has(to) || cycleKeys.has(edgeKey(id, to))) return;
+                            visited.add(to);
+                            set.add(to);
+                            queue.push(to);
+                        });
+                    }
+                    const tree = formatTree(root, adj, set);
+                    chains.push({ kind: 'attached', text: tree.text, nodes: [...set], pairs: tree.pairs });
+                });
+            });
+            loops.sort((a, b) => noteName(a.nodes[0]).localeCompare(noteName(b.nodes[0])));
+            const linked = new Set();
+            links.forEach(link => {
+                linked.add(String(link.a));
+                linked.add(String(link.b));
+            });
+            const unlinked = dataset
+                .filter(item => !linked.has(String(item._id)))
+                .map(item => item._id)
+                .sort((a, b) => noteName(a).localeCompare(noteName(b)));
+            return { loops, chains, unlinked };
+        }
+
+        function formatGroups() {
+            if (!categories.size) return '';
+            const lines = ['Groups', '------'];
+            let any = false;
+            categories.forEach(name => {
+                const items = dataset.filter(item => item.assigned_group === name);
+                if (!items.length) return;
+                any = true;
+                lines.push(name);
+                const subs = [...(subcategories[name] || [])];
+                subs.forEach(sub => {
+                    const names = items
+                        .filter(item => item.assigned_subcategory === sub)
+                        .map(item => noteName(item._id))
+                        .sort((a, b) => a.localeCompare(b));
+                    if (names.length) lines.push(`  ${sub}: ${names.join('; ')}`);
+                });
+                items
+                    .filter(item => !item.assigned_subcategory)
+                    .map(item => noteName(item._id))
+                    .sort((a, b) => a.localeCompare(b))
+                    .forEach(label => lines.push(`  ${label}`));
+            });
+            return any ? lines.join('\n') : '';
+        }
+
+        function buildLinkText(choices = exportChoices) {
+            const analysis = exportAnalysis || analyzeLinkGraph();
+            const directed = new Map();
+            const sections = [
+                'Link notes',
+                '==========',
+                'Arrows show the reading direction. A polymer ring is written —[ ... ]—.',
+                'The dashes outside the brackets join the ends. If a ring is opened between',
+                'two notes, the first line is that sequence and the bracketed line closes the ring.'
+            ];
+
+            if (analysis.loops.length) {
+                sections.push('', 'Loops', '-----');
+                analysis.loops.forEach((cycle, index) => {
+                    const choice = choices[index] || { startId: cycle.nodes[0], endId: cycle.nodes[0], flip: false };
+                    const polymer = formatPolymer(cycle, choice, directed);
+                    sections.push(`Loop ${index + 1}. ${polymer.caption}`);
+                    sections.push(polymer.text);
+                    sections.push('');
+                });
+            }
+
+            if (analysis.chains.length) {
+                sections.push('Chains', '------');
+                analysis.chains.forEach(chain => {
+                    sections.push(chain.text);
+                    (chain.pairs || []).forEach(pair => rememberDirection(directed, pair));
+                    sections.push('');
+                });
+            }
+
+            if (analysis.unlinked.length) {
+                sections.push('Unlinked', '--------');
+                analysis.unlinked.forEach(id => sections.push(noteName(id)));
+                sections.push('');
+            }
+
+            const groups = formatGroups();
+            if (groups) sections.push(groups, '');
+
+            if (links.length) {
+                sections.push('All links', '---------');
+                const rows = links.map(link => {
+                    const key = edgeKey(link.a, link.b);
+                    const chosen = directed.get(key);
+                    if (chosen) return formatWalk([chosen.from, chosen.to], [link]);
+                    const aFirst = noteName(link.a).localeCompare(noteName(link.b)) <= 0;
+                    return formatWalk(aFirst ? [link.a, link.b] : [link.b, link.a], [link]);
+                });
+                rows.sort((a, b) => a.localeCompare(b));
+                sections.push(...rows);
+            }
+
+            return sections.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+        }
+
+        function fillNoteSelect(select, cycle, selected) {
+            select.innerHTML = '';
+            [...cycle.nodes].sort((a, b) => noteName(a).localeCompare(noteName(b))).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = String(id);
+                opt.textContent = noteName(id);
+                if (String(id) === String(selected)) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderExportChoices() {
+            exportLoops.innerHTML = '';
+            if (!exportAnalysis.loops.length) {
+                exportHelp.textContent = 'No loops in this map. Chains are written with arrows from one end to the other.';
+                return;
+            }
+            exportHelp.textContent = 'A loop is written like a polymer. Pick the note where the sequence starts and the note where it ends. Choose the same note for both to close the ring there.';
+            exportAnalysis.loops.forEach((cycle, index) => {
+                const choice = exportChoices[index];
+                const card = document.createElement('div');
+                card.className = 'export-loop';
+                const title = document.createElement('div');
+                title.className = 'export-loop-title';
+                title.textContent = `Loop ${index + 1} · ${cycle.nodes.length} notes`;
+                const choiceRow = document.createElement('div');
+                choiceRow.className = 'export-choice';
+
+                const startLabel = document.createElement('label');
+                startLabel.textContent = 'Starts at';
+                const startSelect = document.createElement('select');
+                fillNoteSelect(startSelect, cycle, choice.startId);
+                startSelect.addEventListener('change', () => {
+                    exportChoices[index].startId = startSelect.value;
+                    refreshExportPreview();
+                });
+                startLabel.appendChild(startSelect);
+
+                const endLabel = document.createElement('label');
+                endLabel.textContent = 'Ends at';
+                const endSelect = document.createElement('select');
+                fillNoteSelect(endSelect, cycle, choice.endId);
+                endSelect.addEventListener('change', () => {
+                    exportChoices[index].endId = endSelect.value;
+                    refreshExportPreview();
+                });
+                endLabel.appendChild(endSelect);
+
+                const flipBtn = document.createElement('button');
+                flipBtn.type = 'button';
+                flipBtn.className = 'btn btn-secondary';
+                flipBtn.textContent = 'Reverse arrows';
+                flipBtn.addEventListener('click', () => {
+                    exportChoices[index].flip = !exportChoices[index].flip;
+                    refreshExportPreview();
+                });
+
+                choiceRow.appendChild(startLabel);
+                choiceRow.appendChild(endLabel);
+                choiceRow.appendChild(flipBtn);
+                card.appendChild(title);
+                card.appendChild(choiceRow);
+                exportLoops.appendChild(card);
+            });
+        }
+
+        function refreshExportPreview() {
+            exportPreview.textContent = buildLinkText(exportChoices);
+        }
+
+        function openExportModal() {
+            if (!dataset.length) return;
+            exportAnalysis = analyzeLinkGraph();
+            exportChoices = exportAnalysis.loops.map(cycle => {
+                const startId = [...cycle.nodes].sort((a, b) => noteName(a).localeCompare(noteName(b)))[0];
+                return { startId, endId: startId, flip: false };
+            });
+            renderExportChoices();
+            refreshExportPreview();
+            exportModal.hidden = false;
+            const focusTarget = exportModal.querySelector('select, button');
+            if (focusTarget) focusTarget.focus();
+        }
+
+        function closeExportModal() {
+            exportModal.hidden = true;
+        }
+
+        function downloadExportText() {
+            const text = exportPreview.textContent || buildLinkText(exportChoices);
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'linknotes.txt';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        async function copyExportText() {
+            const text = exportPreview.textContent || buildLinkText(exportChoices);
+            const button = document.getElementById('export-copy-btn');
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                const area = document.createElement('textarea');
+                area.value = text;
+                document.body.appendChild(area);
+                area.select();
+                document.execCommand('copy');
+                document.body.removeChild(area);
+            }
+            const previous = button.textContent;
+            button.textContent = 'Copied';
+            setTimeout(() => { button.textContent = previous; }, 1200);
+        }
+
         function parseManualList(text) {
             const raw = String(text || '').replace(/^\uFEFF/, '');
             if (!raw.trim()) return [];
@@ -1992,7 +2798,7 @@
 
         function enableWorkspace() {
             const hasNotes = dataset.length > 0;
-            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = linkModeBtn.disabled = !hasNotes;
+            viewSelect.disabled = reshuffleBtn.disabled = exportBtn.disabled = exportTextBtn.disabled = linkModeBtn.disabled = !hasNotes;
             emptyState.hidden = hasNotes;
         }
 
@@ -2428,5 +3234,5 @@
 
         loadWorkspaceFromStorage();
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4e5498e38c8d9a8',t:'MTc5MjYzODM5OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
