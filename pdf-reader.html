@@ -1,372 +1,553 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>PDF Studio — Annotate, OCR &amp; Export</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
-<style>
-  :root{
-    --bg:#0f1220; --panel:#171a2e; --panel2:#1e2240; --line:#2b3157;
-    --txt:#e8eaf6; --muted:#9aa2c9; --acc:#6c8cff; --acc2:#39d98a; --warn:#ffcc5c;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-  header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(90deg,#171a2e,#1b2042);border-bottom:1px solid var(--line);flex-wrap:wrap;position:sticky;top:0;z-index:30}
-  .brand{font-weight:800;letter-spacing:.3px;margin-right:6px}
-  .brand span{color:var(--acc)}
-  button,.btn,select,input[type=file]::file-selector-button{
-    background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:9px;
-    padding:7px 11px;cursor:pointer;font-size:13px;transition:.15s}
-  button:hover,.btn:hover{border-color:var(--acc);transform:translateY(-1px)}
-  button.active{background:var(--acc);border-color:var(--acc);color:#0b1020;font-weight:700}
-  .sep{width:1px;height:26px;background:var(--line);margin:0 4px}
-  .grow{flex:1}
-  main{display:flex;height:calc(100vh - 53px)}
-  #viewerWrap{flex:1;overflow:auto;padding:22px;display:flex;flex-direction:column;align-items:center;gap:22px;background:#0b0e1a}
-  .pageBox{position:relative;box-shadow:0 10px 36px rgba(0,0,0,.6);background:#fff;border-radius:3px}
-  .pageBox canvas{display:block;border-radius:3px}
-  .layer{position:absolute;inset:0;cursor:crosshair}
-  .anno{position:absolute;pointer-events:auto}
-  .anno.hl{border-radius:2px;mix-blend-mode:multiply}
-  .anno.box{border:2px solid var(--acc);background:transparent;border-radius:3px}
-  .pin{width:26px;height:26px;border-radius:50% 50% 50% 2px;background:var(--warn);border:2px solid #7a5a00;
-       display:flex;align-items:center;justify-content:center;font-size:12px;color:#3b2c00;font-weight:800;cursor:pointer;
-       box-shadow:0 3px 10px rgba(0,0,0,.4)}
-  .pageLbl{color:var(--muted);font-size:12px;margin-bottom:-14px;align-self:center}
-  aside{width:340px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column}
-  .tabs{display:flex;border-bottom:1px solid var(--line)}
-  .tabs button{flex:1;border:0;border-radius:0;background:transparent;padding:11px}
-  .tabs button.active{background:var(--panel2);color:var(--acc);box-shadow:inset 0 -2px 0 var(--acc);transform:none}
-  .tabBody{flex:1;overflow:auto;padding:12px}
-  .card{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
-  .card .meta{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:6px}
-  .card textarea{width:100%;min-height:54px;background:#121530;color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:7px;resize:vertical;font:13px/1.4 inherit}
-  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .swatch{width:24px;height:24px;border-radius:6px;border:2px solid transparent;cursor:pointer}
-  .swatch.on{border-color:#fff}
-  pre#ocrOut{white-space:pre-wrap;font:12.5px/1.5 ui-monospace,Menlo,monospace;color:#cfd6ff;background:#121530;border:1px solid var(--line);border-radius:9px;padding:10px;min-height:120px}
-  .bar{height:6px;background:#121530;border-radius:99px;overflow:hidden;margin:8px 0}
-  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:.2s}
-  .hint{color:var(--muted);font-size:12px}
-  #drop{position:fixed;inset:0;background:rgba(10,13,26,.92);display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:14px;text-align:center;padding:30px}
-  #drop.show{display:flex}
-  .big{font-size:26px;font-weight:800}
-  .pill{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12px;color:var(--muted)}
-  a{color:var(--acc)}
-  ::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-thumb{background:#2b3157;border-radius:9px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reader & Annotator</title>
+  <!-- Dependencies via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --panel-bg: #ffffff;
+      --accent-color: #005a9c;
+      --border-color: #d1d5db;
+      --highlight-color: rgba(255, 235, 59, 0.45);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      background-color: var(--bg-color);
+      color: #1f2937;
+    }
+    #sidebar {
+      width: 380px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      box-sizing: border-box;
+      gap: 1rem;
+      z-index: 10;
+    }
+    #main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #toolbar {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      z-index: 5;
+      flex-wrap: wrap;
+    }
+    #document-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    input[type="file"], input[type="text"], input[type="number"], button {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    button {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #004070; }
+    
+    .page-wrapper {
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      background: white;
+      margin-bottom: 1rem;
+    }
+    .textLayer {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      overflow: hidden;
+      opacity: 0.25;
+      line-height: 1;
+    }
+    .textLayer span {
+      color: transparent;
+      position: absolute;
+      white-space: pre;
+      cursor: text;
+      transform-origin: 0% 0%;
+    }
+    .highlight-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .highlight-rect {
+      position: absolute;
+      background-color: var(--highlight-color);
+      border-bottom: 1px solid #fbc02d;
+      pointer-events: auto;
+    }
+    .ocr-layer {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .ocr-span {
+      position: absolute;
+      color: transparent;
+      cursor: text;
+      pointer-events: auto;
+      line-height: 1;
+    }
+
+    #annotations-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .annotation-card {
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--accent-color);
+      padding: 0.75rem;
+      border-radius: 4px;
+      background: #fafafa;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-btn {
+      background: transparent;
+      color: #dc2626;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 0.25rem;
+    }
+    .delete-btn:hover { color: #991b1b; background: transparent; }
+    #status-indicator {
+      font-size: 0.85rem;
+      color: #4b5563;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-<header>
-  <div class="brand">PDF <span>Studio</span></div>
-  <label class="btn">📂 Open PDF<input id="file" type="file" accept="application/pdf" hidden></label>
-  <div class="sep"></div>
-  <button data-tool="select" class="tool active">🖱 Select</button>
-  <button data-tool="highlight" class="tool">🖍 Highlight</button>
-  <button data-tool="box" class="tool">▭ Box</button>
-  <button data-tool="comment" class="tool">💬 Comment</button>
-  <button id="erase" class="tool" data-tool="erase">🧽 Erase</button>
-  <div class="row" id="colors"></div>
-  <div class="sep"></div>
-  <button id="zoomOut">−</button><span class="pill" id="zoomLbl">100%</span><button id="zoomIn">+</button>
-  <div class="grow"></div>
-  <button id="saveLocal">💾 Save locally</button>
-  <button id="loadLocal">↺ Restore</button>
-  <button id="exportPdf">⬇ Export PDF</button>
-  <button id="exportJson">⬇ Notes</button>
-</header>
 
-<main>
-  <div id="viewerWrap">
-    <div class="hint" id="empty" style="margin-top:18vh;text-align:center">
-      <div class="big">Drop a PDF here</div>
-      <p>Everything runs in your browser — no uploads, no server, no account.</p>
-      <label class="btn">Choose a file<input type="file" accept="application/pdf" id="file2" hidden></label>
+  <div id="sidebar">
+    <h2>Pdf Reader</h2>
+    <div class="control-group">
+      <label for="file-input">Open PDF Document</label>
+      <input type="file" id="file-input" accept="application/pdf">
     </div>
+    <div class="control-group">
+      <button id="export-csv-btn">Export Annotations (CSV)</button>
+      <button id="clear-btn" style="background-color: #dc2626;">Clear Session</button>
+    </div>
+    <hr style="width:100%; border:0; border-top:1px solid var(--border-color);">
+    <h3>Annotations</h3>
+    <div id="annotations-list"></div>
   </div>
 
-  <aside>
-    <div class="tabs">
-      <button class="tab active" data-tab="notes">Comments</button>
-      <button class="tab" data-tab="ocr">OCR</button>
-      <button class="tab" data-tab="help">Help</button>
-    </div>
-    <div class="tabBody" id="tab-notes"><div class="hint">Annotations appear here. Use 💬 Comment on the page to add a pinned note.</div></div>
-    <div class="tabBody" id="tab-ocr" hidden>
-      <div class="row">
-        <select id="ocrLang">
-          <option value="eng">English</option><option value="spa">Spanish</option>
-          <option value="fra">French</option><option value="deu">German</option>
-          <option value="por">Portuguese</option><option value="ita">Italian</option>
-          <option value="nld">Dutch</option>
-        </select>
-        <select id="ocrScope"><option value="page">Current page</option><option value="all">All pages</option></select>
-        <button id="runOcr">Run OCR</button>
+  <div id="main-container">
+    <div id="toolbar">
+      <div>
+        <label for="jump-page">Page:</label>
+        <input type="number" id="jump-page" min="1" style="width: 60px;">
+        <span id="page-count-display">/ 0</span>
+        <button id="jump-btn">Jump</button>
       </div>
-      <div class="bar"><i id="ocrBar"></i></div>
-      <div class="row" style="margin-bottom:8px">
-        <button id="copyOcr">Copy text</button><button id="dlOcr">Download .txt</button>
+      <div>
+        <label for="page-offset">Global Offset:</label>
+        <input type="number" id="page-offset" value="0" style="width: 60px;" title="Set offset to adjust all display page numbers (e.g. -10 or +5)">
       </div>
-      <pre id="ocrOut">No text extracted yet. Embedded text is pulled automatically on load; use Run OCR for scanned/image pages.</pre>
+      <button id="ocr-btn" style="background-color: #2563eb;">OCR Active Viewport</button>
+      <span id="status-indicator">Ready</span>
     </div>
-    <div class="tabBody" id="tab-help" hidden>
-      <div class="card"><b>Tools</b><div class="hint">Drag with Highlight or Box to mark an area. Click with Comment to drop a pin. Erase removes any annotation you click.</div></div>
-      <div class="card"><b>Saving</b><div class="hint">“Save locally” stores the document + annotations in your browser (IndexedDB), so refreshing keeps your work. “Export PDF” burns highlights, boxes and notes into a new PDF file.</div></div>
-      <div class="card"><b>Privacy</b><div class="hint">All processing is client-side: pdf.js for rendering, Tesseract.js for OCR, pdf-lib for export.</div></div>
-    </div>
-  </aside>
-</main>
 
-<div id="drop"><div class="big">Release to open PDF</div></div>
+    <div id="document-viewport"></div>
+  </div>
 
-<script>
-const { PDFDocument, rgb, StandardFonts } = PDFLib;
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const S = { pdf:null, bytes:null, name:"document.pdf", scale:1.25, tool:"select",
-            color:"#ffe14d", annos:[], pages:[], text:{} };
-const COLORS = ["#ffe14d","#8affa0","#9ad8ff","#ff9ec4","#ffb36b","#c9a6ff"];
-const $ = s => document.querySelector(s);
-const uid = () => Math.random().toString(36).slice(2,9);
+    let pdfDoc = null;
+    let annotations = [];
+    let currentPdfArrayBuffer = null;
+    let renderedPages = {};
+    let globalPageOffset = 0;
 
-// color swatches
-COLORS.forEach((c,i)=>{const d=document.createElement('div');d.className='swatch'+(i===0?' on':'');
-  d.style.background=c;d.onclick=()=>{S.color=c;document.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));d.classList.add('on')};
-  $('#colors').appendChild(d)});
+    const viewportEl = document.getElementById('document-viewport');
+    const statusEl = document.getElementById('status-indicator');
 
-document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.tool').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active'); S.tool=b.dataset.tool;});
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-  ['notes','ocr','help'].forEach(t=>$('#tab-'+t).hidden = t!==b.dataset.tab);});
-
-// ---------- file loading ----------
-function hook(el){ el && (el.onchange = e => { const f=e.target.files[0]; if(f) openFile(f); }); }
-hook($('#file')); hook($('#file2'));
-['dragenter','dragover'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault();$('#drop').classList.add('show')}));
-['dragleave','drop'].forEach(ev=>window.addEventListener(ev,e=>{e.preventDefault();
-  if(ev==='drop'){const f=e.dataTransfer.files[0]; if(f&&f.type==='application/pdf') openFile(f);} $('#drop').classList.remove('show')}));
-
-async function openFile(f){ S.name=f.name; const buf=new Uint8Array(await f.arrayBuffer()); await load(buf); }
-
-async function load(bytes){
-  S.bytes = bytes; S.annos = []; S.text = {};
-  S.pdf = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
-  await render(); await grabEmbeddedText(); renderNotes();
-}
-
-// ---------- rendering ----------
-async function render(){
-  const w = $('#viewerWrap'); w.innerHTML=''; S.pages=[];
-  for(let i=1;i<=S.pdf.numPages;i++){
-    const page = await S.pdf.getPage(i);
-    const vp = page.getViewport({scale:S.scale * (window.devicePixelRatio>1?1:1)});
-    const lbl=document.createElement('div'); lbl.className='pageLbl'; lbl.textContent=`Page ${i} / ${S.pdf.numPages}`;
-    const box=document.createElement('div'); box.className='pageBox'; box.style.width=vp.width+'px'; box.style.height=vp.height+'px';
-    const cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height;
-    const layer=document.createElement('div'); layer.className='layer'; layer.dataset.page=i;
-    box.append(cv,layer); w.append(lbl,box);
-    await page.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise;
-    S.pages.push({num:i,box,layer,canvas:cv,w:vp.width,h:vp.height});
-    bindLayer(layer, i);
-  }
-  $('#zoomLbl').textContent = Math.round(S.scale/1.25*100)+'%';
-  drawAnnos();
-}
-
-function bindLayer(layer, pageNum){
-  let start=null, ghost=null;
-  layer.addEventListener('mousedown', e=>{
-    if(S.tool==='select'||S.tool==='erase') return;
-    const r=layer.getBoundingClientRect(); start={x:e.clientX-r.left,y:e.clientY-r.top};
-    if(S.tool==='comment'){ addComment(pageNum, start.x/r.width, start.y/r.height); start=null; return; }
-    ghost=document.createElement('div'); ghost.className='anno '+(S.tool==='highlight'?'hl':'box');
-    if(S.tool==='highlight'){ghost.style.background=S.color;ghost.style.opacity=.4}else{ghost.style.borderColor=S.color}
-    layer.appendChild(ghost);
-  });
-  layer.addEventListener('mousemove', e=>{
-    if(!start||!ghost) return; const r=layer.getBoundingClientRect();
-    const x=e.clientX-r.left,y=e.clientY-r.top;
-    Object.assign(ghost.style,{left:Math.min(x,start.x)+'px',top:Math.min(y,start.y)+'px',
-      width:Math.abs(x-start.x)+'px',height:Math.abs(y-start.y)+'px'});
-  });
-  layer.addEventListener('mouseup', e=>{
-    if(!start||!ghost) return; const r=layer.getBoundingClientRect();
-    const x=e.clientX-r.left,y=e.clientY-r.top;
-    const a={id:uid(),type:S.tool,page:pageNum,color:S.color,note:'',
-      x:Math.min(x,start.x)/r.width, y:Math.min(y,start.y)/r.height,
-      w:Math.abs(x-start.x)/r.width, h:Math.abs(y-start.y)/r.height, t:Date.now()};
-    ghost.remove(); start=null; ghost=null;
-    if(a.w*r.width>6 && a.h*r.height>6){ S.annos.push(a); drawAnnos(); renderNotes(); }
-  });
-}
-
-function addComment(page,x,y){
-  const note = prompt('Comment:'); if(note===null) return;
-  S.annos.push({id:uid(),type:'comment',page,x,y,w:0,h:0,color:'#ffcc5c',note,t:Date.now()});
-  drawAnnos(); renderNotes();
-}
-
-function drawAnnos(){
-  S.pages.forEach(p=>p.layer.innerHTML='');
-  S.annos.forEach(a=>{
-    const p=S.pages.find(p=>p.num===a.page); if(!p) return;
-    const el=document.createElement('div');
-    if(a.type==='comment'){
-      el.className='anno pin'; el.textContent='💬';
-      el.style.left=(a.x*p.w-13)+'px'; el.style.top=(a.y*p.h-26)+'px';
-      el.title=a.note;
-      el.onclick=ev=>{ev.stopPropagation(); if(S.tool==='erase') return remove(a.id);
-        document.getElementById('c-'+a.id)?.scrollIntoView({behavior:'smooth',block:'center'});
-        document.getElementById('c-'+a.id)?.querySelector('textarea')?.focus();};
-    } else {
-      el.className='anno '+(a.type==='highlight'?'hl':'box');
-      if(a.type==='highlight'){el.style.background=a.color;el.style.opacity=.4}else{el.style.borderColor=a.color}
-      el.style.left=a.x*p.w+'px'; el.style.top=a.y*p.h+'px';
-      el.style.width=a.w*p.w+'px'; el.style.height=a.h*p.h+'px';
-      el.title=a.note||'';
-      el.onclick=ev=>{if(S.tool==='erase'){ev.stopPropagation();remove(a.id)}};
-    }
-    p.layer.appendChild(el);
-  });
-}
-function remove(id){ S.annos=S.annos.filter(a=>a.id!==id); drawAnnos(); renderNotes(); }
-
-function renderNotes(){
-  const box=$('#tab-notes');
-  if(!S.annos.length){box.innerHTML='<div class="hint">No annotations yet. Pick 🖍 Highlight, ▭ Box or 💬 Comment and mark up the page.</div>';return}
-  box.innerHTML='';
-  [...S.annos].sort((a,b)=>a.page-b.page||a.y-b.y).forEach(a=>{
-    const c=document.createElement('div'); c.className='card'; c.id='c-'+a.id;
-    c.innerHTML=`<div class="meta"><span>${a.type.toUpperCase()} · p.${a.page}</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${a.color}"></span>
-      <button style="padding:1px 6px;margin-left:6px">✕</button></span></div>
-      <textarea placeholder="Write a note…">${(a.note||'').replace(/</g,'&lt;')}</textarea>`;
-    c.querySelector('button').onclick=()=>remove(a.id);
-    c.querySelector('textarea').oninput=e=>{a.note=e.target.value; drawAnnos();};
-    box.appendChild(c);
-  });
-}
-
-// ---------- zoom ----------
-$('#zoomIn').onclick=async()=>{S.scale=Math.min(4,S.scale+0.25); if(S.pdf) await render()};
-$('#zoomOut').onclick=async()=>{S.scale=Math.max(0.5,S.scale-0.25); if(S.pdf) await render()};
-
-// ---------- text / OCR ----------
-async function grabEmbeddedText(){
-  let out='';
-  for(let i=1;i<=S.pdf.numPages;i++){
-    const tc=await (await S.pdf.getPage(i)).getTextContent();
-    const t=tc.items.map(x=>x.str).join(' ').replace(/\s+/g,' ').trim();
-    S.text[i]=t; if(t) out+=`\n──── Page ${i} ────\n${t}\n`;
-  }
-  $('#ocrOut').textContent = out.trim() || 'No embedded text found — this looks like a scan. Run OCR to extract it.';
-}
-
-function currentPage(){
-  const wrap=$('#viewerWrap'), mid=wrap.scrollTop+wrap.clientHeight/2; let best=1;
-  S.pages.forEach(p=>{ if(p.box.offsetTop<=mid) best=p.num; }); return best;
-}
-
-$('#runOcr').onclick = async () => {
-  if(!S.pdf) return alert('Open a PDF first.');
-  const lang=$('#ocrLang').value, all=$('#ocrScope').value==='all';
-  const list = all ? S.pages : [S.pages.find(p=>p.num===currentPage())];
-  $('#ocrOut').textContent='Loading OCR engine…';
-  const worker = await Tesseract.createWorker(lang, 1, {
-    logger: m => { if(m.status==='recognizing text') $('#ocrBar').style.width=(m.progress*100)+'%'; }
-  });
-  let out='';
-  for(const p of list){
-    $('#ocrOut').textContent = `Reading page ${p.num}…`;
-    const { data } = await worker.recognize(p.canvas);
-    S.text[p.num]=data.text.trim();
-    out += `\n──── Page ${p.num} (OCR) ────\n${data.text.trim()}\n`;
-    $('#ocrOut').textContent = out.trim();
-  }
-  await worker.terminate(); $('#ocrBar').style.width='100%';
-};
-$('#copyOcr').onclick=()=>{navigator.clipboard.writeText($('#ocrOut').textContent);$('#copyOcr').textContent='Copied!';setTimeout(()=>$('#copyOcr').textContent='Copy text',1200)};
-$('#dlOcr').onclick=()=>dl(new Blob([$('#ocrOut').textContent],{type:'text/plain'}), S.name.replace(/\.pdf$/i,'')+'-text.txt');
-
-// ---------- local persistence (IndexedDB) ----------
-function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('pdfstudio',1);
-  r.onupgradeneeded=()=>r.result.createObjectStore('docs');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
-async function put(k,v){const db=await idb();return new Promise(r=>{const t=db.transaction('docs','readwrite');t.objectStore('docs').put(v,k);t.oncomplete=r})}
-async function get(k){const db=await idb();return new Promise(r=>{const t=db.transaction('docs','readonly');const q=t.objectStore('docs').get(k);q.onsuccess=()=>r(q.result)})}
-
-$('#saveLocal').onclick=async()=>{
-  if(!S.bytes) return alert('Open a PDF first.');
-  await put('doc',{name:S.name,bytes:S.bytes,annos:S.annos,text:S.text,scale:S.scale});
-  flash($('#saveLocal'),'Saved ✓');
-};
-$('#loadLocal').onclick=async()=>{
-  const d=await get('doc'); if(!d) return alert('Nothing saved yet.');
-  S.name=d.name; S.scale=d.scale||1.25;
-  S.bytes=d.bytes; S.pdf=await pdfjsLib.getDocument({data:d.bytes.slice(0)}).promise;
-  await render(); S.annos=d.annos||[]; S.text=d.text||{};
-  drawAnnos(); renderNotes(); flash($('#loadLocal'),'Restored ✓');
-};
-function flash(b,t){const o=b.textContent;b.textContent=t;setTimeout(()=>b.textContent=o,1300)}
-
-// ---------- export ----------
-function dl(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u)}
-const hex = h => { const n=parseInt(h.slice(1),16); return rgb(((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255); };
-
-$('#exportJson').onclick=()=>{
-  if(!S.annos.length) return alert('No annotations to export.');
-  dl(new Blob([JSON.stringify({file:S.name,annotations:S.annos,text:S.text},null,2)],{type:'application/json'}),
-     S.name.replace(/\.pdf$/i,'')+'-notes.json');
-};
-
-$('#exportPdf').onclick = async () => {
-  if(!S.bytes) return alert('Open a PDF first.');
-  const doc = await PDFDocument.load(S.bytes.slice(0));
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const pages = doc.getPages();
-  let n=0;
-  S.annos.forEach(a=>{
-    const p=pages[a.page-1]; if(!p) return;
-    const {width:W,height:H}=p.getSize();
-    if(a.type==='highlight'){
-      p.drawRectangle({x:a.x*W,y:H-(a.y+a.h)*H,width:a.w*W,height:a.h*H,color:hex(a.color),opacity:.38});
-    } else if(a.type==='box'){
-      p.drawRectangle({x:a.x*W,y:H-(a.y+a.h)*H,width:a.w*W,height:a.h*H,borderColor:hex(a.color),borderWidth:1.5,opacity:0});
-    } else {
-      n++;
-      p.drawCircle({x:a.x*W,y:H-a.y*H,size:8,color:hex('#ffcc5c')});
-      p.drawText(String(n),{x:a.x*W-2.5,y:H-a.y*H-3.5,size:8,font,color:rgb(.2,.15,0)});
-    }
-    if(a.note && a.type!=='comment'){ n++; 
-      p.drawCircle({x:a.x*W+a.w*W,y:H-a.y*H,size:8,color:hex('#ffcc5c')});
-      p.drawText(String(n),{x:a.x*W+a.w*W-2.5,y:H-a.y*H-3.5,size:8,font,color:rgb(.2,.15,0)});
-    }
-  });
-  // appendix page with notes
-  const notes = S.annos.filter(a=>a.note);
-  if(notes.length){
-    let page=doc.addPage(); let {width:W,height:H}=page.getSize(); let y=H-60;
-    page.drawText('Annotation notes',{x:50,y,size:18,font,color:rgb(.1,.1,.2)}); y-=30;
-    let i=0;
-    notes.forEach(a=>{ i++;
-      const lines=wrap(`${i}. [p.${a.page} ${a.type}] ${a.note}`,92);
-      lines.forEach(l=>{ if(y<60){page=doc.addPage();y=page.getSize().height-60;}
-        page.drawText(l,{x:50,y,size:11,font,color:rgb(.15,.15,.2)}); y-=16; });
-      y-=6;
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedData = await localforage.getItem('pdf_session');
+      if (savedData) {
+        currentPdfArrayBuffer = savedData.buffer;
+        annotations = savedData.annotations || [];
+        globalPageOffset = savedData.globalPageOffset || 0;
+        document.getElementById('page-offset').value = globalPageOffset;
+        loadPDFData(currentPdfArrayBuffer);
+      }
     });
-  }
-  dl(new Blob([await doc.save()],{type:'application/pdf'}), S.name.replace(/\.pdf$/i,'')+'-annotated.pdf');
-};
-function wrap(t,n){const w=t.split(' ');const o=[];let l='';w.forEach(x=>{if((l+x).length>n){o.push(l);l=''}l+=x+' '});o.push(l);return o}
 
-// auto-restore prompt
-get('doc').then(d=>{ if(d) $('#empty').insertAdjacentHTML('beforeend',
-  '<p class="hint">A previously saved document was found — click <b>↺ Restore</b> in the toolbar.</p>')});
-</script>
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          currentPdfArrayBuffer = this.result;
+          annotations = [];
+          globalPageOffset = 0;
+          document.getElementById('page-offset').value = 0;
+          await saveSession();
+          loadPDFData(currentPdfArrayBuffer);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+
+    document.getElementById('page-offset').addEventListener('change', (e) => {
+      globalPageOffset = parseInt(e.target.value, 10) || 0;
+      updateAllCustomPages();
+      saveSession();
+      renderSidebar();
+    });
+
+    function updateAllCustomPages() {
+      annotations.forEach(item => {
+        item.customPage = (item.pdfPage + globalPageOffset).toString();
+      });
+    }
+
+    async function loadPDFData(arrayBuffer) {
+      statusEl.textContent = 'Loading Document...';
+      pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      document.getElementById('page-count-display').textContent = `/ ${pdfDoc.numPages}`;
+      document.getElementById('jump-page').max = pdfDoc.numPages;
+      
+      viewportEl.innerHTML = '';
+      renderedPages = {};
+
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        await renderPageContainer(pageNum);
+      }
+
+      renderSidebar();
+      statusEl.textContent = 'Document Loaded';
+    }
+
+    async function renderPageContainer(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      const pageWrapper = document.createElement('div');
+      pageWrapper.className = 'page-wrapper';
+      pageWrapper.id = `page-wrapper-${pageNum}`;
+      pageWrapper.dataset.pageNum = pageNum;
+      pageWrapper.style.width = `${viewport.width}px`;
+      pageWrapper.style.height = `${viewport.height}px`;
+
+      const canvas = document.createElement('canvas');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      const ctx = canvas.getContext('2d');
+
+      const textLayerDiv = document.createElement('div');
+      textLayerDiv.className = 'textLayer';
+
+      const highlightLayerDiv = document.createElement('div');
+      highlightLayerDiv.className = 'highlight-layer';
+
+      const ocrLayerDiv = document.createElement('div');
+      ocrLayerDiv.className = 'ocr-layer';
+
+      pageWrapper.appendChild(canvas);
+      pageWrapper.appendChild(textLayerDiv);
+      pageWrapper.appendChild(highlightLayerDiv);
+      pageWrapper.appendChild(ocrLayerDiv);
+      viewportEl.appendChild(pageWrapper);
+
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+      const textContent = await page.getTextContent();
+      await pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: textLayerDiv,
+        viewport: viewport,
+        textDivs: []
+      }).promise;
+
+      renderedPages[pageNum] = { pageWrapper, canvas, viewport, highlightLayerDiv, ocrLayerDiv };
+      renderHighlightsForPage(pageNum);
+    }
+
+    viewportEl.addEventListener('mouseup', () => {
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+
+      if (selectedText.length > 0 && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rects = Array.from(range.getClientRects());
+        
+        let node = range.startContainer;
+        while (node && !node.classList?.contains('page-wrapper')) {
+          node = node.parentNode;
+        }
+
+        if (node) {
+          const pageNum = Number(node.dataset.pageNum);
+          const wrapperRect = node.getBoundingClientRect();
+
+          const relativeRects = rects.map(r => ({
+            left: r.left - wrapperRect.left,
+            top: r.top - wrapperRect.top,
+            width: r.width,
+            height: r.height
+          }));
+
+          const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+          const newAnnotation = {
+            id: Date.now(),
+            pdfPage: pageNum,
+            customPage: (pageNum + globalPageOffset).toString(),
+            time: timestamp,
+            highlight: selectedText,
+            comment: "",
+            rects: relativeRects
+          };
+
+          annotations.push(newAnnotation);
+          saveSession();
+          renderHighlightsForPage(pageNum);
+          renderSidebar();
+          selection.removeAllRanges();
+        }
+      }
+    });
+
+    function renderHighlightsForPage(pageNum) {
+      const pageObj = renderedPages[pageNum];
+      if (!pageObj) return;
+
+      pageObj.highlightLayerDiv.innerHTML = '';
+      const pageAnnos = annotations.filter(a => a.pdfPage === pageNum);
+
+      pageAnnos.forEach(anno => {
+        if (anno.rects) {
+          anno.rects.forEach(r => {
+            const rectEl = document.createElement('div');
+            rectEl.className = 'highlight-rect';
+            rectEl.style.left = `${r.left}px`;
+            rectEl.style.top = `${r.top}px`;
+            rectEl.style.width = `${r.width}px`;
+            rectEl.style.height = `${r.height}px`;
+            pageObj.highlightLayerDiv.appendChild(rectEl);
+          });
+        }
+      });
+    }
+
+    function renderSidebar() {
+      const listEl = document.getElementById('annotations-list');
+      listEl.innerHTML = '';
+
+      annotations.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'annotation-card';
+        card.innerHTML = `
+          <div class="card-header">
+            <strong>PDF Pg ${item.pdfPage} (Disp: ${item.customPage})</strong>
+            <button class="delete-btn" title="Delete Annotation" data-id="${item.id}">&times;</button>
+          </div>
+          <div><em>"${item.highlight.substring(0, 60)}${item.highlight.length > 60 ? '...' : ''}"</em></div>
+          <div>
+            <label>Display Page #:</label>
+            <input type="text" value="${item.customPage}" data-index="${index}" class="page-input" style="width: 50px;">
+          </div>
+          <div>
+            <input type="text" placeholder="Add commentary..." value="${item.comment}" data-index="${index}" class="comment-input" style="width: 92%;">
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+
+      document.querySelectorAll('.page-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = e.target.getAttribute('data-index');
+          annotations[idx].customPage = e.target.value;
+          saveSession();
+        });
+      });
+
+      document.querySelectorAll('.comment-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const idx = e.target.getAttribute('data-index');
+          annotations[idx].comment = e.target.value;
+          saveSession();
+        });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = Number(e.target.getAttribute('data-id'));
+          deleteAnnotation(id);
+        });
+      });
+    }
+
+    function deleteAnnotation(id) {
+      const target = annotations.find(a => a.id === id);
+      annotations = annotations.filter(a => a.id !== id);
+      saveSession();
+      if (target) renderHighlightsForPage(target.pdfPage);
+      renderSidebar();
+    }
+
+    // Precise OCR Alignment with Canvas-to-DOM Scale Normalization
+    document.getElementById('ocr-btn').addEventListener('click', async () => {
+      const visibleWrapper = document.querySelector('.page-wrapper');
+      if (!visibleWrapper) return;
+
+      const pageNum = Number(visibleWrapper.dataset.pageNum);
+      const pageObj = renderedPages[pageNum];
+
+      statusEl.textContent = `Running OCR on Page ${pageNum}...`;
+
+      const worker = await Tesseract.createWorker('eng');
+      await worker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+      });
+
+      const { data } = await worker.recognize(pageObj.canvas);
+      
+      // Calculate precise scaling ratios between OCR Canvas dimensions and DOM Viewport
+      const scaleX = pageObj.viewport.width / pageObj.canvas.width;
+      const scaleY = pageObj.viewport.height / pageObj.canvas.height;
+
+      pageObj.ocrLayerDiv.innerHTML = '';
+      data.words.forEach(word => {
+        const span = document.createElement('span');
+        span.className = 'ocr-span';
+        span.textContent = word.text + ' ';
+        
+        // Exact scaling normalization prevents vertical offset bug
+        span.style.left = `${word.bbox.x0 * scaleX}px`;
+        span.style.top = `${word.bbox.y0 * scaleY}px`;
+        span.style.width = `${(word.bbox.x1 - word.bbox.x0) * scaleX}px`;
+        span.style.height = `${(word.bbox.y1 - word.bbox.y0) * scaleY}px`;
+        span.style.fontSize = `${(word.bbox.y1 - word.bbox.y0) * scaleY}px`;
+
+        pageObj.ocrLayerDiv.appendChild(span);
+      });
+
+      await worker.terminate();
+      statusEl.textContent = `OCR Complete for Page ${pageNum}`;
+    });
+
+    document.getElementById('jump-btn').addEventListener('click', () => {
+      const pageNum = document.getElementById('jump-page').value;
+      const targetEl = document.getElementById(`page-wrapper-${pageNum}`);
+      if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    async function saveSession() {
+      await localforage.setItem('pdf_session', {
+        buffer: currentPdfArrayBuffer,
+        annotations: annotations,
+        globalPageOffset: globalPageOffset
+      });
+    }
+
+   // Clean CSV Export Logic - Eliminates embedded newline record breakage
+document.getElementById('export-csv-btn').addEventListener('click', () => {
+  if (annotations.length === 0) {
+    alert('No annotations available to export.');
+    return;
+  }
+
+  // Header Definition
+  let csvContent = "data:text/csv;charset=utf-8,Page number;Time;Comment/Highlight\n";
+
+  annotations.forEach(item => {
+    // 1. Sanitize Highlight Text: Remove line breaks, carriage returns, and collapse multiple spaces
+    const cleanHighlightText = item.highlight
+      .replace(/[\r\n]+/g, ' ')       // Replace newlines (Char 10 / Char 13) with spaces
+      .replace(/\s+/g, ' ')           // Collapse consecutive spaces
+      .replace(/"/g, '""')            // Escape internal double quotes per CSV standard
+      .trim();
+
+    const formattedHighlight = `"${cleanHighlightText}"`;
+    csvContent += `${item.customPage};${item.time};${formattedHighlight}\n`;
+
+    // 2. Sanitize Comment Text if present
+    if (item.comment && item.comment.trim() !== "") {
+      const cleanCommentText = item.comment
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/"/g, '""')
+        .trim();
+
+      const formattedComment = `"c: ${cleanCommentText}"`;
+      csvContent += `${item.customPage};${item.time};${formattedComment}\n`;
+    }
+  });
+
+  // Download Trigger
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `study_highlights_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      if (confirm("Are you sure you wish to clear all session data?")) {
+        await localforage.removeItem('pdf_session');
+        location.reload();
+      }
+    });
+  </script>
 </body>
 </html>
